@@ -183,12 +183,12 @@ export default function Profile(){
         const { error: upErr } = await supabase.storage.from(LOGO_BUCKET)
           .upload(path, logoFile, { upsert:true, cacheControl:'3600', contentType:logoFile.type })
         if(upErr) throw upErr
-        const { data: pub, error: pubErr } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(path)
-        if(pubErr) throw pubErr
-        logoPathToSave = path;
-        logoUrlToSave = pub.publicUrl;
-        setLogoPath(logoPathToSave);
-        setLogoUrl(logoUrlToSave);
+        const { data: pub } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(path)
+        if (!pub?.publicUrl) throw new Error('Failed to get public URL for uploaded logo.')
+        logoPathToSave = path
+        logoUrlToSave = pub.publicUrl
+        setLogoPath(logoPathToSave)
+        setLogoUrl(logoUrlToSave)
       }
 
       // Upsert profile (persist team logo path)
