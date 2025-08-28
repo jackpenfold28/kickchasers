@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* app shell */
+  .app-bg {
+    /* Deep night gradient with subtle vignettes */
+    background:
+      radial-gradient(1200px 600px at 0% -10%, rgba(34,119,255,.10), transparent 60%),
+      radial-gradient(900px 400px at 100% 0%, rgba(99,102,241,.08), transparent 55%),
+      radial-gradient(700px 500px at 50% 120%, rgba(56,189,248,.06), transparent 60%),
+      linear-gradient(180deg, #0A0F1C 0%, #0B1022 50%, #090E1A 100%);
+    @apply text-slate-100 min-h-screen;
+  }
+  body { @apply app-bg; }
+
+  /* cards / headings */
+  .card { @apply relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-5 overflow-hidden; }
+  .card::before { /* soft inner glow */ content:""; position:absolute; inset:0; pointer-events:none; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+  .h1 { @apply text-2xl font-semibold; }
+  .h2 { @apply text-xl font-semibold; }
+
+  /* buttons / tabs */
+  .btn { @apply inline-flex items-center justify-center rounded-xl px-4 py-2 bg-white/10 border border-white/10 hover:bg-white/20 transition shadow-sm active:scale-[.98]; }
+  .btn-primary { @apply bg-[#1A4DFF] text-white border-0 hover:brightness-110 shadow-[0_8px_24px_rgba(26,77,255,.25)] active:shadow-[0_4px_16px_rgba(26,77,255,.25)]; }
+
+  /* team logo badge */
+  .team-logo { width: 76px; height: 76px; border-radius: 16px; overflow: hidden; @apply bg-white/10 border border-white/15 shadow-[0_8px_28px_rgba(0,0,0,.35)] backdrop-blur; }
+  .team-logo img { width:100%; height:100%; object-fit:cover; display:block; }
+
+  /* form card + inputs (fix Sign in & Setup look) */
+  .form-card { @apply max-w-md mx-auto card space-y-4; }
+  .input { @apply w-full rounded-xl bg-white/[.08] border border-white/10 px-3 py-3 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/20; }
+  .row { @apply grid grid-cols-[68px,1fr,96px] gap-2 items-center; }
+
+  /* number inputs – remove spinners and match height */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+
+  /* player buttons (used in Live) */
+  .player-btn { @apply rounded-xl border px-3 py-2 text-left bg-white/5 border-white/10 hover:bg-white/10; }
+  .player-btn--active { @apply bg-white/10 border-white/20; }
+
+  /* crisp stat tiles (kept) */
+  .stat-grid { @apply grid gap-3 grid-cols-3; }
+  .stat-tile {
+    @apply w-full h-full rounded-2xl border border-black/20 px-4 py-3 text-white select-none relative overflow-hidden;
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 10px 24px rgba(0,0,0,.25);
+    transition: transform .08s ease, box-shadow .2s ease;
+  }
+  .stat-tile:active { transform: translateY(1px) scale(.995); }
+  .stat-tile::after { /* ripple */ content:""; position:absolute; inset:auto; left:50%; top:50%; width:0; height:0; border-radius:9999px; background:rgba(255,255,255,.25); transform:translate(-50%,-50%); opacity:0; }
+  .stat-tile:active::after { animation: ripple .4s ease-out; }
+  .stat-title { @apply absolute top-2 left-3 text-[14px] leading-4 opacity-90 whitespace-nowrap pointer-events-none; }
+  .stat-key {
+    @apply font-extrabold tracking-wide;
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    font-size: 40px; /* bigger */
+    line-height: 1;
+  }
+
+  .k{background:linear-gradient(180deg,#2B5FD9 0%,#234FC0 100%)}
+  .hb{background:linear-gradient(180deg,#2B96A3 0%,#237D87 100%)}
+  .m{background:linear-gradient(180deg,#F07C14 0%,#D86E12 100%)}
+  .t{background:linear-gradient(180deg,#D83A3A 0%,#B83030 100%)}
+  .g{background:linear-gradient(180deg,#2E8B57 0%,#247148 100%)}
+  .bh{background:linear-gradient(180deg,#86A814 0%,#6E8E11 100%)}
+  .ff{background:linear-gradient(180deg,#137373 0%,#0F5E5E 100%)}
+  .fa{background:linear-gradient(180deg,#C93552 0%,#A42B44 100%)}
+  .cl{background:linear-gradient(180deg,#8B2BD1 0%,#6F23AA 100%)}
+  .i50{background:linear-gradient(180deg,#3857D1 0%,#2E49B3 100%)}
+  .r50{background:linear-gradient(180deg,#6B2BD1 0%,#5523AA 100%)}
+  .score-glow { text-shadow: 0 0 32px rgba(255,255,255,.25), 0 2px 0 rgba(0,0,0,.35); }
+  .tabbar { @apply bg-white/10 border border-white/10 rounded-2xl p-1 inline-flex gap-1 shadow-[inset_0_1px_0_rgba(255,255,255,.08)]; }
+  .tab { @apply px-3 py-2 rounded-lg text-[14px] text-slate-300 hover:text-white transition; }
+  .tab--on { @apply bg-white text-black shadow-[0_6px_18px_rgba(255,255,255,.15)]; }
+
+
+  /* totals */
+  .totals-strip { @apply grid gap-3 md:grid-cols-6; }
+  .totals-pill { @apply rounded-xl px-4 py-3 bg-white/5 border border-white/10 text-center; }
+  .totals-value { @apply text-3xl font-bold leading-none; font-variant-numeric: tabular-nums; }
+  .totals-label { @apply text-[11px] uppercase tracking-wide opacity-70; }
+
+  /* --- AFL mirrored team compare --- */
+  .compare-row { @apply grid grid-cols-[120px,1fr,120px] items-center gap-4; }
+  .compare-side { @apply flex flex-col; }
+  .compare-number { @apply text-4xl font-extrabold leading-none; font-variant-numeric: tabular-nums; }
+  .compare-side-label { @apply text-xs uppercase tracking-wide opacity-60; }
+
+  .compare-bars { @apply flex flex-col gap-2; }
+  .compare-label { @apply text-base font-semibold; }
+
+  .compare-track {
+    position: relative;
+    height: 56px;
+    @apply rounded-xl bg-white/5 border border-white/10 overflow-hidden;
+    display: grid;
+    grid-template-columns: 1fr 2px 1fr; /* left bar, divider, right bar */
+    align-items: stretch;
+  }
+
+  .compare-bar-left {
+    @apply bg-[#1E4ED8]/90;
+    justify-self: end;
+    height: 100%;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
+
+  .compare-divider { @apply bg-white/30; }
+
+  .compare-bar-right {
+    @apply bg-white/60;
+    justify-self: start;
+    height: 100%;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+  }
+}
+@keyframes ripple { from { width:0; height:0; opacity:.35; } to { width:220px; height:220px; opacity:0; } }

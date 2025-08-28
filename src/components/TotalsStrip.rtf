@@ -1,0 +1,43 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 import \{ STAT_DEFS, StatKey \} from '@/types'\
+\
+export type Totals = Record<StatKey, number>\
+\
+export default function TotalsStrip(\{ title, totals \}:\{ title:string; totals: Totals \}) \{\
+  const keys: StatKey[] = ['K','HB','M','T','G','B','FF','FA','CL','I50','R50']\
+  return (\
+    <div className="card">\
+      <div className="h2 mb-3">\{title\}</div>\
+      <div className="totals-strip">\
+        \{keys.map(k => (\
+          <div key=\{k\} className="totals-pill">\
+            <div className="totals-value">\{totals[k] ?? 0\}</div>\
+            <div className="totals-label">\{label(k)\}</div>\
+          </div>\
+        ))\}\
+      </div>\
+    </div>\
+  )\
+\}\
+\
+function label(k: StatKey) \{\
+  switch(k)\{\
+    case 'K': return 'Kicks'\
+    case 'HB': return 'Handballs'\
+    case 'M': return 'Marks'\
+    case 'T': return 'Tackles'\
+    case 'G': return 'Goals'\
+    case 'B': return 'Behinds'\
+    case 'FF': return 'Free For'\
+    case 'FA': return 'Free Against'\
+    case 'CL': return 'Clearances'\
+    case 'I50': return 'Inside 50s'\
+    case 'R50': return 'Rebound 50s'\
+  \}\
+\}}
