@@ -23,7 +23,6 @@ const router=createBrowserRouter([
     { path:'signup', element:<Register/> },
     { path:'forgot', element:<Forgot/> },
     { path:'onboarding', element:<Onboarding/> },
-    { path:'auth/callback', element:<AuthCallback/> },
     { path:'hub', element:<Hub/> },
     { path:'profile', element:<Profile/> },
     { path:'new', element:<NewGame/> },
@@ -31,7 +30,8 @@ const router=createBrowserRouter([
     { path:'game/:gameId', element:<Game/> },
     { path:'summary/:gameId', element:<Summary/> },
     { path:'viewer/:gameId', element:<Viewer/> }
-  ]}
+  ]},
+  { path:'auth/callback', element:<AuthCallback/> },
 ])
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
