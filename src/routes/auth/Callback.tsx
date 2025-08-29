@@ -18,7 +18,10 @@ export default function AuthCallback() {
 
         // On success, route to onboarding
         navigate('/onboarding?new=1', { replace: true })
-      } 
+      } catch (err) {
+        console.error('Unexpected error in callback:', err)
+        navigate('/login', { replace: true })
+      }
     })()
   }, [navigate])
 
