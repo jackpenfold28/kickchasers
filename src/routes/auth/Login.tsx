@@ -61,8 +61,29 @@ export default function Login() {
       return;
     }
 
-    // success: go to hub (or ?redirect=)
-    if (data?.user) nav(redirectTo, { replace: true });
+    // success: first-login goes to onboarding; otherwise go to hub (or ?redirect=)
+    if (data?.user) {
+      try {
+        const { data: profileRow, error: profErr } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (profErr) {
+          console.warn('profiles lookup failed, sending to onboarding by default:', profErr);
+          nav('/onboarding?new=1', { replace: true });
+        } else if (!profileRow) {
+          // No profile row yet -> treat as first login
+          nav('/onboarding?new=1', { replace: true });
+        } else {
+          nav(redirectTo, { replace: true });
+        }
+      } catch (e) {
+        console.error('profiles check error, routing to onboarding:', e);
+        nav('/onboarding?new=1', { replace: true });
+      }
+    }
     setLoading(false);
   }
 
