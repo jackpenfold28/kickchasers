@@ -118,7 +118,7 @@ export default function Onboarding(){
     <div className="grid gap-4 card p-4">
       <h2 className="text-base font-semibold opacity-90">Your details</h2>
       <label className="text-sm opacity-80">Your Name</label>
-      <Input className="input" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g., Jack Penfold"/>
+      <Input className="input" value={name} onChange={e=>setName(e.target.value)} placeholder="Name Here"/>
 
       <label className="text-sm mt-2 opacity-80">Game Day Role</label>
       <div className="relative">
@@ -135,7 +135,7 @@ export default function Onboarding(){
 
       <h2 className="text-base font-semibold opacity-90 mt-4">Team</h2>
       <label className="text-sm opacity-80">Team (Club)</label>
-      <Input className="input" value={team} onChange={e=>setTeam(e.target.value)} />
+      <Input className="input" value={team} onChange={e=>setTeam(e.target.value)} placeholder="Team Name Here" />
 
       <label className="text-sm mt-2 opacity-80">League</label>
       <Input className="input" value={league} onChange={e=>setLeague(e.target.value)} />

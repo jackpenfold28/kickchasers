@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Link, useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/Input'
+import { onboardingUrl } from '@/lib/siteUrl'
 
 export default function Register(){
   const [email, setEmail] = useState('')
@@ -18,7 +19,7 @@ export default function Register(){
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+      options: { emailRedirectTo: onboardingUrl }
     })
 
     if (error) {
