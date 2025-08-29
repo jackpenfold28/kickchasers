@@ -14,23 +14,35 @@ export default function Login() {
   const [err, setErr] = useState<string>();
 
   useEffect(() => {
-    // If a magic-link / confirmation routed to '/', handle it here as a fallback.
-    const url = window.location.href;
-    const hasCode =
-      url.includes('code=') ||
-      url.includes('access_token=') ||
-      url.includes('refresh_token=');
+    // Handle Supabase magic-link / email confirmation that lands on '/' with hash tokens.
+    // Outlook SafeLinks and some clients preserve tokens in the URL hash.
+    const hash = window.location.hash || ''
+    const hasAuthParams =
+      hash.includes('code=') ||
+      hash.includes('access_token=') ||
+      hash.includes('refresh_token=')
 
-    if (!hasCode) return;
+    if (!hasAuthParams) return
 
-    (async () => {
-      const { error } = await supabase.auth.exchangeCodeForSession(url);
-      if (error) {
-        console.error('exchangeCodeForSession on Login failed:', error);
-        return;
+    ;(async () => {
+      try {
+        // Build a URL that includes the hash fragment for Supabase to parse
+        const full = `${window.location.origin}${window.location.pathname}${hash}`
+        const { error } = await supabase.auth.exchangeCodeForSession(full)
+        if (error) {
+          console.error('exchangeCodeForSession on Login failed:', error)
+          return
+        }
+
+        // Clean the hash from the address bar
+        window.history.replaceState({}, document.title, window.location.pathname)
+
+        // Proceed to onboarding once session is set
+        nav('/onboarding?new=1', { replace: true })
+      } catch (err) {
+        console.error('Unexpected error exchanging code on Login:', err)
       }
-      nav('/onboarding?new=1', { replace: true });
-    })();
+    })()
   }, [nav]);
 
   async function onSubmit(e: React.FormEvent) {

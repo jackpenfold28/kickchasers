@@ -474,7 +474,7 @@ export default function Summary() {
                 <img
                   src="/kickchasers_logo.png"
                   alt="Kickchasers"
-                  className="h-12 md:h-14 w-auto shrink-0 drop-shadow"
+                  className="h-auto w-28 sm:w-36 max-w-[45vw] object-contain flex-shrink-0 drop-shadow"
                   draggable={false}
                 />
                 {isOwner && (
