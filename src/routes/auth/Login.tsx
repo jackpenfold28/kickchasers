@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 
@@ -12,6 +12,26 @@ export default function Login() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string>();
+
+  useEffect(() => {
+    // If a magic-link / confirmation routed to '/', handle it here as a fallback.
+    const url = window.location.href;
+    const hasCode =
+      url.includes('code=') ||
+      url.includes('access_token=') ||
+      url.includes('refresh_token=');
+
+    if (!hasCode) return;
+
+    (async () => {
+      const { error } = await supabase.auth.exchangeCodeForSession(url);
+      if (error) {
+        console.error('exchangeCodeForSession on Login failed:', error);
+        return;
+      }
+      nav('/onboarding?new=1', { replace: true });
+    })();
+  }, [nav]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
