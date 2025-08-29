@@ -12,7 +12,7 @@ import Setup from './routes/Setup'
 import Game from './routes/Game'
 import Viewer from './routes/Viewer'
 import Onboarding from './routes/Onboarding'
-import AuthCallback from './routes/auth/callback.tsx'
+import AuthCallback from './routes/auth/Callback'
 import Profile from './routes/Profile'
 import Summary from './routes/Summary'
 
