@@ -12,13 +12,22 @@ export default function AuthCallback() {
         const { error } = await supabase.auth.exchangeCodeForSession(window.location.href)
         if (error) {
           console.error('exchangeCodeForSession error:', error)
+          navigate('/login', { replace: true })
+          return
         }
-      } finally {
-        // Route to onboarding by default (works for sign-up and magic link)
+
+        // On success, route to onboarding
         navigate('/onboarding?new=1', { replace: true })
-      }
+      } 
     })()
   }, [navigate])
 
-  return <div className="p-6">Finishing sign-in…</div>
+  return (
+    <div className="flex h-screen items-center justify-center bg-gray-900 text-white">
+      <div className="rounded-md bg-gray-800 px-6 py-4 shadow-lg">
+        <p className="text-lg font-semibold">Signing you in…</p>
+        <p className="mt-2 text-sm text-gray-400">Please wait a moment.</p>
+      </div>
+    </div>
+  )
 }

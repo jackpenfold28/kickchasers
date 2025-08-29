@@ -9,6 +9,7 @@ export default function Register(){
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
+  const [showVerify, setShowVerify] = useState(false)
   const nav = useNavigate()
 
   async function onSubmit(e: React.FormEvent) {
@@ -27,12 +28,10 @@ export default function Register(){
       return
     }
 
-    // Always send to onboarding. If no session yet (email confirmation flow), append verify flag.
-    if (data.session) {
-      nav('/onboarding?new=1', { replace: true })
-    } else {
-      nav('/onboarding?new=1&verify=1', { replace: true })
-    }
+    // Do not navigate; show a verification dialog instead.
+    setInfo('Check your email and confirm to complete setup.')
+    setShowVerify(true)
+    setPassword('')
   }
 
   return (
@@ -63,6 +62,41 @@ export default function Register(){
           </div>
         </div>
       </div>
+      {showVerify && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="mx-4 w-full max-w-md rounded-lg border border-white/10 bg-white/10 backdrop-blur-md p-6 text-white shadow-xl">
+            <div className="flex items-start gap-3">
+              <div className="mt-1 h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_20px_2px_rgba(16,185,129,0.7)]" />
+              <div className="flex-1">
+                <h2 className="text-lg font-semibold">Verify your email</h2>
+                <p className="mt-1 text-sm text-white/80">
+                  We’ve sent a confirmation link to <span className="font-medium">{email}</span>.
+                  Click the link to verify your account, then you’ll be taken to onboarding.
+                </p>
+                <p className="mt-3 text-xs text-white/60">
+                  Didn’t receive it? Check your spam folder or try again.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowVerify(false)}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => onSubmit(new Event('submit') as unknown as React.FormEvent)}
+              >
+                Resend
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
