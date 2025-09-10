@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { Link, useParams, useLocation } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { STAT_DEFS, StatKey } from '@/types'
@@ -126,6 +126,85 @@ export default function Game(){
   const [shareOn, setShareOn] = useState(false)
   // Global help modal for stat workflow
   const [helpOpen, setHelpOpen] = useState(false)
+  // --- Edit Players modal state ---
+  type FormPlayer = GP & { _orig: number }
+  const [editOpen, setEditOpen] = useState(false)
+  const [editTab, setEditTab] = useState<'home'|'away'>('home')
+  const [editHome, setEditHome] = useState<FormPlayer[]>([])
+  const [editAway, setEditAway] = useState<FormPlayer[]>([])
+  const [savingEdits, setSavingEdits] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+
+  const openEdit = useCallback(() => {
+    setEditTab('home')
+    setEditHome(home.map(p => ({ ...p, _orig: p.number })))
+    setEditAway(away.map(p => ({ ...p, _orig: p.number })))
+    setEditOpen(true)
+  }, [home, away])
+
+  const validateSquad = (list: FormPlayer[]) => {
+    const seen = new Set<number>()
+    for (const p of list) {
+      if (!p.name || String(p.name).trim() === '') return 'All players must have a name.'
+      if (typeof p.number !== 'number' || isNaN(p.number)) return 'Numbers must be valid integers.'
+      if (seen.has(p.number)) return `Duplicate number: ${p.number}`
+      seen.add(p.number)
+    }
+    return null
+  }
+
+  const saveEdits = useCallback(async () => {
+    setEditError(null)
+    const errHome = validateSquad(editHome)
+    if (errHome) { setEditError(`Home: ${errHome}`); return }
+    const errAway = validateSquad(editAway)
+    if (errAway) { setEditError(`Away: ${errAway}`); return }
+
+    setSavingEdits(true)
+    try {
+      // Apply diffs per side
+      const diffs = (orig: GP[], edited: FormPlayer[]) => {
+        const byOrig = new Map<number, GP>()
+        for (const p of orig) byOrig.set(p.number, p)
+        const out: { side:'home'|'away'; orig:number; number:number; name:string }[] = []
+        for (const p of edited) {
+          const o = byOrig.get(p._orig)
+          if (!o) continue
+          if (o.number !== p.number || (o.name||'') !== (p.name||'')) {
+            out.push({ side: p.team_side, orig: p._orig, number: p.number, name: p.name })
+          }
+        }
+        return out
+      }
+
+      const changes = [
+        ...diffs(home, editHome),
+        ...diffs(away, editAway),
+      ]
+
+      for (const c of changes) {
+        const { error } = await supabase
+          .from('game_players')
+          .update({ number: c.number, name: c.name })
+          .eq('game_id', gameId)
+          .eq('team_side', c.side)
+          .eq('number', c.orig)
+
+        if (error) {
+          setEditError(`Save failed for ${c.side} #${c.orig} → #${c.number}: ${error.message}`)
+          setSavingEdits(false)
+          return
+        }
+      }
+
+      // Update local state on success
+      setHome(editHome.map(({ _orig, ...p }) => ({ ...p })))
+      setAway(editAway.map(({ _orig, ...p }) => ({ ...p })))
+      setEditOpen(false)
+    } finally {
+      setSavingEdits(false)
+    }
+  }, [editHome, editAway, home, away, gameId])
   // Compact header toggle
   const [hdrCompact, setHdrCompact] = useState(false)
   // Quick Stats (single-team mode) base + stage state
@@ -527,6 +606,13 @@ export default function Game(){
     away: ([1,2,3,4] as (1|2|3|4)[]).map(q => scoreFor('away', q)),
   }), [events])
 
+  // Memo: last event for selected home player in single-team mode
+  const lastHomeSelectedEvt = useMemo(() => {
+    if (!sel || sel.side !== 'home') return null
+    const arr = events.filter(e => e.team_side === 'home' && e.player_number === sel.num)
+    return arr.length ? arr[arr.length - 1] : null
+  }, [events, sel])
+
   const fmtBreak = (arr: {g:number;b:number}[]) => arr.map(s => `${s.g}.${s.b}`).join(' | ')
 
   // simple per-quarter clock
@@ -551,6 +637,9 @@ export default function Game(){
     if (!running) { setStartTs(Date.now()); setElapsed(0); setRunning(true) }
     else { setRunning(false) }
   }
+
+  // Opponent quick-stats active press state (for single-row glow/disable UX)
+  const [oppActive, setOppActive] = useState<string|null>(null)
 
   const segLabel = typeof seg === 'number' ? `Q${seg}` : 'Total'
 
@@ -642,6 +731,16 @@ export default function Game(){
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-80"><path d="M5 21V10m7 11V3m7 18v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
             </Link>
             <button
+              onClick={openEdit}
+              className="h-7 w-7 grid place-items-center rounded-md border border-white/20 bg-white/10 hover:bg-white/15"
+              aria-label="Edit Players"
+              title="Edit players"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-80">
+                <path d="M4 21h4l11-11a2.828 2.828 0 10-4-4L4 17v4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button
               role="switch"
               aria-checked={shareOn}
               onClick={() => setShareOn(v => !v)}
@@ -710,6 +809,18 @@ export default function Game(){
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-80"><path d="M5 21V10m7 11V3m7 18v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                     <span className={hdrCompact ? 'sr-only' : ''}>Stats Summary</span>
                   </Link>
+
+                  <button
+                    onClick={openEdit}
+                    className={`inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/5 hover:bg-white/10 ${hdrCompact ? 'px-2 py-1 text-[12px]' : 'px-3 py-1.5 text-[13px]'}`}
+                    aria-label="Edit players"
+                    title="Edit players"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-80">
+                      <path d="M4 21h4l11-11a2.828 2.828 0 10-4-4L4 17v4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span className={hdrCompact ? 'sr-only' : ''}>Edit players</span>
+                  </button>
 
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-white/15 bg-white/5">
                     <button
@@ -855,7 +966,20 @@ export default function Game(){
             onHelp={() => setHelpOpen(true)}
           />
           <div className="card">
-            <div className="h2 mb-2.5 text-center">Quick Stats</div>
+            {lastHomeSelectedEvt && (
+              <div className="mb-2.5 flex items-center justify-between rounded-md border border-white/10 bg-white/5 px-2 py-1.5">
+                <div className="text-[12px] opacity-80">
+                  Last: <span className="font-semibold">{lastHomeSelectedEvt.stat_key}</span>
+                  <span className="opacity-60"> · Q{lastHomeSelectedEvt.quarter}</span>
+                  <span className="opacity-60"> · {new Date(lastHomeSelectedEvt.timestamp_ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <button
+                  className="h-7 px-2.5 rounded-md border border-white/15 bg-white/10 hover:bg-white/15 text-[12px]"
+                  onClick={() => undoById(lastHomeSelectedEvt.id)}
+                  title="Undo last action"
+                >Undo</button>
+              </div>
+            )}
             <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 md:p-3 mb-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-sm opacity-80">Record Stat (selected player)</div>
@@ -933,7 +1057,7 @@ export default function Game(){
               {/* Modifier row below the grid */}
               <div className="mt-3 grid grid-cols-5 gap-2">
                 {(['GBG','CON','UC','EF','IF'] as const).map((key) => {
-                  const label = key
+                  const label = key === 'IF' ? 'IN-EF' : key
                   let variant = 'bg-white/10 border-white/20 text-white/90 hover:bg-white/15'
                   if (key === 'EF') variant = 'bg-green-400/20 border-green-400/40 text-green-100'
                   if (key === 'IF') variant = 'bg-red-400/20 border-red-400/40 text-red-100'
@@ -981,6 +1105,14 @@ export default function Game(){
                           }
                           setQBase(null); setQStage('idle')
                         }
+                        // --- Add flash animation to modifier toggle ---
+                        const wrap = btn.closest('.rounded-xl') as HTMLElement | null
+                        if (wrap){
+                          wrap.classList.remove('flash-stats')
+                          void wrap.offsetWidth
+                          wrap.classList.add('flash-stats')
+                          setTimeout(()=>wrap.classList.remove('flash-stats'), 450)
+                        }
                       }}
                     >
                       <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
@@ -990,43 +1122,81 @@ export default function Game(){
                 })}
               </div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 md:p-3">
-              <div className="text-sm opacity-80 mb-2">Opponent</div>
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm opacity-75">Score: <span className="font-semibold">{scores.away.g}.{scores.away.b}</span> (<span className="tabular-nums">{scores.away.pts}</span>)</div>
-                <div className="flex gap-2">
-                  <button className="px-3 py-2 rounded-md bg-emerald-500/20 border border-emerald-400/40 hover:bg-emerald-500/30" onClick={()=>logAwayScore('G')}>+ Goal</button>
-                  <button className="px-3 py-2 rounded-md bg-white/10 border border-white/20 hover:bg-white/15" onClick={()=>logAwayScore('B')}>+ Behind</button>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3 md:p-3.5">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm opacity-80">Opponent quick stats</span>
+                {/* +Goal/+Behind in top-right */}
+                <div className="flex items-center gap-1.5">
+                  {([
+                    { key: 'G',   label: '+ Goal',   kind: 'score' },
+                    { key: 'B',   label: '+ Behind', kind: 'score' },
+                  ] as const).map(btn => {
+                    const isActive = oppActive === btn.key
+                    const disabledOthers = oppActive !== null && !isActive
+                    const baseCls = 'btn-opp h-8 min-w-[76px] px-3 text-[11px] rounded-full border transition select-none flex items-center justify-center'
+                    const colorCls = 'bg-emerald-500/15 border-emerald-400/35 hover:bg-emerald-500/25'
+                    const activeCls = isActive ? 'active ring-2 ring-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.55)]' : ''
+                    const mutedCls = disabledOthers ? 'opacity-40 pointer-events-none' : ''
+                    return (
+                      <button
+                        key={btn.key}
+                        className={`${baseCls} ${colorCls} ${activeCls} ${mutedCls}`}
+                        onPointerDown={() => setOppActive(btn.key)}
+                        onPointerUp={() => setOppActive(null)}
+                        onPointerLeave={() => setOppActive(null)}
+                        onClick={e => {
+                          const wrap = (e.currentTarget.closest('.rounded-xl') as HTMLElement) || null
+                          logAwayScore(btn.key as 'G'|'B')
+                          if (wrap){
+                            wrap.classList.remove('flash-stats'); void wrap.offsetWidth; wrap.classList.add('flash-stats'); setTimeout(()=>wrap.classList.remove('flash-stats'), 450)
+                          }
+                        }}
+                        title={btn.label}
+                      >
+                        {btn.label}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
-              <div className="mt-3">
-                <div className="text-sm opacity-80 mb-1">Quick keys (team totals)</div>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    className="h-7 px-2.5 rounded-md border text-[12px] bg-blue-500/15 border-blue-400/30 text-blue-100 hover:bg-blue-500/25"
-                    onClick={()=>logAwayStat('GBG' as unknown as StatKey)}
-                    title="Ground Ball Get"
-                  >GBG</button>
-                  <button
-                    className="h-7 px-2.5 rounded-md border text-[12px] bg-white/10 border-white/20 hover:bg-white/15"
-                    onClick={()=>logAwayStat('CON' as unknown as StatKey)}
-                    title="Contested Possession"
-                  >CON</button>
-                  <button
-                    className="h-7 px-2.5 rounded-md border text-[12px] bg-white/10 border-white/20 hover:bg-white/15"
-                    onClick={()=>logAwayStat('UC' as unknown as StatKey)}
-                    title="Uncontested Possession"
-                  >UC</button>
-                  <button
-                    className="h-7 px-2.5 rounded-md border text-[12px] bg-white/10 border-white/20 hover:bg-white/15"
-                    onClick={()=>logAwayStat('MC' as unknown as StatKey)}
-                    title="Mark (Contested)"
-                  >MC</button>
-                  <button
-                    className="h-7 px-2.5 rounded-md border text-[12px] bg-white/10 border-white/20 hover:bg-white/15"
-                    onClick={()=>logAwayStat('MUC' as unknown as StatKey)}
-                    title="Mark (Uncontested)"
-                  >MUC</button>
+              <div className="mt-2 h-px bg-white/10"></div>
+              {/* Unified single-row for remaining opponent buttons */}
+              <div className="mt-2 flex justify-center">
+                <div className="flex gap-1.5 w-full justify-center flex-nowrap">
+                  {([
+                    { key: 'GBG', label: 'GBG' },
+                    { key: 'CON', label: 'CON' },
+                    { key: 'UC',  label: 'UC'  },
+                    { key: 'MC',  label: 'MC'  },
+                    { key: 'MUC', label: 'MUC' },
+                  ] as const).map(btn => {
+                    const isActive = oppActive === btn.key
+                    const disabledOthers = oppActive !== null && !isActive
+                    // Compact styling: fixed width, uniform height
+                    const baseCls = 'btn-opp h-8 w-[56px] sm:w-[62px] text-[11px] rounded-full border transition select-none flex items-center justify-center'
+                    const colorCls = 'bg-white/10 border-white/15 hover:bg-white/15'
+                    const activeCls = isActive ? 'active ring-2 ring-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.55)]' : ''
+                    const mutedCls = disabledOthers ? 'opacity-40 pointer-events-none' : ''
+                    return (
+                      <button
+                        key={btn.key}
+                        className={`${baseCls} ${colorCls} ${activeCls} ${mutedCls}`}
+                        onPointerDown={() => setOppActive(btn.key)}
+                        onPointerUp={() => setOppActive(null)}
+                        onPointerLeave={() => setOppActive(null)}
+                        onClick={e => {
+                          const wrap = (e.currentTarget.closest('.rounded-xl') as HTMLElement) || null
+                          logAwayStat(btn.key as unknown as StatKey)
+                          if (wrap){
+                            wrap.classList.remove('flash-stats'); void wrap.offsetWidth; wrap.classList.add('flash-stats'); setTimeout(()=>wrap.classList.remove('flash-stats'), 450)
+                          }
+                        }}
+                        title={btn.label}
+                      >
+                        {btn.label}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             </div>
@@ -1051,6 +1221,93 @@ export default function Game(){
               <li>Each press shows a ripple and briefly highlights to confirm the log. Use <span className="font-semibold">Undo</span> to revert the last event for the selected player.</li>
             </ol>
             <div className="mt-3 text-xs opacity-70">Example sequence: <span className="tabular-nums">1</span>, <span className="font-semibold">K</span>, <span className="font-semibold">CON</span>, <span className="font-semibold">EF</span> → logs a contested, effective kick; <span className="font-semibold">GBG</span> can be logged independently at any time.</div>
+          </div>
+        </div>
+      )}
+      {editOpen && (
+        <div className="fixed inset-0 z-[70]">
+          <div className="absolute inset-0 bg-black/60" onClick={()=>setEditOpen(false)}></div>
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[96vw] max-w-[720px] rounded-xl border border-white/10 bg-slate-900/95 p-4 md:p-5 shadow-2xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-base font-semibold">Edit players</div>
+              <button className="h-7 w-7 grid place-items-center rounded-md bg-white/10 hover:bg-white/15 border border-white/20" onClick={()=>setEditOpen(false)}>✕</button>
+            </div>
+
+            <div className="mb-3">
+              <div className="inline-flex rounded-md border border-white/15 bg-white/5 overflow-hidden">
+                {(['home','away'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={()=>setEditTab(tab)}
+                    className={`px-3 py-1.5 text-sm ${editTab===tab ? 'bg-white text-slate-900' : 'text-white/90 hover:bg-white/10'}`}
+                  >
+                    {tab==='home' ? (homeTeamName || 'Home') : (awayTeamName || 'Away')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {editError && (
+              <div className="mb-3 rounded-md border border-rose-400/40 bg-rose-500/15 px-3 py-2 text-[13px] text-rose-100">
+                {editError}
+              </div>
+            )}
+
+            <div className="max-h-[52vh] overflow-auto rounded-lg border border-white/10">
+              <table className="w-full text-sm">
+                <thead className="bg-white/5">
+                  <tr>
+                    <th className="text-left px-3 py-2 w-24">Number</th>
+                    <th className="text-left px-3 py-2">Name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(editTab==='home' ? editHome : editAway).map((p, idx) => (
+                    <tr key={`${p._orig}-${idx}`} className="border-t border-white/10">
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          value={p.number}
+                          onChange={e=>{
+                            const v = parseInt(e.target.value || '0', 10)
+                            if (editTab==='home') setEditHome(list => list.map((row,i)=> i===idx ? {...row, number: v} : row))
+                            else setEditAway(list => list.map((row,i)=> i===idx ? {...row, number: v} : row))
+                          }}
+                          className="w-20 bg-white/[0.06] border border-white/10 rounded-md px-2 py-1"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="text"
+                          value={p.name}
+                          onChange={e=>{
+                            const v = e.target.value
+                            if (editTab==='home') setEditHome(list => list.map((row,i)=> i===idx ? {...row, name: v} : row))
+                            else setEditAway(list => list.map((row,i)=> i===idx ? {...row, name: v} : row))
+                          }}
+                          className="w-full bg-white/[0.06] border border-white/10 rounded-md px-2 py-1"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button
+                className="px-3 py-1.5 rounded-md border border-white/15 bg-white/5 hover:bg-white/10"
+                onClick={()=>setEditOpen(false)}
+                disabled={savingEdits}
+              >Cancel</button>
+              <button
+                className={`px-3 py-1.5 rounded-md border ${savingEdits ? 'bg-emerald-500/30 border-emerald-400/40' : 'bg-emerald-500/20 border-emerald-400/40 hover:bg-emerald-500/30'}`}
+                onClick={saveEdits}
+                disabled={savingEdits}
+              >
+                {savingEdits ? 'Saving…' : 'Save changes'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1084,7 +1341,7 @@ function TeamCol({ title, side, players, selected, onSelect, onLog, onUndo, even
     { key: 'CON', label: 'CON' },
     { key: 'UC',  label: 'UC'  },
     { key: 'EF',  label: 'EF'  },
-    { key: 'IF',  label: 'IF'  },
+    { key: 'IF',  label: 'IN-EF'  },
   ] as const
 
   // Ripple animation for stat-tile button (not used in new grid, but keep for reference)
@@ -1344,8 +1601,14 @@ function TeamCol({ title, side, players, selected, onSelect, onLog, onUndo, even
                         setStage('idle')
                       }
 
+                      // --- Add flash animation to modifier toggle ---
                       const wrap = btn.closest('.rounded-xl') as HTMLElement | null
-                      if (wrap) { wrap.classList.remove('flash-stats'); void wrap.offsetWidth; wrap.classList.add('flash-stats'); setTimeout(()=>wrap.classList.remove('flash-stats'), 450) }
+                      if (wrap){
+                        wrap.classList.remove('flash-stats')
+                        void wrap.offsetWidth
+                        wrap.classList.add('flash-stats')
+                        setTimeout(()=>wrap.classList.remove('flash-stats'), 450)
+                      }
                     }}
                   >
                     <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
@@ -1512,6 +1775,13 @@ if (typeof document !== 'undefined' && !document.getElementById('game-extra-styl
     20% { box-shadow: 0 0 22px rgba(255,255,255,0.35); }
     100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
   }
+  /* Opponent toolbar buttons: uniform sizing + subtle active glow, no ripple */
+  .btn-opp { position: relative; backdrop-filter: saturate(1.1); will-change: transform; }
+  .btn-opp:active { transform: translateY(0); }
+  .btn-opp.active { outline: none; }
+  /* Hide horizontal scrollbar aesthetically where supported */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .sash-mask { position: absolute; inset: 0; overflow: hidden; }
   /* Left sash: full height, slanted parallelogram */
   .sash-left { clip-path: polygon(0% 0%, 96% 0%, 72% 100%, 0% 100%); }

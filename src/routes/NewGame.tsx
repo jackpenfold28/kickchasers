@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Input } from '@/components/ui/Input'
 
 export default function NewGame(){
+  const { gameId } = useParams();
+  const isEditing = Boolean(gameId);
+
   const nav=useNavigate()
   const [homeTeamId,setHomeTeamId]=useState(''); 
   const [homeTeamText,setHomeTeamText]=useState('')
@@ -12,19 +15,54 @@ export default function NewGame(){
   const [date,setDate]=useState(()=>new Date().toISOString().slice(0,16))
   const [venue,setVenue]=useState('Home')
   const [quarterLength,setQuarterLength]=useState(20)
-  const [trackBoth,setTrackBoth]=useState(true)
+  const [trackBoth,setTrackBoth]=useState(false)
 
   const [oppLogoUploading, setOppLogoUploading] = useState(false)
   const [oppLogoPath, setOppLogoPath] = useState('')
   const [oppLogoUrl, setOppLogoUrl] = useState('')
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(()=>{
     (async()=>{
-      const {data}=await supabase.from('teams').select('id,name').order('name');
-      setTeams(data||[]);
-      if(data?.[0]) { setHomeTeamId(data[0].id); setHomeTeamText(data[0].name); }
+      // 1) Load teams list
+      const {data: teamRows} = await supabase.from('teams').select('id,name').order('name');
+      setTeams(teamRows || []);
+
+      // Try to maintain prior selection if it existed
+      if(teamRows?.length && !homeTeamId){
+        setHomeTeamId(teamRows[0].id);
+        setHomeTeamText(teamRows[0].name);
+      }
+
+      // 2) If editing, load the game row and prefill
+      if(gameId){
+        const { data: g, error } = await supabase
+          .from('games')
+          .select('id, home_team_id, opponent, date, venue, quarter_length, track_both_teams, opponent_logo_path, away_team_name')
+          .eq('id', gameId)
+          .single();
+
+        if(!error && g){
+          setHomeTeamId(g.home_team_id || '');
+          // If we already have the teams list, map id -> name for display
+          const match = (teamRows || []).find(t => t.id === g.home_team_id);
+          setHomeTeamText(match?.name || '');
+          setOpponent(g.opponent || '');
+          setDate(g.date ? new Date(g.date).toISOString().slice(0,16) : new Date().toISOString().slice(0,16));
+          setVenue(g.venue || '');
+          setQuarterLength(typeof g.quarter_length === 'number' ? g.quarter_length : 20);
+          setTrackBoth(!!g.track_both_teams);
+
+          if(g.opponent_logo_path){
+            setOppLogoPath(g.opponent_logo_path);
+            const { data: pub } = supabase.storage.from('team-logos').getPublicUrl(g.opponent_logo_path);
+            setOppLogoUrl(pub.publicUrl);
+          }
+        }
+      }
+      setLoaded(true);
     })()
-  },[])
+  },[gameId])
 
   function syncTeamIdFromText(txt:string){
     setHomeTeamText(txt);
@@ -52,7 +90,7 @@ export default function NewGame(){
     }
   }
 
-  async function create(){
+  async function save(){
     // Ensure homeTeamId is resolved from homeTeamText if empty
     let resolvedHomeTeamId = homeTeamId;
     if(!resolvedHomeTeamId){
@@ -80,53 +118,56 @@ export default function NewGame(){
     }
     if(oppLogoPath) payload.opponent_logo_path = oppLogoPath
 
-    // Insert with graceful fallback if optional columns aren't present yet
-    const tryInsert = async () => {
-      // First attempt
-      let res = await supabase.from('games').insert(payload).select('id').single()
-      if(!res.error) return res
-
-      const msg = res.error.message || ''
-      let mutated = false
-      if(/column\s+.*opponent_logo_path/i.test(msg)) { delete (payload as any).opponent_logo_path; mutated = true }
-      if(/column\s+.*track_both_teams/i.test(msg)) { delete (payload as any).track_both_teams; mutated = true }
-
-      if(mutated){
-        // Retry once without the missing columns
+    // Helper to gracefully handle optional columns on older schemas
+    const graceful = async (op: 'insert'|'update')=>{
+      let res;
+      if(op==='insert'){
         res = await supabase.from('games').insert(payload).select('id').single()
+      }else{
+        res = await supabase.from('games').update(payload).eq('id', gameId as string).select('id').single()
       }
-      return res
+      if(!res.error) return res;
+      const msg = res.error.message || '';
+      let mutated = false;
+      if(/column\s+.*opponent_logo_path/i.test(msg)){ delete (payload as any).opponent_logo_path; mutated = true }
+      if(/column\s+.*track_both_teams/i.test(msg)){ delete (payload as any).track_both_teams; mutated = true }
+      if(mutated){
+        if(op==='insert'){
+          res = await supabase.from('games').insert(payload).select('id').single()
+        }else{
+          res = await supabase.from('games').update(payload).eq('id', gameId as string).select('id').single()
+        }
+      }
+      return res;
     }
 
-    const gameRes = await tryInsert()
-    if(gameRes.error){ alert(gameRes.error.message); return }
-    // Persist the choice for Setup to read defensively
-    const newGameId = gameRes.data.id as string
-    try {
-      localStorage.setItem(`game:trackBoth:${newGameId}`, trackBoth ? '1' : '0')
-    } catch {}
+    const result = await graceful(isEditing ? 'update' : 'insert');
+    if(result.error){ alert(result.error.message); return }
 
-    // Also pass it via query string to avoid any race with DB schema
+    const id = (result.data?.id || gameId) as string;
+
+    // Persist & navigate
+    try { localStorage.setItem(`game:trackBoth:${id}`, trackBoth ? '1' : '0') } catch {}
     const qs = trackBoth ? '1' : '0'
-    nav(`/setup/${newGameId}?both=${qs}`)
+    nav(`/setup/${id}?both=${qs}`)
   }
 
   return (
     <div className="max-w-3xl mx-auto p-6 md:p-10">
-      <header className="mb-6 md:mb-8">
+      <header className="mb-4 md:mb-6">
         <div className="flex items-center gap-4">
           <img
             src="/kickchasers_logo.png"
             alt="Kickchasers"
-            className="h-10 md:h-12 w-auto drop-shadow-lg select-none"
+            className="h-12 md:h-14 w-auto drop-shadow-lg select-none"
             draggable={false}
           />
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">New Game</h1>
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">{isEditing ? 'Edit Game' : 'New Game'}</h1>
         </div>
         <p className="text-sm text-white/60 mt-1">Set your matchup details. You can tweak anything later.</p>
       </header>
 
-      <section className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-white/[0.03] shadow-xl backdrop-blur-md p-5 md:p-7">
+      <section className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-white/[0.03] shadow-xl backdrop-blur-md p-5 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Home team */}
           <div className="space-y-2">
@@ -197,12 +238,16 @@ export default function NewGame(){
           </p>
         </div>
 
-        {/* Actions */}
-        <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-          <p className="text-[11px] text-white/50">Tip: keeping both teams enabled makes live graphs &amp; summaries richer.</p>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button className="btn bg-red-600 hover:bg-red-700 text-white" onClick={()=>nav(-1)}>Cancel</button>
           <div className="flex gap-3 justify-end">
-            <button className="btn" onClick={()=>history.back()}>Cancel</button>
-            <button className={`btn btn-primary ${oppLogoUploading ? 'opacity-70 cursor-not-allowed' : ''}`} onClick={create} disabled={oppLogoUploading}>Continue to Setup</button>
+            <button
+              className={`btn btn-primary ${oppLogoUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              onClick={()=>save()}
+              disabled={oppLogoUploading || !loaded}
+            >
+              {isEditing ? 'Save & Continue' : 'Continue to Squad Selection'}
+            </button>
           </div>
         </div>
       </section>

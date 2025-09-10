@@ -8,6 +8,7 @@ export default function Register(){
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [info, setInfo] = useState<string | null>(null)
   const [showVerify, setShowVerify] = useState(false)
   const nav = useNavigate()
@@ -16,6 +17,16 @@ export default function Register(){
     e.preventDefault()
     setError(null)
     setInfo(null)
+
+    // Basic client-side validation
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter an email and password.')
+      return
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -52,6 +63,12 @@ export default function Register(){
             <form onSubmit={onSubmit} className="space-y-3">
               <Input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
               <Input placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
+              <Input
+                placeholder="Confirm password"
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+              />
               {error && <div className="text-red-500 text-sm">{error}</div>}
               {info && <div className="text-emerald-400 text-sm">{info}</div>}
               <button className="btn btn-primary w-full">Sign up</button>
@@ -71,10 +88,10 @@ export default function Register(){
                 <h2 className="text-lg font-semibold">Verify your email</h2>
                 <p className="mt-1 text-sm text-white/80">
                   We’ve sent a confirmation link to <span className="font-medium">{email}</span>.
-                  Click the link to verify your account, then you’ll be taken to onboarding.
+                  Please confirm your email, then log in to complete your setup.
                 </p>
                 <p className="mt-3 text-xs text-white/60">
-                  Didn’t receive it? Check your spam folder or try again.
+                  Didn’t receive it? Check your spam folder or press “Resend”. After confirming, return here and sign in.
                 </p>
               </div>
             </div>

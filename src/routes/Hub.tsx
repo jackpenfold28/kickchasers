@@ -429,6 +429,7 @@ export default function Hub(){
         </div>
         <div className="flex items-center gap-2">
           <button className="btn" onClick={()=>nav('/profile')}>Profile</button>
+          <Link to="/squad" className="btn" data-testid="load-squad">Load Your Squad</Link>
           <Link to="/new" className="btn btn-primary">New Game</Link>
           <button className="btn hover:bg-red-600/70" onClick={onLogout}>Log out</button>
         </div>
