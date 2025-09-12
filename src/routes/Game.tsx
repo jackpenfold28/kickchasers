@@ -855,63 +855,95 @@ export default function Game(){
 
           {/* Center: meta (title + clock + controls) OR single player stats */}
           <div className={`flex-1 flex flex-col items-center justify-center ${hdrCompact ? 'min-h-[72px]' : 'min-h-[132px]'}`}>
-            {/* Single Player Mode Header */}
+            {/* Single Player Mode Header - Sleek & Sporty */}
             {singlePlayerMode && (
-              <div className="text-center space-y-3">
-                {/* Navigation buttons for single player mode */}
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Link
-                    to="/hub"
-                    className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-[13px] transition-all hover:shadow-[0_0_12px_rgba(110,231,183,0.3)]"
-                    aria-label="Back to Hub"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-80">
-                      <path d="M3 11.5L12 5l9 6.5M5 10v9a1 1 0 001 1h3a1 1 0 001-1v-4h2v4a1 1 0 001 1h3a1 1 0 001-1v-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <span>Hub</span>
-                  </Link>
-                  <Link
-                    to={`/summary/${gameId}`}
-                    className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-[13px] transition-all hover:shadow-[0_0_12px_rgba(110,231,183,0.3)]"
-                    aria-label="Stats Summary"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-80">
-                      <path d="M5 21V10m7 11V3m7 18v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                    <span>Summary</span>
-                  </Link>
-                </div>
-                
-                {/* Player Name */}
-                <div className={`font-semibold text-white ${hdrCompact ? 'text-lg' : 'text-2xl'}`}>
-                  #{singlePlayerNumber} {singlePlayerName}
-                </div>
-                
-                {/* Total Disposals - Highlighted */}
-                {singlePlayerTotals && (
-                  <div className="flex items-center justify-center gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className={`font-bold text-emerald-400 ${hdrCompact ? 'text-3xl' : 'text-5xl'}`}>
-                        {singlePlayerTotals['D' as StatKey] || 0}
-                      </div>
-                      <div className={`text-emerald-300/80 font-medium ${hdrCompact ? 'text-xs' : 'text-sm'}`}>
-                        DISPOSALS
+              <div className="relative w-full max-w-4xl mx-auto">
+                {/* Main player info strip - compact and sporty */}
+                <div className={`relative rounded-lg bg-gradient-to-r from-slate-900/60 via-slate-800/40 to-slate-900/60 backdrop-blur-sm border border-white/10 ${hdrCompact ? 'px-4 py-2' : 'px-6 py-3'} shadow-xl`}>
+                  {/* Subtle glow effect */}
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/10 via-transparent to-emerald-500/10 opacity-50"></div>
+                  
+                  <div className="relative flex items-center justify-between">
+                    {/* Left: Navigation - Compact icons only */}
+                    <div className="flex items-center gap-1.5">
+                      <Link
+                        to="/hub"
+                        className="group p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all hover:border-emerald-400/30"
+                        aria-label="Back to Hub"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="opacity-60 group-hover:opacity-90 transition-opacity">
+                          <path d="M3 11.5L12 5l9 6.5M5 10v9a1 1 0 001 1h3a1 1 0 001-1v-4h2v4a1 1 0 001 1h3a1 1 0 001-1v-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </Link>
+                      <Link
+                        to={`/summary/${gameId}`}
+                        className="group p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all hover:border-emerald-400/30"
+                        aria-label="Stats Summary"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="opacity-60 group-hover:opacity-90 transition-opacity">
+                          <path d="M5 21V10m7 11V3m7 18v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                      </Link>
+                    </div>
+                    
+                    {/* Center: Player identity with athletic styling */}
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="text-center space-y-1">
+                        {/* Jersey number with sporty design */}
+                        <div className="flex items-center justify-center gap-3">
+                          <div className={`inline-flex items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-black font-black ${hdrCompact ? 'w-8 h-8 text-sm' : 'w-10 h-10 text-lg'} shadow-lg`}>
+                            {singlePlayerNumber}
+                          </div>
+                          <div className={`font-bold text-white tracking-wide ${hdrCompact ? 'text-base' : 'text-xl'}`}>
+                            {singlePlayerName?.toUpperCase()}
+                          </div>
+                        </div>
+                        
+                        {/* Quarter indicator */}
+                        <div className="text-xs text-emerald-300/80 font-medium tracking-wider">
+                          {segLabel}
+                        </div>
                       </div>
                     </div>
+                    
+                    {/* Right: Live stats */}
+                    {singlePlayerTotals && (
+                      <div className="flex items-center gap-3">
+                        {/* Main disposals counter */}
+                        <div className="text-right">
+                          <div className={`font-black text-emerald-400 ${hdrCompact ? 'text-xl' : 'text-2xl'} leading-none`}>
+                            {singlePlayerTotals['D' as StatKey] || 0}
+                          </div>
+                          <div className="text-[10px] text-emerald-300/60 font-semibold tracking-widest uppercase">
+                            DISP
+                          </div>
+                        </div>
+                        
+                        {/* Quick stats */}
+                        {!hdrCompact && (
+                          <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                            <div className="text-right">
+                              <span className="text-white/40">K</span>
+                              <span className="text-white font-semibold ml-1">{singlePlayerTotals.K || 0}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-white/40">HB</span>
+                              <span className="text-white font-semibold ml-1">{singlePlayerTotals.HB || 0}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-white/40">M</span>
+                              <span className="text-white font-semibold ml-1">{singlePlayerTotals.M || 0}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-white/40">G</span>
+                              <span className="text-orange-400 font-semibold ml-1">{singlePlayerTotals.G || 0}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
-                
-                {/* Key Stats Summary */}
-                {!hdrCompact && singlePlayerTotals && (
-                  <div className="flex items-center justify-center gap-4 text-sm opacity-80">
-                    <span>K: {singlePlayerTotals.K || 0}</span>
-                    <span>HB: {singlePlayerTotals.HB || 0}</span>
-                    <span>M: {singlePlayerTotals.M || 0}</span>
-                    <span>T: {singlePlayerTotals.T || 0}</span>
-                    <span>G: {singlePlayerTotals.G || 0}</span>
-                    <span>B: {singlePlayerTotals.B || 0}</span>
-                  </div>
-                )}
+                </div>
               </div>
             )}
             {/* Normal header - Wide toolbar and timer only when NOT single player mode */}
