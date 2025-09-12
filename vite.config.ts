@@ -19,4 +19,9 @@ export default defineConfig({
       clientPort: 443, // Use HTTPS port for Replit
     },
   },
+  preview: {
+    host: '0.0.0.0',   // expose preview server for Replit deployment
+    port: Number(process.env.PORT) || 5000,  // use PORT env var or default to 5000
+    strictPort: true,  // fail instead of picking a random port
+  },
 })
