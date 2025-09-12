@@ -1109,10 +1109,9 @@ export default function Game(){
         /* Single Player Mode Layout - Mobile Optimized */
         <div className="max-w-2xl mx-auto px-2 sm:px-4">
           <div className="card mb-4">
-            {/* Player Info Header - Mobile Optimized */}
+            {/* Segment info only - Player info now in sleek header above */}
             <div className="text-center mb-4 px-2 sm:px-4">
-              <h3 className="text-lg sm:text-xl md:text-2xl font-semibold">#{singlePlayerNumber} {singlePlayerName}</h3>
-              <p className="text-xs sm:text-sm opacity-70 mt-1">Single Player Tracking - {segLabel}</p>
+              <p className="text-xs sm:text-sm opacity-70">Single Player Tracking - {segLabel}</p>
             </div>
             
             {/* Last Action - Mobile Optimized */}
