@@ -14,7 +14,9 @@ export default defineConfig({
     port: 5000,        // Replit requires port 5000 for frontend
     strictPort: true,  // fail instead of picking a random port
     cors: true,        // allow cross‑origin requests from LAN devices
-    // Configure for Replit proxy setup
+    // Allow all hosts for Replit proxy setup
+    allowedHosts: true,
+    // Configure HMR for Replit proxy setup
     hmr: {
       clientPort: 443, // Use HTTPS port for Replit
     },
