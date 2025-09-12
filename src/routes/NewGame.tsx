@@ -270,35 +270,35 @@ export default function NewGame(){
             <Input type="number" value={quarterLength} onChange={e=>setQuarterLength(parseInt(e.target.value||'20',10))} />
           </div>
 
-          {/* Game Mode Selection */}
+          {/* Game Mode Selection - Tab Interface */}
           <div className="col-span-full space-y-3">
             <label className="text-xs uppercase tracking-wider text-white/70">Game Mode</label>
-            <div className="flex flex-col gap-3">
-              {/* Team Mode */}
-              <div className="flex items-center gap-3">
-                <input 
-                  id="mode-team" 
-                  type="radio" 
-                  name="gameMode" 
-                  className="scale-110" 
-                  checked={gameMode === 'team'} 
-                  onChange={() => setGameMode('team')}
-                />
-                <label htmlFor="mode-team" className="text-[13px] text-white/80">Track Team</label>
-              </div>
+            <div className="grid grid-cols-2 gap-0 rounded-lg border border-white/10 bg-white/5 p-1">
+              {/* Team Tracking Tab */}
+              <button
+                type="button"
+                onClick={() => setGameMode('team')}
+                className={`rounded-md py-2.5 px-4 text-sm font-medium transition-all ${
+                  gameMode === 'team'
+                    ? 'bg-white/15 text-white shadow-md border border-white/20'
+                    : 'text-white/70 hover:text-white/90 hover:bg-white/5'
+                }`}
+              >
+                Team Tracking
+              </button>
               
-              {/* Single Player Mode */}
-              <div className="flex items-center gap-3">
-                <input 
-                  id="mode-single" 
-                  type="radio" 
-                  name="gameMode" 
-                  className="scale-110" 
-                  checked={gameMode === 'single_player'} 
-                  onChange={() => setGameMode('single_player')}
-                />
-                <label htmlFor="mode-single" className="text-[13px] text-white/80">Track Single Player</label>
-              </div>
+              {/* Single Player Tab */}
+              <button
+                type="button"
+                onClick={() => setGameMode('single_player')}
+                className={`rounded-md py-2.5 px-4 text-sm font-medium transition-all ${
+                  gameMode === 'single_player'
+                    ? 'bg-white/15 text-white shadow-md border border-white/20'
+                    : 'text-white/70 hover:text-white/90 hover:bg-white/5'
+                }`}
+              >
+                Single Player
+              </button>
             </div>
             
             {/* Team mode sub-option */}

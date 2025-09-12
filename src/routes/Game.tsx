@@ -776,20 +776,25 @@ export default function Game(){
         {/* Compact actions cluster (to the left of chevron) */}
         {hdrCompact && (
           <div className="absolute right-10 top-1.5 z-20 flex items-center gap-1.5">
-            <Link
-              to="/hub"
-              className="h-7 w-7 grid place-items-center rounded-md border border-white/20 bg-white/10 hover:bg-white/15"
-              aria-label="Game Hub"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-80"><path d="M3 11.5L12 5l9 6.5M5 10v9a1 1 0 001 1h3a1 1 0 001-1v-4h2v4a1 1 0 001 1h3a1 1 0 001-1v-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </Link>
-            <Link
-              to={`/summary/${gameId}`}
-              className="h-7 w-7 grid place-items-center rounded-md border border-white/20 bg-white/10 hover:bg-white/15"
-              aria-label="Stats Summary"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-80"><path d="M5 21V10m7 11V3m7 18v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-            </Link>
+            {/* Hide Hub/Summary buttons in single player mode when condensed */}
+            {!singlePlayerMode && (
+              <>
+                <Link
+                  to="/hub"
+                  className="h-7 w-7 grid place-items-center rounded-md border border-white/20 bg-white/10 hover:bg-white/15"
+                  aria-label="Game Hub"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-80"><path d="M3 11.5L12 5l9 6.5M5 10v9a1 1 0 001 1h3a1 1 0 001-1v-4h2v4a1 1 0 001 1h3a1 1 0 001-1v-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </Link>
+                <Link
+                  to={`/summary/${gameId}`}
+                  className="h-7 w-7 grid place-items-center rounded-md border border-white/20 bg-white/10 hover:bg-white/15"
+                  aria-label="Stats Summary"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-80"><path d="M5 21V10m7 11V3m7 18v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                </Link>
+              </>
+            )}
             <button
               onClick={openEdit}
               className="h-7 w-7 grid place-items-center rounded-md border border-white/20 bg-white/10 hover:bg-white/15"
