@@ -845,8 +845,9 @@ export default function Game(){
                   <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/10 via-transparent to-emerald-500/10 opacity-50"></div>
                   
                   <div className="relative flex items-center justify-between">
-                    {/* Left: Navigation - All action buttons grouped */}
+                    {/* Left: Navigation - Mobile optimized */}
                     <div className="flex items-center gap-1.5">
+                      {/* Always show Hub - most important */}
                       <Link
                         to="/hub"
                         className="group p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all hover:border-emerald-400/30"
@@ -856,25 +857,31 @@ export default function Game(){
                           <path d="M3 11.5L12 5l9 6.5M5 10v9a1 1 0 001 1h3a1 1 0 001-1v-4h2v4a1 1 0 001 1h3a1 1 0 001-1v-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </Link>
-                      <Link
-                        to={`/summary/${gameId}`}
-                        className="group p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all hover:border-emerald-400/30"
-                        aria-label="Stats Summary"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="opacity-60 group-hover:opacity-90 transition-opacity">
-                          <path d="M5 21V10m7 11V3m7 18v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                        </svg>
-                      </Link>
-                      <button
-                        onClick={openEdit}
-                        className="group p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all hover:border-emerald-400/30"
-                        aria-label="Edit Players"
-                        title="Edit players"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="opacity-60 group-hover:opacity-90 transition-opacity">
-                          <path d="M4 21h4l11-11a2.828 2.828 0 10-4-4L4 17v4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
+                      
+                      {/* Hide some buttons on mobile when compact - CSS responsive */}
+                      <div className={`${hdrCompact ? 'hidden sm:flex' : 'flex'} items-center gap-1.5`}>
+                        <Link
+                          to={`/summary/${gameId}`}
+                          className="group p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all hover:border-emerald-400/30"
+                          aria-label="Stats Summary"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="opacity-60 group-hover:opacity-90 transition-opacity">
+                            <path d="M5 21V10m7 11V3m7 18v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                          </svg>
+                        </Link>
+                        <button
+                          onClick={openEdit}
+                          className="group p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all hover:border-emerald-400/30"
+                          aria-label="Edit Players"
+                          title="Edit players"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="opacity-60 group-hover:opacity-90 transition-opacity">
+                            <path d="M4 21h4l11-11a2.828 2.828 0 10-4-4L4 17v4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </div>
+                      
+                      {/* Live toggle - smaller on mobile */}
                       <button
                         role="switch"
                         aria-checked={shareOn}
@@ -882,8 +889,8 @@ export default function Game(){
                         title="Share live"
                         className={`relative rounded-lg p-1 border transition-all ${shareOn ? 'bg-emerald-500/20 border-emerald-400/40' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-emerald-400/30'}`}
                       >
-                        <div className={`w-6 h-3 rounded-full border transition ${shareOn ? 'bg-emerald-500/30 border-emerald-400/40' : 'bg-white/10 border-white/20'}`}>
-                          <span className={`block w-2.5 h-2.5 rounded-full bg-white transition-transform ${shareOn ? 'translate-x-3.5' : 'translate-x-0'} transform`} />
+                        <div className={`${hdrCompact ? 'w-5 h-2.5' : 'w-6 h-3'} rounded-full border transition ${shareOn ? 'bg-emerald-500/30 border-emerald-400/40' : 'bg-white/10 border-white/20'}`}>
+                          <span className={`block ${hdrCompact ? 'w-2 h-2 translate-x-2.5' : 'w-2.5 h-2.5 translate-x-3.5'} rounded-full bg-white transition-transform ${shareOn ? (hdrCompact ? 'translate-x-2.5' : 'translate-x-3.5') : 'translate-x-0'} transform`} />
                         </div>
                       </button>
                     </div>
@@ -1072,11 +1079,12 @@ export default function Game(){
               </div>
             </div>
           )}
-        </div>
+          </div>
         </div>
       </div>
     </div>
-      <div className="max-w-[1200px] mx-auto p-4 space-y-4">
+    
+    <div className="max-w-[1200px] mx-auto p-4 space-y-4">
       {authWarning && (
         <div className="mt-2 rounded-md border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-[13px] text-amber-100">
           {authWarning}
