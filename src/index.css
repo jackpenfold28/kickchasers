@@ -24,6 +24,8 @@
   /* buttons / tabs */
   .btn { @apply inline-flex items-center justify-center rounded-xl px-4 py-2 bg-white/10 border border-white/10 hover:bg-white/20 transition shadow-sm active:scale-[.98]; }
   .btn-primary { @apply bg-[#1A4DFF] text-white border-0 hover:brightness-110 shadow-[0_8px_24px_rgba(26,77,255,.25)] active:shadow-[0_4px_16px_rgba(26,77,255,.25)]; }
+  .btn-secondary { @apply bg-white/5 border-white/15 hover:bg-white/10 hover:border-white/25 text-white/90 hover:text-white; }
+  .btn-ghost { @apply bg-transparent border-transparent hover:bg-white/10 text-white/70 hover:text-white shadow-none; }
 
   /* team logo badge */
   .team-logo { width: 76px; height: 76px; border-radius: 16px; overflow: hidden; @apply bg-white/10 border border-white/15 shadow-[0_8px_28px_rgba(0,0,0,.35)] backdrop-blur; }

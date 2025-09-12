@@ -427,11 +427,16 @@ export default function Hub(){
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="btn" onClick={()=>nav('/profile')}>Profile</button>
-          <Link to="/squad" className="btn" data-testid="load-squad">Load Your Squad</Link>
-          <Link to="/new" className="btn btn-primary">New Game</Link>
-          <button className="btn hover:bg-red-600/70" onClick={onLogout}>Log out</button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button className="btn btn-secondary" onClick={()=>nav('/profile')}>Profile</button>
+            <Link to="/squad" className="btn btn-secondary" data-testid="manage-squad">Manage Squad</Link>
+          </div>
+          <div className="h-6 w-px bg-white/20"></div>
+          <div className="flex items-center gap-2">
+            <Link to="/new" className="btn btn-primary">+ New Game</Link>
+            <button className="btn btn-ghost hover:bg-red-600/70" onClick={onLogout}>Log out</button>
+          </div>
         </div>
       </header>
 
@@ -677,10 +682,29 @@ export default function Hub(){
                     </span>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button className="btn" onClick={()=>nav(`/game/${g.id}`)}>Open</button>
-                  <Link className="btn" to={`/summary/${g.id}`}>Stats Summary</Link>
-                  <button className="btn hover:bg-red-600/60" onClick={()=>onDelete(g.id)}>Delete</button>
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-2">
+                    <button 
+                      className="btn btn-primary text-sm px-3 py-1.5" 
+                      onClick={()=>nav(`/game/${g.id}`)}
+                    >
+                      {g.status === 'live' ? '🔴 Resume' : g.status === 'final' ? '📊 View' : '▶️ Start'}
+                    </button>
+                    <Link 
+                      className="btn btn-secondary text-sm px-3 py-1.5" 
+                      to={`/summary/${g.id}`}
+                    >
+                      📈 Summary
+                    </Link>
+                  </div>
+                  <div className="h-6 w-px bg-white/10 mx-1"></div>
+                  <button 
+                    className="btn btn-ghost hover:bg-red-600/60 text-sm px-2 py-1.5 text-red-400" 
+                    onClick={()=>onDelete(g.id)}
+                    title="Delete game"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </li>
             ))}
