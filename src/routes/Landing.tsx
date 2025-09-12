@@ -47,6 +47,7 @@ function DevicePhoneMobileIcon() {
   )
 }
 
+
 export default function Landing() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
   const [scrolled, setScrolled] = useState(false)
@@ -539,46 +540,3 @@ function Testimonial({ quote, name, role }: { quote: string; name: string; role:
   )
 }
 
-function BoltIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
-      <path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z" stroke="currentColor" strokeWidth="2" />
-    </svg>
-  )
-}
-function SparkleIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
-      <path d="M12 3l2.5 5L20 11.5 15 14l-2.5 5L10 14 4 11.5 9.5 8 12 3z" stroke="currentColor" strokeWidth="2" />
-    </svg>
-  )
-}
-function UsersIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
-      <path d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8zM20 21v-2a4 4 0 00-3-3.87" stroke="currentColor" strokeWidth="2"/>
-    </svg>
-  )
-}
-function ShareIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
-      <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-}
-function DocumentIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
-      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-}
-function DevicePhoneMobileIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
-      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
-      <line x1="12" y1="18" x2="12.01" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-}
