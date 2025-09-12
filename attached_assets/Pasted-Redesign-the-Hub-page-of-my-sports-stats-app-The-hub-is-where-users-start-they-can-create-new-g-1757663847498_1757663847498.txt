@@ -1,0 +1,34 @@
+Redesign the “Hub” page of my sports stats app. The hub is where users start — they can create new games, load existing ones, manage squads, and view player/game history. The current UI is functional but plain; I want it elevated to look like a high-end SaaS sports platform that feels professional and expensive to build.
+
+Style Goals:
+	•	Modern, premium aesthetic: minimal clutter, lots of whitespace, elegant dark theme with premium accent colors (emerald, teal, subtle gradients).
+	•	Professional polish: consistent typography (use a modern sans-serif like Inter or Satoshi), balanced spacing, smooth hierarchy.
+	•	Intuitive, user-friendly layout: clear calls to action, obvious next steps, responsive design that works on desktop and iPhone.
+	•	Micro-interactions: hover states, button press animations, smooth fade-in sections.
+
+Design Features:
+	1.	Navigation Bar
+	•	Frosted glass effect with sticky behavior.
+	•	Clean logo placement left, user profile/avatar right.
+	2.	Hero Area (Hub Overview)
+	•	Welcome headline (“Welcome back, [Name]”) with subtle animated gradient accent.
+	•	Two main CTAs: Start New Game (primary) and Load Squad (secondary).
+	•	Supporting text that’s minimal and motivational.
+	3.	Game/Squad Cards
+	•	Rounded corners, soft shadows, subtle hover lift.
+	•	Consistent layout: game info, squad info, quick actions (Edit, Continue, Delete).
+	•	Add color accents (emerald/teal) for active or recent items.
+	4.	Sections
+	•	Your Squads: horizontal scrollable cards with clean typography.
+	•	Recent Games: vertical list of recent matches, each in a sleek card.
+	•	Use icons (Lucide or Feather style) sparingly for clarity.
+	5.	Overall Feel
+	•	Polished, balanced, aspirational. Should feel like something Nike, Hudl, or a professional sports SaaS tool would release.
+	•	Minimal text, rely on visuals + layout.
+
+Deliverable:
+Provide a clean, modern React + Tailwind design for the Hub page with placeholder data. The output should be production-ready code, using:
+	•	React + TypeScript
+	•	Tailwind CSS
+	•	Consistent with shadcn/ui components (buttons, cards).
+	•	Responsive and mobile-first, but scaling gracefully on desktop.

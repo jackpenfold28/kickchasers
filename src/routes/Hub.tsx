@@ -29,7 +29,7 @@ const STAT_COLORS: Record<string, string> = {
   CL: 'bg-orange-600/20 text-orange-100',
   FF: 'bg-teal-600/20 text-teal-100',
   FA: 'bg-red-700/25 text-red-100',
-  AF: 'bg-purple-700/25 text-purple-100',
+  AF: 'bg-emerald-700/25 text-emerald-100',
   CON: 'bg-emerald-600/20 text-emerald-100',
   UC:  'bg-teal-600/20 text-teal-100',
   GBG: 'bg-green-700/20 text-green-100',
@@ -49,47 +49,47 @@ const STAT_GRADIENTS: Record<string, string> = {
   T:   'from-rose-500 via-red-600 to-amber-600',
   G:   'from-emerald-500 via-teal-600 to-green-700',
   B:   'from-lime-500 via-emerald-600 to-emerald-800',
-  I50: 'from-fuchsia-500 via-purple-600 to-violet-700',
+  I50: 'from-teal-500 via-emerald-600 to-green-700',
   R50: 'from-cyan-500 via-teal-600 to-emerald-700',
   CL:  'from-orange-500 via-amber-600 to-rose-600',
   FF:  'from-teal-500 via-cyan-600 to-sky-700',
   FA:  'from-red-600 via-rose-700 to-pink-800',
-  AF:  'from-purple-600 via-violet-700 to-fuchsia-800',
+  AF:  'from-emerald-600 via-teal-700 to-green-800',
   CON: 'from-emerald-500 via-teal-600 to-green-800',
   UC:  'from-teal-500 via-cyan-600 to-sky-800',
   GBG: 'from-green-500 via-emerald-700 to-lime-800',
   MUC: 'from-yellow-400 via-amber-600 to-orange-700',
   MC:  'from-amber-500 via-orange-700 to-rose-700',
   KEF: 'from-indigo-500 via-violet-600 to-fuchsia-700',
-  KIF: 'from-fuchsia-500 via-purple-700 to-violet-800',
+  KIF: 'from-teal-500 via-emerald-700 to-green-800',
   HEF: 'from-sky-500 via-cyan-600 to-blue-800',
   HIF: 'from-cyan-500 via-blue-700 to-indigo-800',
 };
 
 // Stat metadata map for labels and icons
 const STAT_META: Record<string, {label: string; icon: string}> = {
-  D:   { label: 'Disposals',    icon: '🟦' },
-  K:   { label: 'Kicks',        icon: '👟' },
-  HB:  { label: 'Handballs',    icon: '🤲' },
-  M:   { label: 'Marks',        icon: '✋' },
-  T:   { label: 'Tackles',      icon: '🤼' },
-  G:   { label: 'Goals',        icon: '🥅' },
-  B:   { label: 'Behinds',      icon: '🎯' },
-  I50: { label: 'Inside 50s',   icon: '↘️' },
-  R50: { label: 'Rebound 50s',  icon: '↗️' },
-  CL:  { label: 'Clearances',   icon: '🚀' },
-  FF:  { label: 'Frees For',    icon: '👍' },
-  FA:  { label: 'Frees Against',icon: '👎' },
-  AF:  { label: 'AFL Fantasy',  icon: '📊' },
-  CON: { label: 'Contested', icon: '🧨' },
-  UC:  { label: 'Uncontested', icon: '🎯' },
-  GBG: { label: 'GBG', icon: '🟢' },
-  MUC: { label: 'Marks UC', icon: '📐' },
-  MC:  { label: 'Marks C', icon: '📏' },
-  KEF: { label: 'Kicks EF', icon: '✅' },
-  KIF: { label: 'Kicks IF', icon: '❌' },
-  HEF: { label: 'Handballs EF', icon: '✅' },
-  HIF: { label: 'Handballs IF', icon: '❌' },
+  D:   { label: 'Disposals',    icon: '' },
+  K:   { label: 'Kicks',        icon: '' },
+  HB:  { label: 'Handballs',    icon: '' },
+  M:   { label: 'Marks',        icon: '' },
+  T:   { label: 'Tackles',      icon: '' },
+  G:   { label: 'Goals',        icon: '' },
+  B:   { label: 'Behinds',      icon: '' },
+  I50: { label: 'Inside 50s',   icon: '' },
+  R50: { label: 'Rebound 50s',  icon: '' },
+  CL:  { label: 'Clearances',   icon: '' },
+  FF:  { label: 'Frees For',    icon: '' },
+  FA:  { label: 'Frees Against',icon: '' },
+  AF:  { label: 'AFL Fantasy',  icon: '' },
+  CON: { label: 'Contested', icon: '' },
+  UC:  { label: 'Uncontested', icon: '' },
+  GBG: { label: 'GBG', icon: '' },
+  MUC: { label: 'Marks UC', icon: '' },
+  MC:  { label: 'Marks C', icon: '' },
+  KEF: { label: 'Kicks EF', icon: '' },
+  KIF: { label: 'Kicks IF', icon: '' },
+  HEF: { label: 'Handballs EF', icon: '' },
+  HIF: { label: 'Handballs IF', icon: '' },
 };
 
 type Game = {
@@ -404,7 +404,7 @@ export default function Hub(){
       <header className="relative overflow-hidden">
         {/* Background Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-slate-800/60 to-slate-900/80 rounded-3xl"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-indigo-600/10 rounded-3xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/10 via-teal-600/10 to-green-600/10 rounded-3xl"></div>
         
         {/* Content */}
         <div className="relative rounded-3xl bg-white/[0.02] backdrop-blur-sm border border-white/10 shadow-2xl p-6 lg:p-8">
@@ -419,7 +419,7 @@ export default function Hub(){
                   alt="Kickchasers"
                   className="h-16 w-auto shrink-0 drop-shadow-lg md:h-20 lg:h-24"
                 />
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl blur-sm -z-10"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 rounded-xl blur-sm -z-10"></div>
               </div>
               
               {/* Divider */}
@@ -434,9 +434,9 @@ export default function Hub(){
                       <img src={logoUrl} alt="team logo" className="w-full h-full object-cover" />
                     </div>
                   ) : (
-                    <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 grid place-items-center ring-2 ring-white/20 shadow-xl text-2xl">🏉</div>
+                    <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 grid place-items-center ring-2 ring-white/20 shadow-xl text-2xl text-white/40">T</div>
                   )}
-                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/30 to-purple-600/30 rounded-2xl blur opacity-50 -z-10"></div>
+                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600/30 to-teal-600/30 rounded-2xl blur opacity-50 -z-10"></div>
                 </div>
                 
                 {/* User Greeting */}
@@ -457,7 +457,7 @@ export default function Hub(){
                   </div>
                   {!logoUrl && (
                     <div className="mt-2 text-xs text-white/50 max-w-sm">
-                      💡 Add a club logo in <button type="button" onClick={() => nav('/profile')} className="text-blue-400 hover:text-blue-300 underline decoration-dotted underline-offset-2 transition-colors">Profile</button> to personalize your experience
+                      Add a club logo in <button type="button" onClick={() => nav('/profile')} className="text-emerald-400 hover:text-emerald-300 underline decoration-dotted underline-offset-2 transition-colors">Profile</button> to personalize your experience
                     </div>
                   )}
                 </div>
@@ -499,9 +499,9 @@ export default function Hub(){
                 </Link>
                 <Link 
                   to="/new" 
-                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border border-blue-500/50 rounded-xl font-semibold text-sm text-white transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 border border-emerald-500/50 rounded-xl font-semibold text-sm text-white transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                 >
-                  ⚡ New Game
+                  New Game
                 </Link>
                 <button 
                   className="px-4 py-2.5 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 rounded-xl font-medium text-sm text-red-200 hover:text-white transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95" 
@@ -521,9 +521,9 @@ export default function Hub(){
           {/* Navigation Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-6 bg-gradient-to-b from-blue-400 to-purple-500 rounded-full"></div>
+              <div className="w-1 h-6 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-full"></div>
               <h2 className="text-lg font-bold text-white tracking-tight">
-                {activeTab==='games' ? '🏆 Games Dashboard' : activeTab==='team' ? `📊 Team Analytics${avgFilter!=='all' ? ` — ${avgFilter.charAt(0).toUpperCase() + avgFilter.slice(1)}` : ''}` : '🌟 Player Rankings'}
+                {activeTab==='games' ? 'Games Dashboard' : activeTab==='team' ? `Team Analytics${avgFilter!=='all' ? ` — ${avgFilter.charAt(0).toUpperCase() + avgFilter.slice(1)}` : ''}` : 'Player Rankings'}
               </h2>
             </div>
             
@@ -534,7 +534,6 @@ export default function Hub(){
                 to="/new" 
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600/20 to-emerald-500/30 border border-emerald-500/30 rounded-lg text-emerald-200 text-xs font-medium hover:from-emerald-500/30 hover:to-emerald-400/40 transition-all duration-200 hover:scale-105"
               >
-                <span>⚡</span>
                 New Game
               </Link>
             </div>
@@ -543,9 +542,9 @@ export default function Hub(){
           {/* Enhanced Tab Navigation */}
           <div className="flex items-center gap-1 p-1 bg-black/20 rounded-2xl border border-white/10 backdrop-blur-sm">
             {([
-              ['games','Games', '🏆', 'View and manage your game history'],
-              ['team','Team Stats', '📊', 'Analyze team performance metrics'],
-              ['players','Player Leaders', '🌟', 'Top performing players this season'],
+              ['games','Games', '', 'View and manage your game history'],
+              ['team','Team Stats', '', 'Analyze team performance metrics'],
+              ['players','Player Leaders', '', 'Top performing players this season'],
             ] as const).map(([key, label, icon, description]) => (
               <button
                 key={key}
@@ -554,17 +553,16 @@ export default function Hub(){
                 title={description}
                 className={`group relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 active:scale-95
                   ${activeTab===key 
-                    ? 'bg-gradient-to-r from-blue-600/40 to-purple-600/40 text-white shadow-lg ring-1 ring-white/20 scale-105' 
+                    ? 'bg-gradient-to-r from-emerald-600/40 to-teal-600/40 text-white shadow-lg ring-1 ring-white/20 scale-105' 
                     : 'text-white/70 hover:text-white hover:bg-white/5'}
                 `}
               >
                 {/* Active indicator */}
                 {activeTab === key && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl border border-blue-400/30 shadow-inner"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 rounded-xl border border-emerald-400/30 shadow-inner"></div>
                 )}
                 
                 {/* Content */}
-                <span className="relative z-10 text-base">{icon}</span>
                 <span className="relative z-10 hidden sm:inline">{label}</span>
                 
                 {/* Hover effect */}
@@ -584,7 +582,7 @@ export default function Hub(){
             <div className="text-2xl font-semibold tabular-nums drop-shadow-sm">{perGame.D.toFixed(1)}</div>
           </div>
           {/* Inside 50s / game */}
-          <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-violet-700 text-white shadow-[0_6px_20px_rgba(168,85,247,.25)]">
+          <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-emerald-400 via-teal-500 to-green-700 text-white shadow-[0_6px_20px_rgba(16,185,129,.25)]">
             <div className="text-[10px] sm:text-xs tracking-widest font-medium mb-1 uppercase/70">Inside 50s / Game</div>
             <div className="text-2xl font-semibold tabular-nums drop-shadow-sm">{perGame.I50.toFixed(1)}</div>
           </div>
@@ -612,9 +610,9 @@ export default function Hub(){
           {/* Enhanced Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-8 bg-gradient-to-b from-blue-400 to-purple-500 rounded-full"></div>
+              <div className="w-1 h-8 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-full"></div>
               <div>
-                <h3 className="text-xl font-bold text-white">📊 Team Analytics</h3>
+                <h3 className="text-xl font-bold text-white">Team Analytics</h3>
                 <p className="text-sm text-white/60">Performance metrics and season averages</p>
               </div>
             </div>
@@ -651,11 +649,11 @@ export default function Hub(){
                     aria-pressed={avgFilter===k}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                       avgFilter===k
-                        ? 'bg-gradient-to-r from-blue-600/40 to-purple-600/40 text-white shadow-lg scale-105'
+                        ? 'bg-gradient-to-r from-emerald-600/40 to-teal-600/40 text-white shadow-lg scale-105'
                         : 'text-white/70 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    {k === 'all' ? '📊 All Games' : k === 'wins' ? '🏆 Wins Only' : '📎 Losses Only'}
+                    {k === 'all' ? 'All Games' : k === 'wins' ? 'Wins Only' : 'Losses Only'}
                   </button>
                 ))}
               </div>
@@ -671,16 +669,16 @@ export default function Hub(){
             {/* Primary Stats Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
               {([
-                ['D','DISPOSALS', '🎯'],
-                ['K','KICKS', '🦵'],
-                ['HB','HANDBALLS', '👋'],
-                ['M','MARKS', '🤲'],
-                ['T','TACKLES', '🤼'],
+                ['D','DISPOSALS', ''],
+                ['K','KICKS', ''],
+                ['HB','HANDBALLS', ''],
+                ['M','MARKS', ''],
+                ['T','TACKLES', ''],
               ] as [keyof typeof perGame, string, string][]).map(([key,label,icon])=> {
                 const bgGradient =
                   avgFilter==='wins' ? 'from-emerald-500/20 via-emerald-600/30 to-emerald-700/40'
                 : avgFilter==='losses' ? 'from-rose-500/20 via-rose-600/30 to-rose-700/40'
-                : (STAT_GRADIENTS[key] || 'from-blue-500/20 via-purple-600/30 to-indigo-700/40');
+                : (STAT_GRADIENTS[key] || 'from-emerald-500/20 via-teal-600/30 to-green-700/40');
 
                 let arrow: JSX.Element | null = null;
                 if (avgFilter !== 'all') {
@@ -724,12 +722,12 @@ export default function Hub(){
               {([
                 ['G','GOALS', '⚽'],
                 ['B','BEHINDS', '🎯'],
-                ['I50','INSIDE 50S', '➡️'],
-                ['R50','REBOUND 50s', '⬅️'],
-                ['CL','CLEARANCES', '🔄'],
-                ['FF','FREES FOR', '✅'],
-                ['FA','FREES AGAINST', '❌'],
-                ['AF','AFL FANTASY', '⭐'],
+                ['I50','INSIDE 50S', ''],
+                ['R50','REBOUND 50s', ''],
+                ['CL','CLEARANCES', ''],
+                ['FF','FREES FOR', ''],
+                ['FA','FREES AGAINST', ''],
+                ['AF','AFL FANTASY', ''],
               ] as [keyof typeof perGame, string, string][]).map(([key,label,icon])=> {
                 const bgGradient =
                   avgFilter==='wins' ? 'from-emerald-600/15 to-emerald-800/25'
@@ -749,26 +747,24 @@ export default function Hub(){
             {/* Advanced Analytics Section */}
             <div className="border-t border-white/10 pt-6">
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-lg">🔬</span>
                 <div className="tracking-widest text-xs text-white/70 font-semibold uppercase">Advanced Analytics</div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {([
-                  ['CON','CONTESTED', '🤼'],
-                  ['UC','UNCONTESTED', '🏃'],
-                  ['GBG','GET THE BALL & GO', '⚡'],
-                  ['MUC','MARKS UNCONTESTED', '🤲'],
-                  ['MC','MARKS CONTESTED', '🤼'],
-                  ['KEF','KICKS EFFECTIVE', '🎯'],
-                  ['KIF','KICKS INEFFECTIVE', '❌'],
-                  ['HEF','HANDBALLS EFFECTIVE', '🎯'],
-                  ['HIF','HANDBALLS INEFFECTIVE', '❌'],
+                  ['CON','CONTESTED', ''],
+                  ['UC','UNCONTESTED', ''],
+                  ['GBG','GET THE BALL & GO', ''],
+                  ['MUC','MARKS UNCONTESTED', ''],
+                  ['MC','MARKS CONTESTED', ''],
+                  ['KEF','KICKS EFFECTIVE', ''],
+                  ['KIF','KICKS INEFFECTIVE', ''],
+                  ['HEF','HANDBALLS EFFECTIVE', ''],
+                  ['HIF','HANDBALLS INEFFECTIVE', ''],
                 ] as [keyof typeof perGame, string, string][]).map(([key,label,icon])=>{
                   const bgGradient = (STAT_GRADIENTS as any)[key] || 'from-slate-600/15 to-slate-800/25';
                   return (
                     <div key={key} className={`group rounded-xl p-4 text-center ring-1 ring-white/10 text-white bg-gradient-to-br ${bgGradient} hover:ring-white/20 transition-all duration-200 backdrop-blur-sm`}>
                       <div className="flex items-center justify-center gap-2 mb-2">
-                        <span className="text-sm">{icon}</span>
                         <div className="text-[10px] tracking-widest font-medium uppercase text-white/70">{label}</div>
                       </div>
                       <div className="text-xl font-bold tabular-nums">{(perGame as any)[key].toFixed(1)}</div>
@@ -839,9 +835,9 @@ export default function Hub(){
           {/* Section Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-8 bg-gradient-to-b from-blue-400 to-purple-500 rounded-full"></div>
+              <div className="w-1 h-8 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-full"></div>
               <div>
-                <h3 className="text-xl font-bold text-white">🏆 Game History</h3>
+                <h3 className="text-xl font-bold text-white">Game History</h3>
                 <p className="text-sm text-white/60">Manage and review your season games</p>
               </div>
             </div>
@@ -853,7 +849,6 @@ export default function Hub(){
                 to="/new" 
                 className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 border border-emerald-500/50 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:from-emerald-500 hover:to-emerald-400 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
               >
-                <span>⚡</span>
                 Create Game
               </Link>
             </div>
@@ -872,8 +867,8 @@ export default function Hub(){
           {/* Empty State */}
           {!loading && games.length === 0 && (
             <div className="text-center py-16">
-              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-white/5 to-white/10 rounded-2xl flex items-center justify-center text-4xl">
-                🏉
+              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-white/5 to-white/10 rounded-2xl flex items-center justify-center text-4xl text-white/40">
+                T
               </div>
               <h4 className="text-xl font-semibold text-white mb-2">No games yet</h4>
               <p className="text-white/60 mb-6 max-w-md mx-auto">
@@ -881,9 +876,8 @@ export default function Hub(){
               </p>
               <Link 
                 to="/new" 
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 border border-blue-500/50 rounded-xl font-semibold text-white transition-all duration-200 hover:from-blue-500 hover:to-purple-500 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 border border-emerald-500/50 rounded-xl font-semibold text-white transition-all duration-200 hover:from-emerald-500 hover:to-teal-500 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
               >
-                <span>⚡</span>
                 Create Your First Game
               </Link>
             </div>
@@ -900,7 +894,7 @@ export default function Hub(){
                   <div key={g.id} className="group relative">
                     {/* Card Background */}
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/10 rounded-2xl transition-all duration-300 group-hover:from-white/10 group-hover:to-white/15"></div>
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-purple-600/5 to-indigo-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/5 via-teal-600/5 to-green-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     
                     {/* Card Content */}
                     <div className="relative p-6 border border-white/10 rounded-2xl backdrop-blur-sm transition-all duration-300 group-hover:border-white/20 group-hover:shadow-2xl">
@@ -943,7 +937,6 @@ export default function Hub(){
                       
                       {/* Venue */}
                       <div className="flex items-center gap-2 mb-6 text-sm text-white/60">
-                        <span>🏐</span>
                         <span>{g.venue}</span>
                       </div>
                       
@@ -953,20 +946,20 @@ export default function Hub(){
                           className="flex-1 px-3 py-2 bg-white/10 hover:bg-white/15 border border-white/20 rounded-lg font-medium text-sm text-white transition-all duration-200 hover:scale-105 active:scale-95" 
                           onClick={()=>nav(`/game/${g.id}`)}
                         >
-                          🎮 Open Game
+                          Open Game
                         </button>
                         <Link 
-                          className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-600/20 to-purple-600/30 hover:from-blue-500/30 hover:to-purple-500/40 border border-blue-500/30 rounded-lg font-medium text-sm text-white transition-all duration-200 hover:scale-105 active:scale-95 text-center" 
+                          className="flex-1 px-3 py-2 bg-gradient-to-r from-emerald-600/20 to-teal-600/30 hover:from-emerald-500/30 hover:to-teal-500/40 border border-emerald-500/30 rounded-lg font-medium text-sm text-white transition-all duration-200 hover:scale-105 active:scale-95 text-center" 
                           to={`/summary/${g.id}`}
                         >
-                          📊 Stats
+                          Stats
                         </Link>
                         <button 
                           className="px-3 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 rounded-lg font-medium text-sm text-red-200 hover:text-white transition-all duration-200 hover:scale-105 active:scale-95" 
                           onClick={()=>onDelete(g.id)}
                           title="Delete game"
                         >
-                          🗑️
+                          Delete
                         </button>
                       </div>
                     </div>
