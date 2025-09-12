@@ -400,68 +400,175 @@ export default function Hub(){
   return (
     <div className="relative min-h-screen">
       <main className="max-w-5xl mx-auto p-6 space-y-5">
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-5">
-          <img
-            src="/kickchasers_logo.png"
-            alt="Kickchasers"
-            className="h-[4.5rem] w-auto shrink-0 drop-shadow md:h-[5.5rem] lg:h-24"
-          />
-          <div className="hidden sm:block h-14 w-px bg-white/15 mx-3"></div>
-          <div className="flex items-center gap-3">
-            {logoUrl ? (
-              <div className="h-16 w-16 rounded-2xl overflow-hidden bg-white/10 flex items-center justify-center">
-                <img src={logoUrl} alt="team logo" className="w-full h-full object-cover" />
+      {/* Professional Header with Enhanced Branding */}
+      <header className="relative overflow-hidden">
+        {/* Background Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-slate-800/60 to-slate-900/80 rounded-3xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-indigo-600/10 rounded-3xl"></div>
+        
+        {/* Content */}
+        <div className="relative rounded-3xl bg-white/[0.02] backdrop-blur-sm border border-white/10 shadow-2xl p-6 lg:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            
+            {/* Left Section - Branding & User Info */}
+            <div className="flex items-center gap-6">
+              {/* App Logo */}
+              <div className="relative">
+                <img
+                  src="/kickchasers_logo.png"
+                  alt="Kickchasers"
+                  className="h-16 w-auto shrink-0 drop-shadow-lg md:h-20 lg:h-24"
+                />
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl blur-sm -z-10"></div>
               </div>
-            ) : (
-              <div className="h-16 w-16 rounded-2xl bg-white/10 grid place-items-center">🏉</div>
-            )}
-            <div>
-              <div className="text-sm opacity-80">Welcome back</div>
-              <h1 className="h1 leading-tight">{profile?.name || 'Coach'}</h1>
-              {!logoUrl && (
-                <div className="mt-0.5 text-xs text-white/70">
-                  Tip: add a club logo in <button type="button" onClick={() => nav('/profile')} className="underline decoration-dotted underline-offset-2 hover:text-white">Profile</button> to personalise your experience.
+              
+              {/* Divider */}
+              <div className="hidden md:block h-16 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
+              
+              {/* Team & User Info */}
+              <div className="flex items-center gap-4">
+                {/* Team Logo */}
+                <div className="relative">
+                  {logoUrl ? (
+                    <div className="h-20 w-20 rounded-2xl overflow-hidden bg-white/10 flex items-center justify-center ring-2 ring-white/20 shadow-xl">
+                      <img src={logoUrl} alt="team logo" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 grid place-items-center ring-2 ring-white/20 shadow-xl text-2xl">🏉</div>
+                  )}
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/30 to-purple-600/30 rounded-2xl blur opacity-50 -z-10"></div>
                 </div>
-              )}
+                
+                {/* User Greeting */}
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-white/70 tracking-wide">Welcome back</div>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">{profile?.name || 'Coach'}</h1>
+                  <div className="flex items-center gap-3 text-sm text-white/60">
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-400 rounded-full shadow-sm"></div>
+                      Season {new Date().getFullYear()}
+                    </span>
+                    {team && (
+                      <span className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full shadow-sm"></div>
+                        {team.name}
+                      </span>
+                    )}
+                  </div>
+                  {!logoUrl && (
+                    <div className="mt-2 text-xs text-white/50 max-w-sm">
+                      💡 Add a club logo in <button type="button" onClick={() => nav('/profile')} className="text-blue-400 hover:text-blue-300 underline decoration-dotted underline-offset-2 transition-colors">Profile</button> to personalize your experience
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Right Section - Quick Stats & Actions */}
+            <div className="flex flex-col gap-4 lg:items-end">
+              {/* Quick Stats Cards */}
+              <div className="flex gap-3">
+                <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/30 rounded-xl p-3 backdrop-blur-sm border border-emerald-400/20">
+                  <div className="text-xs text-emerald-200/80 tracking-wide">WINS</div>
+                  <div className="text-xl font-bold text-white">{record.wins}</div>
+                </div>
+                <div className="bg-gradient-to-br from-rose-500/20 to-rose-600/30 rounded-xl p-3 backdrop-blur-sm border border-rose-400/20">
+                  <div className="text-xs text-rose-200/80 tracking-wide">LOSSES</div>
+                  <div className="text-xl font-bold text-white">{record.losses}</div>
+                </div>
+                <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/30 rounded-xl p-3 backdrop-blur-sm border border-blue-400/20">
+                  <div className="text-xs text-blue-200/80 tracking-wide">GAMES</div>
+                  <div className="text-xl font-bold text-white">{games.length}</div>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button 
+                  className="px-4 py-2.5 bg-white/10 hover:bg-white/15 border border-white/20 rounded-xl font-medium text-sm text-white transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95" 
+                  onClick={()=>nav('/profile')}
+                >
+                  Profile
+                </button>
+                <Link 
+                  to="/squad" 
+                  className="px-4 py-2.5 bg-white/10 hover:bg-white/15 border border-white/20 rounded-xl font-medium text-sm text-white transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95" 
+                  data-testid="load-squad"
+                >
+                  Load Squad
+                </Link>
+                <Link 
+                  to="/new" 
+                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border border-blue-500/50 rounded-xl font-semibold text-sm text-white transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                >
+                  ⚡ New Game
+                </Link>
+                <button 
+                  className="px-4 py-2.5 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 rounded-xl font-medium text-sm text-red-200 hover:text-white transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95" 
+                  onClick={onLogout}
+                >
+                  Sign Out
+                </button>
+              </div>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="btn" onClick={()=>nav('/profile')}>Profile</button>
-          <Link to="/squad" className="btn" data-testid="load-squad">Load Your Squad</Link>
-          <Link to="/new" className="btn btn-primary">New Game</Link>
-          <button className="btn hover:bg-red-600/70" onClick={onLogout}>Log out</button>
-        </div>
       </header>
 
-      {/* Sticky mini-nav */}
+      {/* Modern Navigation Tabs */}
       <div className="relative">
-        <div className="sticky top-0 z-20 -mx-6 px-6 py-3 backdrop-blur-xl 
-        bg-[linear-gradient(90deg,rgba(56,189,248,.12)_0%,rgba(147,51,234,.12)_100%)] 
-        border-b border-white/10 flex items-center justify-between relative overflow-hidden">
-          <div className="flex items-center gap-2 relative z-10">
-            <h2 className="text-sm tracking-widest font-semibold text-white uppercase drop-shadow-md">
-              {activeTab==='games' ? 'Games' : activeTab==='team' ? `Season Averages${avgFilter!=='all' ? ` — ${avgFilter}` : ''}` : 'Season Leaders'}
-            </h2>
+        <div className="sticky top-0 z-20 -mx-6 px-6 py-4 backdrop-blur-2xl bg-gradient-to-r from-slate-900/80 via-slate-800/70 to-slate-900/80 border-b border-white/10 shadow-lg">
+          {/* Navigation Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-6 bg-gradient-to-b from-blue-400 to-purple-500 rounded-full"></div>
+              <h2 className="text-lg font-bold text-white tracking-tight">
+                {activeTab==='games' ? '🏆 Games Dashboard' : activeTab==='team' ? `📊 Team Analytics${avgFilter!=='all' ? ` — ${avgFilter.charAt(0).toUpperCase() + avgFilter.slice(1)}` : ''}` : '🌟 Player Rankings'}
+              </h2>
+            </div>
+            
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2">
+              <div className="text-xs text-white/60 font-medium tracking-wide">QUICK ACCESS</div>
+              <Link 
+                to="/new" 
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600/20 to-emerald-500/30 border border-emerald-500/30 rounded-lg text-emerald-200 text-xs font-medium hover:from-emerald-500/30 hover:to-emerald-400/40 transition-all duration-200 hover:scale-105"
+              >
+                <span>⚡</span>
+                New Game
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center gap-2 justify-end relative z-10">
+          
+          {/* Enhanced Tab Navigation */}
+          <div className="flex items-center gap-1 p-1 bg-black/20 rounded-2xl border border-white/10 backdrop-blur-sm">
             {([
-              ['games','Games'],
-              ['team','Team Averages'],
-              ['players','Player Leaders'],
-            ] as const).map(([key,label]) => (
+              ['games','Games', '🏆', 'View and manage your game history'],
+              ['team','Team Stats', '📊', 'Analyze team performance metrics'],
+              ['players','Player Leaders', '🌟', 'Top performing players this season'],
+            ] as const).map(([key, label, icon, description]) => (
               <button
                 key={key}
                 onClick={()=>{ setActiveTab(key); nav(`/hub?tab=${key}`) }}
                 aria-pressed={activeTab===key}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors active:scale-[.97] 
+                title={description}
+                className={`group relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 active:scale-95
                   ${activeTab===key 
-                    ? 'bg-gradient-to-r from-sky-500/30 to-purple-500/30 text-white shadow-md ring-1 ring-white/20' 
-                    : 'bg-white/[.04] hover:bg-white/[.08] text-white/70 ring-1 ring-white/10'}
+                    ? 'bg-gradient-to-r from-blue-600/40 to-purple-600/40 text-white shadow-lg ring-1 ring-white/20 scale-105' 
+                    : 'text-white/70 hover:text-white hover:bg-white/5'}
                 `}
               >
-                {label}
+                {/* Active indicator */}
+                {activeTab === key && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl border border-blue-400/30 shadow-inner"></div>
+                )}
+                
+                {/* Content */}
+                <span className="relative z-10 text-base">{icon}</span>
+                <span className="relative z-10 hidden sm:inline">{label}</span>
+                
+                {/* Hover effect */}
+                <div className="absolute inset-0 bg-white/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </button>
             ))}
           </div>
