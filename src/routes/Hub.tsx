@@ -404,7 +404,7 @@ export default function Hub(){
       <header className="relative overflow-hidden">
         {/* Background Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-slate-800/60 to-slate-900/80 rounded-3xl"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/10 via-teal-600/10 to-green-600/10 rounded-3xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-700/10 via-slate-600/10 to-slate-800/10 rounded-3xl"></div>
         
         {/* Content */}
         <div className="relative rounded-3xl bg-white/[0.02] backdrop-blur-sm border border-white/10 shadow-2xl p-6 lg:p-8">
@@ -419,7 +419,7 @@ export default function Hub(){
                   alt="Kickchasers"
                   className="h-16 w-auto shrink-0 drop-shadow-lg md:h-20 lg:h-24"
                 />
-                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 rounded-xl blur-sm -z-10"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-slate-600/20 to-slate-700/20 rounded-xl blur-sm -z-10"></div>
               </div>
               
               {/* Divider */}
@@ -436,7 +436,7 @@ export default function Hub(){
                   ) : (
                     <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 grid place-items-center ring-2 ring-white/20 shadow-xl text-2xl text-white/40">T</div>
                   )}
-                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600/30 to-teal-600/30 rounded-2xl blur opacity-50 -z-10"></div>
+                  <div className="absolute -inset-1 bg-gradient-to-r from-slate-600/30 to-slate-700/30 rounded-2xl blur opacity-50 -z-10"></div>
                 </div>
                 
                 {/* User Greeting */}
@@ -457,7 +457,7 @@ export default function Hub(){
                   </div>
                   {!logoUrl && (
                     <div className="mt-2 text-xs text-white/50 max-w-sm">
-                      Add a club logo in <button type="button" onClick={() => nav('/profile')} className="text-emerald-400 hover:text-emerald-300 underline decoration-dotted underline-offset-2 transition-colors">Profile</button> to personalize your experience
+                      Add a club logo in <button type="button" onClick={() => nav('/profile')} className="text-slate-400 hover:text-slate-300 underline decoration-dotted underline-offset-2 transition-colors">Profile</button> to personalize your experience
                     </div>
                   )}
                 </div>
@@ -468,16 +468,8 @@ export default function Hub(){
             <div className="flex flex-col gap-4 lg:items-end">
               {/* Quick Stats Cards */}
               <div className="flex gap-3">
-                <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/30 rounded-xl p-3 backdrop-blur-sm border border-emerald-400/20">
-                  <div className="text-xs text-emerald-200/80 tracking-wide">WINS</div>
-                  <div className="text-xl font-bold text-white">{record.wins}</div>
-                </div>
-                <div className="bg-gradient-to-br from-rose-500/20 to-rose-600/30 rounded-xl p-3 backdrop-blur-sm border border-rose-400/20">
-                  <div className="text-xs text-rose-200/80 tracking-wide">LOSSES</div>
-                  <div className="text-xl font-bold text-white">{record.losses}</div>
-                </div>
-                <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/30 rounded-xl p-3 backdrop-blur-sm border border-blue-400/20">
-                  <div className="text-xs text-blue-200/80 tracking-wide">GAMES</div>
+                <div className="bg-gradient-to-br from-slate-700/40 to-slate-800/60 rounded-xl p-3 backdrop-blur-sm border border-slate-600/30">
+                  <div className="text-xs text-slate-200/80 tracking-wide">TOTAL GAMES</div>
                   <div className="text-xl font-bold text-white">{games.length}</div>
                 </div>
               </div>
@@ -493,13 +485,13 @@ export default function Hub(){
                 <Link 
                   to="/squad" 
                   className="px-4 py-2.5 bg-white/10 hover:bg-white/15 border border-white/20 rounded-xl font-medium text-sm text-white transition-all duration-200 backdrop-blur-sm hover:scale-105 active:scale-95" 
-                  data-testid="load-squad"
+                  data-testid="manage-squads"
                 >
-                  Load Squad
+                  Manage Squads
                 </Link>
                 <Link 
                   to="/new" 
-                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 border border-emerald-500/50 rounded-xl font-semibold text-sm text-white transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                  className="px-5 py-2.5 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 border border-slate-500/50 rounded-xl font-semibold text-sm text-white transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                 >
                   New Game
                 </Link>
@@ -521,7 +513,7 @@ export default function Hub(){
           {/* Navigation Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-6 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-full"></div>
+              <div className="w-1 h-6 bg-gradient-to-b from-slate-400 to-slate-600 rounded-full"></div>
               <h2 className="text-lg font-bold text-white tracking-tight">
                 {activeTab==='games' ? 'Games Dashboard' : activeTab==='team' ? `Team Analytics${avgFilter!=='all' ? ` — ${avgFilter.charAt(0).toUpperCase() + avgFilter.slice(1)}` : ''}` : 'Player Rankings'}
               </h2>
@@ -532,7 +524,7 @@ export default function Hub(){
               <div className="text-xs text-white/60 font-medium tracking-wide">QUICK ACCESS</div>
               <Link 
                 to="/new" 
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600/20 to-emerald-500/30 border border-emerald-500/30 rounded-lg text-emerald-200 text-xs font-medium hover:from-emerald-500/30 hover:to-emerald-400/40 transition-all duration-200 hover:scale-105"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-slate-600/20 to-slate-500/30 border border-slate-500/30 rounded-lg text-slate-200 text-xs font-medium hover:from-slate-500/30 hover:to-slate-400/40 transition-all duration-200 hover:scale-105"
               >
                 New Game
               </Link>
@@ -553,13 +545,13 @@ export default function Hub(){
                 title={description}
                 className={`group relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 active:scale-95
                   ${activeTab===key 
-                    ? 'bg-gradient-to-r from-emerald-600/40 to-teal-600/40 text-white shadow-lg ring-1 ring-white/20 scale-105' 
+                    ? 'bg-gradient-to-r from-slate-600/40 to-slate-700/40 text-white shadow-lg ring-1 ring-white/20 scale-105' 
                     : 'text-white/70 hover:text-white hover:bg-white/5'}
                 `}
               >
                 {/* Active indicator */}
                 {activeTab === key && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 rounded-xl border border-emerald-400/30 shadow-inner"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-slate-600/20 to-slate-700/20 rounded-xl border border-slate-400/30 shadow-inner"></div>
                 )}
                 
                 {/* Content */}
@@ -582,12 +574,12 @@ export default function Hub(){
             <div className="text-2xl font-semibold tabular-nums drop-shadow-sm">{perGame.D.toFixed(1)}</div>
           </div>
           {/* Inside 50s / game */}
-          <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-emerald-400 via-teal-500 to-green-700 text-white shadow-[0_6px_20px_rgba(16,185,129,.25)]">
+          <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-slate-400 via-slate-500 to-slate-700 text-white shadow-[0_6px_20px_rgba(71,85,105,.25)]">
             <div className="text-[10px] sm:text-xs tracking-widest font-medium mb-1 uppercase/70">Inside 50s / Game</div>
             <div className="text-2xl font-semibold tabular-nums drop-shadow-sm">{perGame.I50.toFixed(1)}</div>
           </div>
           {/* Leader — Disposals */}
-          <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-emerald-400 via-teal-500 to-green-700 text-white shadow-[0_6px_20px_rgba(16,185,129,.25)]">
+          <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-slate-400 via-slate-500 to-slate-700 text-white shadow-[0_6px_20px_rgba(71,85,105,.25)]">
             <div className="text-[10px] sm:text-xs tracking-widest font-medium mb-1 uppercase/70">Leader — Disposals</div>
             <div className="flex items-baseline justify-between gap-2">
               <div className="font-medium truncate drop-shadow-sm">{(leadersByStat['D']?.[0]?.name) || '—'}</div>
@@ -610,7 +602,7 @@ export default function Hub(){
           {/* Enhanced Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-8 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-full"></div>
+              <div className="w-1 h-8 bg-gradient-to-b from-slate-400 to-slate-600 rounded-full"></div>
               <div>
                 <h3 className="text-xl font-bold text-white">Team Analytics</h3>
                 <p className="text-sm text-white/60">Performance metrics and season averages</p>
@@ -649,7 +641,7 @@ export default function Hub(){
                     aria-pressed={avgFilter===k}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                       avgFilter===k
-                        ? 'bg-gradient-to-r from-emerald-600/40 to-teal-600/40 text-white shadow-lg scale-105'
+                        ? 'bg-gradient-to-r from-slate-600/40 to-slate-700/40 text-white shadow-lg scale-105'
                         : 'text-white/70 hover:text-white hover:bg-white/5'
                     }`}
                   >
@@ -676,9 +668,9 @@ export default function Hub(){
                 ['T','TACKLES', ''],
               ] as [keyof typeof perGame, string, string][]).map(([key,label,icon])=> {
                 const bgGradient =
-                  avgFilter==='wins' ? 'from-emerald-500/20 via-emerald-600/30 to-emerald-700/40'
+                  avgFilter==='wins' ? 'from-slate-500/20 via-slate-600/30 to-slate-700/40'
                 : avgFilter==='losses' ? 'from-rose-500/20 via-rose-600/30 to-rose-700/40'
-                : (STAT_GRADIENTS[key] || 'from-emerald-500/20 via-teal-600/30 to-green-700/40');
+                : (STAT_GRADIENTS[key] || 'from-slate-500/20 via-slate-600/30 to-slate-700/40');
 
                 let arrow: JSX.Element | null = null;
                 if (avgFilter !== 'all') {
@@ -835,7 +827,7 @@ export default function Hub(){
           {/* Section Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-8 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-full"></div>
+              <div className="w-1 h-8 bg-gradient-to-b from-slate-400 to-slate-600 rounded-full"></div>
               <div>
                 <h3 className="text-xl font-bold text-white">Game History</h3>
                 <p className="text-sm text-white/60">Manage and review your season games</p>
@@ -847,7 +839,7 @@ export default function Hub(){
               </div>
               <Link 
                 to="/new" 
-                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 border border-emerald-500/50 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:from-emerald-500 hover:to-emerald-400 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-slate-600 to-slate-500 border border-slate-500/50 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:from-slate-500 hover:to-slate-400 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
               >
                 Create Game
               </Link>
@@ -876,7 +868,7 @@ export default function Hub(){
               </p>
               <Link 
                 to="/new" 
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 border border-emerald-500/50 rounded-xl font-semibold text-white transition-all duration-200 hover:from-emerald-500 hover:to-teal-500 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 border border-slate-500/50 rounded-xl font-semibold text-white transition-all duration-200 hover:from-slate-500 hover:to-slate-600 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
               >
                 Create Your First Game
               </Link>
@@ -894,7 +886,7 @@ export default function Hub(){
                   <div key={g.id} className="group relative">
                     {/* Card Background */}
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/10 rounded-2xl transition-all duration-300 group-hover:from-white/10 group-hover:to-white/15"></div>
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/5 via-teal-600/5 to-green-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-600/5 via-slate-700/5 to-slate-800/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     
                     {/* Card Content */}
                     <div className="relative p-6 border border-white/10 rounded-2xl backdrop-blur-sm transition-all duration-300 group-hover:border-white/20 group-hover:shadow-2xl">
@@ -904,7 +896,7 @@ export default function Hub(){
                           <div className="flex items-center gap-2 mb-1">
                             <h4 className="font-bold text-white text-lg">vs {g.opponent}</h4>
                             {isRecent && (
-                              <span className="px-2 py-0.5 bg-emerald-500/20 border border-emerald-400/30 rounded-full text-xs text-emerald-300 font-medium">
+                              <span className="px-2 py-0.5 bg-slate-500/20 border border-slate-400/30 rounded-full text-xs text-slate-300 font-medium">
                                 Recent
                               </span>
                             )}
@@ -922,22 +914,62 @@ export default function Hub(){
                         {/* Status Badge */}
                         <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${
                           g.status === 'live' 
-                            ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300'
+                            ? 'bg-slate-500/20 border-slate-400/40 text-slate-300'
                             : g.status === 'final'
                             ? 'bg-blue-500/20 border-blue-400/40 text-blue-300'
                             : 'bg-amber-500/20 border-amber-400/40 text-amber-300'
                         }`}>
                           <div className={`w-2 h-2 rounded-full ${
-                            g.status === 'live' ? 'bg-emerald-400 animate-pulse' :
+                            g.status === 'live' ? 'bg-slate-400 animate-pulse' :
                             g.status === 'final' ? 'bg-blue-400' : 'bg-amber-400'
                           }`}></div>
                           {g.status.toUpperCase()}
                         </div>
                       </div>
+
+                      {/* Score Section - Enhanced for Finals */}
+                      {g.status === 'final' && (
+                        <div className="mb-4 p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                          <div className="text-xs text-white/60 mb-2 tracking-widest font-semibold uppercase">Final Score</div>
+                          <div className="flex items-center justify-between">
+                            <div className="text-center">
+                              <div className="text-sm text-white/70">Home</div>
+                              <div className="text-2xl font-bold text-white">--</div>
+                            </div>
+                            <div className="text-white/40 text-xs">VS</div>
+                            <div className="text-center">
+                              <div className="text-sm text-white/70">{g.opponent}</div>
+                              <div className="text-2xl font-bold text-white">--</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Top Performers - Enhanced */}
+                      <div className="mb-4 p-4 bg-slate-900/40 rounded-xl border border-slate-800/50">
+                        <div className="text-xs text-white/60 mb-3 tracking-widest font-semibold uppercase">Top Possession Getters</div>
+                        <div className="space-y-2">
+                          {[1, 2, 3].map(rank => (
+                            <div key={rank} className="flex items-center justify-between p-2 bg-slate-800/30 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className="w-6 h-6 rounded-full bg-slate-600/40 flex items-center justify-center text-xs font-bold text-white/80">
+                                  {rank}
+                                </div>
+                                <div className="text-sm font-medium text-white/90">
+                                  Player {rank}
+                                </div>
+                              </div>
+                              <div className="text-sm font-bold text-white/80 tabular-nums">
+                                --
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                       
                       {/* Venue */}
-                      <div className="flex items-center gap-2 mb-6 text-sm text-white/60">
-                        <span>{g.venue}</span>
+                      <div className="flex items-center gap-2 mb-4 text-sm text-white/60 bg-slate-800/20 rounded-lg p-2">
+                        <span className="font-medium">{g.venue}</span>
                       </div>
                       
                       {/* Actions */}
@@ -949,7 +981,7 @@ export default function Hub(){
                           Open Game
                         </button>
                         <Link 
-                          className="flex-1 px-3 py-2 bg-gradient-to-r from-emerald-600/20 to-teal-600/30 hover:from-emerald-500/30 hover:to-teal-500/40 border border-emerald-500/30 rounded-lg font-medium text-sm text-white transition-all duration-200 hover:scale-105 active:scale-95 text-center" 
+                          className="flex-1 px-3 py-2 bg-gradient-to-r from-slate-600/20 to-slate-700/30 hover:from-slate-500/30 hover:to-slate-600/40 border border-slate-500/30 rounded-lg font-medium text-sm text-white transition-all duration-200 hover:scale-105 active:scale-95 text-center" 
                           to={`/summary/${g.id}`}
                         >
                           Stats
