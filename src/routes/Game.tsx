@@ -431,10 +431,10 @@ export default function Game(){
 
   // LOCK selection in single player mode - prevent any selection changes
   useEffect(() => {
-    if (singlePlayerMode && singlePlayerNumber > 0) {
+    if (singlePlayerMode && singlePlayerNumber > 0 && sel?.num !== singlePlayerNumber) {
       setSel({ side: 'home', num: singlePlayerNumber })
     }
-  }, [sel, singlePlayerMode, singlePlayerNumber])
+  }, [singlePlayerMode, singlePlayerNumber]) // Remove sel from dependencies to prevent infinite loop
 
   // Detect single player mode from URL and localStorage
   useEffect(() => {
@@ -835,39 +835,69 @@ export default function Game(){
             />
           )}
         </div>
-        <div className="relative z-10 flex items-center justify-between gap-4 max-w-[1100px] mx-auto">
-          {/* Left: Home team logo and score */}
-          <div className={`relative overflow-hidden flex items-center gap-3 md:gap-4 flex-none ${hdrCompact ? 'w-[200px]' : 'w-[240px]'} text-center`}>
-            {/* Score block */}
-            <div className="relative z-10 flex flex-col justify-center items-center flex-1 text-center">
-              <div className="text-[11px] md:text-sm opacity-70 -mb-0.5 text-center">{homeTeamName || "Home"}</div>
-              <ScoreGlow value={totalScores.home.pts} compact={hdrCompact} />
-              <div className="text-[10px] md:text-xs opacity-70 whitespace-nowrap">| {fmtBreak(quarterScores.home)} |</div>
+        <div className={`relative z-10 flex items-center ${singlePlayerMode ? 'justify-center' : 'justify-between'} gap-4 max-w-[1100px] mx-auto`}>
+          {/* Left: Home team logo and score - HIDDEN in single player mode */}
+          {!singlePlayerMode && (
+            <div className={`relative overflow-hidden flex items-center gap-3 md:gap-4 flex-none ${hdrCompact ? 'w-[200px]' : 'w-[240px]'} text-center`}>
+              {/* Score block */}
+              <div className="relative z-10 flex flex-col justify-center items-center flex-1 text-center">
+                <div className="text-[11px] md:text-sm opacity-70 -mb-0.5 text-center">{homeTeamName || "Home"}</div>
+                <ScoreGlow value={totalScores.home.pts} compact={hdrCompact} />
+                <div className="text-[10px] md:text-xs opacity-70 whitespace-nowrap">| {fmtBreak(quarterScores.home)} |</div>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Center: meta (title + clock + controls) OR single player stats */}
           <div className={`flex-1 flex flex-col items-center justify-center ${hdrCompact ? 'min-h-[72px]' : 'min-h-[132px]'}`}>
             {/* Single Player Mode Header */}
-            {singlePlayerMode && singlePlayerTotals && (
-              <div className="text-center space-y-2">
+            {singlePlayerMode && (
+              <div className="text-center space-y-3">
+                {/* Navigation buttons for single player mode */}
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Link
+                    to="/hub"
+                    className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-[13px] transition-all hover:shadow-[0_0_12px_rgba(110,231,183,0.3)]"
+                    aria-label="Back to Hub"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-80">
+                      <path d="M3 11.5L12 5l9 6.5M5 10v9a1 1 0 001 1h3a1 1 0 001-1v-4h2v4a1 1 0 001 1h3a1 1 0 001-1v-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span>Hub</span>
+                  </Link>
+                  <Link
+                    to={`/summary/${gameId}`}
+                    className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-[13px] transition-all hover:shadow-[0_0_12px_rgba(110,231,183,0.3)]"
+                    aria-label="Stats Summary"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-80">
+                      <path d="M5 21V10m7 11V3m7 18v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    <span>Summary</span>
+                  </Link>
+                </div>
+                
                 {/* Player Name */}
                 <div className={`font-semibold text-white ${hdrCompact ? 'text-lg' : 'text-2xl'}`}>
                   #{singlePlayerNumber} {singlePlayerName}
                 </div>
+                
                 {/* Total Disposals - Highlighted */}
-                <div className="flex items-center justify-center gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className={`font-bold text-emerald-400 ${hdrCompact ? 'text-3xl' : 'text-5xl'}`}>
-                      {singlePlayerTotals['D' as StatKey] || 0}
-                    </div>
-                    <div className={`text-emerald-300/80 font-medium ${hdrCompact ? 'text-xs' : 'text-sm'}`}>
-                      DISPOSALS
+                {singlePlayerTotals && (
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className={`font-bold text-emerald-400 ${hdrCompact ? 'text-3xl' : 'text-5xl'}`}>
+                        {singlePlayerTotals['D' as StatKey] || 0}
+                      </div>
+                      <div className={`text-emerald-300/80 font-medium ${hdrCompact ? 'text-xs' : 'text-sm'}`}>
+                        DISPOSALS
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+                
                 {/* Key Stats Summary */}
-                {!hdrCompact && (
+                {!hdrCompact && singlePlayerTotals && (
                   <div className="flex items-center justify-center gap-4 text-sm opacity-80">
                     <span>K: {singlePlayerTotals.K || 0}</span>
                     <span>HB: {singlePlayerTotals.HB || 0}</span>
@@ -879,7 +909,7 @@ export default function Game(){
                 )}
               </div>
             )}
-            {/* Normal header - Wide toolbar only when not compact and not single player mode */}
+            {/* Normal header - Wide toolbar and timer only when NOT single player mode */}
             {!singlePlayerMode && !hdrCompact && (
               <div className="mb-2 w-full max-w-[760px]">
                 <div className="flex items-center justify-center gap-2">
@@ -928,24 +958,27 @@ export default function Game(){
                 </div>
               </div>
             )}
-            <div className={`flex items-center justify-center ${hdrCompact ? 'gap-2 md:gap-3' : 'gap-3 md:gap-4'} leading-none`}>
-              <div className={`${hdrCompact ? 'sr-only' : 'text-sm md:text-base opacity-80 leading-none'}`}>Live — {segLabel}</div>
-              <div className={`px-3 py-1 rounded-full text-sm font-medium border leading-none ${running ? 'bg-green-500/20 border-green-400/40 text-green-200' : 'bg-white/10 border-white/20 text-white/90'}`}>
-                {formatClock(elapsed)}
-              </div>
-              <button onClick={handleStartStop}
-                className={`px-3 py-1 rounded-md text-sm font-medium border transition leading-none ${running ? 'bg-red-500/20 border-red-400/40 hover:bg-red-500/30' : 'bg-emerald-500/20 border-emerald-400/40 hover:bg-emerald-500/30'}`}>
-                {hdrCompact ? (
-                  running ? (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+            {/* Timer and controls - ONLY for non-single player mode */}
+            {!singlePlayerMode && (
+              <div className={`flex items-center justify-center ${hdrCompact ? 'gap-2 md:gap-3' : 'gap-3 md:gap-4'} leading-none`}>
+                <div className={`${hdrCompact ? 'sr-only' : 'text-sm md:text-base opacity-80 leading-none'}`}>Live — {segLabel}</div>
+                <div className={`px-3 py-1 rounded-full text-sm font-medium border leading-none ${running ? 'bg-green-500/20 border-green-400/40 text-green-200' : 'bg-white/10 border-white/20 text-white/90'}`}>
+                  {formatClock(elapsed)}
+                </div>
+                <button onClick={handleStartStop}
+                  className={`px-3 py-1 rounded-md text-sm font-medium border transition leading-none ${running ? 'bg-red-500/20 border-red-400/40 hover:bg-red-500/30' : 'bg-emerald-500/20 border-emerald-400/40 hover:bg-emerald-500/30'}`}>
+                  {hdrCompact ? (
+                    running ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M8 5l12 7-12 7V5z" fill="currentColor"/></svg>
+                    )
                   ) : (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M8 5l12 7-12 7V5z" fill="currentColor"/></svg>
-                  )
-                ) : (
-                  running ? 'Stop' : 'Start quarter'
-                )}
-              </button>
-            </div>
+                    running ? 'Stop' : 'Start quarter'
+                  )}
+                </button>
+              </div>
+            )}
 
             {/* Quarter tabs (centered) – fixed height so the header doesn't jump */}
             <div className="mt-3 flex items-center justify-center">
@@ -983,15 +1016,17 @@ export default function Game(){
             </div>
           </div>
 
-          {/* Right: Away team score and logo */}
-          <div className={`relative overflow-hidden flex items-center gap-3 md:gap-4 flex-none ${hdrCompact ? 'w-[200px]' : 'w-[240px]'} justify-end text-center`}>
-            {/* Score block */}
-            <div className="relative z-10 flex flex-col justify-center items-center flex-1 text-center">
-              <div className="text-[11px] md:text-sm opacity-70 -mb-0.5 text-center">{awayTeamName || "Away"}</div>
-              <ScoreGlow value={totalScores.away.pts} compact={hdrCompact} />
-              <div className="text-[10px] md:text-xs opacity-70 whitespace-nowrap">| {fmtBreak(quarterScores.away)} |</div>
+          {/* Right: Away team score and logo - HIDDEN in single player mode */}
+          {!singlePlayerMode && (
+            <div className={`relative overflow-hidden flex items-center gap-3 md:gap-4 flex-none ${hdrCompact ? 'w-[200px]' : 'w-[240px]'} justify-end text-center`}>
+              {/* Score block */}
+              <div className="relative z-10 flex flex-col justify-center items-center flex-1 text-center">
+                <div className="text-[11px] md:text-sm opacity-70 -mb-0.5 text-center">{awayTeamName || "Away"}</div>
+                <ScoreGlow value={totalScores.away.pts} compact={hdrCompact} />
+                <div className="text-[10px] md:text-xs opacity-70 whitespace-nowrap">| {fmtBreak(quarterScores.away)} |</div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
         </div>
       </div>
@@ -1018,30 +1053,32 @@ export default function Game(){
       )}
 
       {singlePlayerMode ? (
-        /* Single Player Mode Layout */
-        <div className="max-w-2xl mx-auto">
+        /* Single Player Mode Layout - Mobile Optimized */
+        <div className="max-w-2xl mx-auto px-2 sm:px-4">
           <div className="card mb-4">
-            <div className="text-center mb-4">
-              <h3 className="text-xl font-semibold">#{singlePlayerNumber} {singlePlayerName}</h3>
-              <p className="text-sm opacity-70">Single Player Tracking - {segLabel}</p>
+            {/* Player Info Header - Mobile Optimized */}
+            <div className="text-center mb-4 px-2 sm:px-4">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-semibold">#{singlePlayerNumber} {singlePlayerName}</h3>
+              <p className="text-xs sm:text-sm opacity-70 mt-1">Single Player Tracking - {segLabel}</p>
             </div>
             
+            {/* Last Action - Mobile Optimized */}
             {lastHomeSelectedEvt && (
-              <div className="mb-4 flex items-center justify-between rounded-md border border-white/10 bg-white/5 px-3 py-2">
-                <div className="text-sm opacity-80">
+              <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-md border border-white/10 bg-white/5 p-3 gap-2 sm:gap-0">
+                <div className="text-xs sm:text-sm opacity-80">
                   Last: <span className="font-semibold">{lastHomeSelectedEvt.stat_key}</span>
                   <span className="opacity-60"> · Q{lastHomeSelectedEvt.quarter}</span>
-                  <span className="opacity-60"> · {new Date(lastHomeSelectedEvt.timestamp_ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="opacity-60 hidden sm:inline"> · {new Date(lastHomeSelectedEvt.timestamp_ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 <button
-                  className="h-7 px-2.5 rounded-md border border-white/15 bg-white/10 hover:bg-white/15 text-sm"
+                  className="h-8 sm:h-7 px-3 sm:px-2.5 rounded-md border border-white/15 bg-white/10 hover:bg-white/15 text-xs sm:text-sm min-w-[60px] touch-manipulation"
                   onClick={() => undoById(lastHomeSelectedEvt.id)}
                   title="Undo last action"
                 >Undo</button>
               </div>
             )}
 
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4 mb-4">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3 md:p-4 mb-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="text-sm opacity-80">Record Stat</div>
                 <button
@@ -1050,7 +1087,137 @@ export default function Game(){
                   title="How this works"
                 >?</button>
               </div>
-              <StatPad onLog={log} />
+              {/* Base stat grid with full system - Mobile Optimized */}
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-x-2 sm:gap-x-2.5 md:gap-x-3 gap-y-2 md:gap-y-2.5 auto-rows-[4.8rem] sm:auto-rows-[5.2rem] md:auto-rows-[5.6rem]">
+                {/* Kick */}
+                <button className={`stat-tile k relative overflow-hidden`} onClick={(e)=>{ const btn=e.currentTarget; const r=btn.querySelector('.ripple') as HTMLSpanElement; if(r){r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; } setQBase('K' as StatKey); log('K' as StatKey); setQStage('pos'); }}>
+                  <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                  <div className="stat-title">Kick</div><div></div><div className="stat-key">K</div>
+                </button>
+                {/* Handball */}
+                <button className={`stat-tile hb relative overflow-hidden`} onClick={(e)=>{ const btn=e.currentTarget; const r=btn.querySelector('.ripple') as HTMLSpanElement; if(r){r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; } setQBase('HB' as StatKey); log('HB' as StatKey); setQStage('pos'); }}>
+                  <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                  <div className="stat-title">Handball</div><div></div><div className="stat-key">HB</div>
+                </button>
+                {/* Mark */}
+                <button className={`stat-tile m relative overflow-hidden`} onClick={(e)=>{ const btn=e.currentTarget; const r=btn.querySelector('.ripple') as HTMLSpanElement; if(r){r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; } setQBase('M' as StatKey); log('M' as StatKey); setQStage('pos'); }}>
+                  <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                  <div className="stat-title">Mark</div><div></div><div className="stat-key">M</div>
+                </button>
+                {/* Tackle */}
+                <button className={`stat-tile t relative overflow-hidden`} onClick={(e)=>{ const btn=e.currentTarget; const r=btn.querySelector('.ripple') as HTMLSpanElement; if(r){r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; } setQBase('T' as StatKey); log('T' as StatKey); setQBase(null); setQStage('idle'); }}>
+                  <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                  <div className="stat-title">Tackle</div><div></div><div className="stat-key">T</div>
+                </button>
+                {/* Goal */}
+                <button className={`stat-tile g relative overflow-hidden`} onClick={(e)=>{ const btn=e.currentTarget; const r=btn.querySelector('.ripple') as HTMLSpanElement; if(r){r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; } setQBase('G' as StatKey); log('G' as StatKey); setQBase(null); setQStage('idle'); }}>
+                  <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                  <div className="stat-title">Goal</div><div></div><div className="stat-key">G</div>
+                </button>
+                {/* Behind */}
+                <button className={`stat-tile bh relative overflow-hidden`} onClick={(e)=>{ const btn=e.currentTarget; const r=btn.querySelector('.ripple') as HTMLSpanElement; if(r){r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; } setQBase('B' as StatKey); log('B' as StatKey); setQBase(null); setQStage('idle'); }}>
+                  <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                  <div className="stat-title">Behind</div><div></div><div className="stat-key">B</div>
+                </button>
+                {/* Free For */}
+                <button className={`stat-tile ff relative overflow-hidden`} onClick={(e)=>{ const btn=e.currentTarget; const r=btn.querySelector('.ripple') as HTMLSpanElement; if(r){r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; } setQBase('FF' as StatKey); log('FF' as StatKey); setQBase(null); setQStage('idle'); }}>
+                  <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                  <div className="stat-title">Free For</div><div></div><div className="stat-key">FF</div>
+                </button>
+                {/* Free Against */}
+                <button className={`stat-tile fa relative overflow-hidden`} onClick={(e)=>{ const btn=e.currentTarget; const r=btn.querySelector('.ripple') as HTMLSpanElement; if(r){r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; } setQBase('FA' as StatKey); log('FA' as StatKey); setQBase(null); setQStage('idle'); }}>
+                  <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                  <div className="stat-title">Free Against</div><div></div><div className="stat-key">FA</div>
+                </button>
+                {/* Clearance */}
+                <button className={`stat-tile cl relative overflow-hidden`} onClick={(e)=>{ const btn=e.currentTarget; const r=btn.querySelector('.ripple') as HTMLSpanElement; if(r){r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; } setQBase('CL' as StatKey); log('CL' as StatKey); setQBase(null); setQStage('idle'); }}>
+                  <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                  <div className="stat-title">Clearance</div><div></div><div className="stat-key">CL</div>
+                </button>
+                {/* Inside 50 */}
+                <button className={`stat-tile i50 relative overflow-hidden`} onClick={(e)=>{ const btn=e.currentTarget; const r=btn.querySelector('.ripple') as HTMLSpanElement; if(r){r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; } setQBase('I50' as StatKey); log('I50' as StatKey); setQBase(null); setQStage('idle'); }}>
+                  <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                  <div className="stat-title">Inside 50</div><div></div><div className="stat-key">I50</div>
+                </button>
+                {/* Rebound 50 */}
+                <button className={`stat-tile r50 relative overflow-hidden`} onClick={(e)=>{ const btn=e.currentTarget; const r=btn.querySelector('.ripple') as HTMLSpanElement; if(r){r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; } setQBase('R50' as StatKey); log('R50' as StatKey); setQBase(null); setQStage('idle'); }}>
+                  <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                  <div className="stat-title">Rebound 50</div><div></div><div className="stat-key">R50</div>
+                </button>
+                {/* Hitout */}
+                <button className={`stat-tile ho relative overflow-hidden`} onClick={(e)=>{ const btn=e.currentTarget; const r=btn.querySelector('.ripple') as HTMLSpanElement; if(r){r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; } setQBase('HO' as StatKey); log('HO' as StatKey); setQBase(null); setQStage('idle'); }}>
+                  <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                  <div className="stat-title">Hitout</div><div></div><div className="stat-key">HO</div>
+                </button>
+              </div>
+
+              {/* Modifier row below the grid */}
+              <div className="mt-3 grid grid-cols-5 gap-2">
+                {(['GBG','CON','UC','EF','IF'] as const).map((key) => {
+                  const label = key === 'IF' ? 'IN-EF' : key
+                  let variant = 'bg-white/10 border-white/20 text-white/90 hover:bg-white/15'
+                  if (key === 'EF') variant = 'bg-green-400/20 border-green-400/40 text-green-100'
+                  if (key === 'IF') variant = 'bg-red-400/20 border-red-400/40 text-red-100'
+
+                  const isBaseThatCanModify = (b: StatKey | null): b is StatKey => !!b && (b==='K'||b==='HB'||b==='M')
+
+                  const active = (
+                    (key === 'GBG' && qStage === 'gbg') ||
+                    ((key === 'CON' || key === 'UC') && qStage === 'pos' && isBaseThatCanModify(qBase)) ||
+                    ((key === 'EF' || key === 'IF') && qStage === 'eff' && (qBase === 'K' || qBase === 'HB'))
+                  )
+
+                  const glow = active ? 'ring-2 ring-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.6)]' : 'opacity-50'
+
+                  return (
+                    <button
+                      key={key}
+                      className={`relative overflow-hidden h-10 rounded-md border text-sm font-semibold tracking-wide transition ${variant} ${glow} ${!active ? 'pointer-events-none opacity-50' : ''} focus:outline-none`}
+                      onClick={(e)=>{
+                        if (!active) return
+                        const btn=e.currentTarget as HTMLButtonElement
+                        const r=btn.querySelector('.ripple') as HTMLSpanElement
+                        if(r){ r.classList.remove('show'); void r.offsetWidth; r.classList.add('show'); const rect=btn.getBoundingClientRect(); const s=Math.max(rect.width,rect.height); const x=(e as any).clientX-rect.left-s/2; const y=(e as any).clientY-rect.top-s/2; r.style.left=`${x}px`; r.style.top=`${y}px`; r.style.width=r.style.height=`${s}px`; }
+
+                        if (key==='GBG') {
+                          log('GBG' as unknown as StatKey)
+                          // stay on current stage
+                        } else if (key==='CON' || key==='UC') {
+                          if (qBase === 'M') {
+                            // Marks: record MC/MUC; do not increment generic CON/UC
+                            const markKey = (key === 'CON' ? 'MC' : 'MUC') as StatKey
+                            log(markKey)
+                            setQBase(null)
+                            setQStage('idle')
+                          } else {
+                            // K/HB path: possession first, then effectiveness
+                            log(key as StatKey)
+                            setQStage('eff')
+                          }
+                        } else if (key==='EF' || key==='IF') {
+                          const base = qBase
+                          if (base === 'K' || base === 'HB') {
+                            const combined = `${base}_${key}` as unknown as StatKey
+                            log(combined)
+                          }
+                          setQBase(null); setQStage('idle')
+                        }
+                        // --- Add flash animation to modifier toggle ---
+                        const wrap = btn.closest('.rounded-xl') as HTMLElement | null
+                        if (wrap){
+                          wrap.classList.remove('flash-stats')
+                          void wrap.offsetWidth
+                          wrap.classList.add('flash-stats')
+                          setTimeout(()=>wrap.classList.remove('flash-stats'), 450)
+                        }
+                      }}
+                    >
+                      <span className="ripple pointer-events-none absolute rounded-full opacity-30 bg-white/80"></span>
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>
