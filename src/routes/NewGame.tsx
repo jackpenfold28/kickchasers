@@ -16,6 +16,9 @@ export default function NewGame(){
   const [venue,setVenue]=useState('Home')
   const [quarterLength,setQuarterLength]=useState(20)
   const [trackBoth,setTrackBoth]=useState(false)
+  const [gameMode,setGameMode]=useState<'team'|'single_player'>('team') // New game mode state
+  const [playerName,setPlayerName]=useState('')
+  const [playerNumber,setPlayerNumber]=useState('')
 
   const [oppLogoUploading, setOppLogoUploading] = useState(false)
   const [oppLogoPath, setOppLogoPath] = useState('')
@@ -91,6 +94,19 @@ export default function NewGame(){
   }
 
   async function save(){
+    // Validation for single player mode
+    if(gameMode === 'single_player'){
+      if(!playerName.trim()){
+        alert('Please enter the player name.');
+        return;
+      }
+      const parsedNumber = parseInt(playerNumber.trim(), 10);
+      if(!playerNumber.trim() || isNaN(parsedNumber) || parsedNumber <= 0){
+        alert('Please enter a valid player jersey number (must be a positive number).');
+        return;
+      }
+    }
+
     // Ensure homeTeamId is resolved from homeTeamText if empty
     let resolvedHomeTeamId = homeTeamId;
     if(!resolvedHomeTeamId){
@@ -113,8 +129,8 @@ export default function NewGame(){
       quarter_length:quarterLength,
       created_by:user.user?.id,
       status:'live',
-      away_team_name:trackBoth?opponent:null,
-      track_both_teams: trackBoth,
+      away_team_name:(gameMode === 'team' && trackBoth)?opponent:null,
+      track_both_teams: gameMode === 'team' ? trackBoth : false,
     }
     if(oppLogoPath) payload.opponent_logo_path = oppLogoPath
 
@@ -146,10 +162,36 @@ export default function NewGame(){
 
     const id = (result.data?.id || gameId) as string;
 
-    // Persist & navigate
-    try { localStorage.setItem(`game:trackBoth:${id}`, trackBoth ? '1' : '0') } catch {}
-    const qs = trackBoth ? '1' : '0'
-    nav(`/setup/${id}?both=${qs}`)
+    // Handle single player mode
+    if(gameMode === 'single_player'){
+      // Create single player record
+      const playerPayload = {
+        game_id: id,
+        team_side: 'home',
+        name: playerName.trim(),
+        number: parseInt(playerNumber, 10)
+      };
+
+      const { error: playerError } = await supabase
+        .from('game_players')
+        .insert(playerPayload);
+
+      if(playerError){
+        alert('Failed to create player: ' + playerError.message);
+        return;
+      }
+
+      // Navigate directly to game with single player mode
+      try { localStorage.setItem(`game:singlePlayer:${id}`, '1') } catch {}
+      try { localStorage.setItem(`game:playerName:${id}`, playerName.trim()) } catch {}
+      try { localStorage.setItem(`game:playerNumber:${id}`, playerNumber) } catch {}
+      nav(`/game/${id}?mode=single_player&player=${encodeURIComponent(playerName.trim())}&number=${playerNumber}`)
+    } else {
+      // Team mode - original flow
+      try { localStorage.setItem(`game:trackBoth:${id}`, trackBoth ? '1' : '0') } catch {}
+      const qs = trackBoth ? '1' : '0'
+      nav(`/setup/${id}?both=${qs}`)
+    }
   }
 
   return (
@@ -228,14 +270,73 @@ export default function NewGame(){
             <Input type="number" value={quarterLength} onChange={e=>setQuarterLength(parseInt(e.target.value||'20',10))} />
           </div>
 
-          {/* Track both */}
-          <div className="flex items-center gap-3 pt-1">
-            <input id="track-both" type="checkbox" className="scale-110" checked={trackBoth} onChange={e=>setTrackBoth(e.target.checked)}/>
-            <label htmlFor="track-both" className="text-[13px] text-white/80">Track both teams in‑game</label>
+          {/* Game Mode Selection */}
+          <div className="col-span-full space-y-3">
+            <label className="text-xs uppercase tracking-wider text-white/70">Game Mode</label>
+            <div className="flex flex-col gap-3">
+              {/* Team Mode */}
+              <div className="flex items-center gap-3">
+                <input 
+                  id="mode-team" 
+                  type="radio" 
+                  name="gameMode" 
+                  className="scale-110" 
+                  checked={gameMode === 'team'} 
+                  onChange={() => setGameMode('team')}
+                />
+                <label htmlFor="mode-team" className="text-[13px] text-white/80">Track Team</label>
+              </div>
+              
+              {/* Single Player Mode */}
+              <div className="flex items-center gap-3">
+                <input 
+                  id="mode-single" 
+                  type="radio" 
+                  name="gameMode" 
+                  className="scale-110" 
+                  checked={gameMode === 'single_player'} 
+                  onChange={() => setGameMode('single_player')}
+                />
+                <label htmlFor="mode-single" className="text-[13px] text-white/80">Track Single Player</label>
+              </div>
+            </div>
+            
+            {/* Team mode sub-option */}
+            {gameMode === 'team' && (
+              <div className="ml-6 space-y-2">
+                <div className="flex items-center gap-3">
+                  <input id="track-both" type="checkbox" className="scale-110" checked={trackBoth} onChange={e=>setTrackBoth(e.target.checked)}/>
+                  <label htmlFor="track-both" className="text-[12px] text-white/70">Track both teams in‑game</label>
+                </div>
+                <p className="text-[10px] text-white/50">
+                  When off, only your squad is shown with a simple opponent score tracker.
+                </p>
+              </div>
+            )}
+            
+            {/* Single Player inputs */}
+            {gameMode === 'single_player' && (
+              <div className="ml-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-wider text-white/70">Player Name</label>
+                  <Input 
+                    value={playerName} 
+                    onChange={e=>setPlayerName(e.target.value)} 
+                    placeholder="e.g. John Smith"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs uppercase tracking-wider text-white/70">Jersey Number</label>
+                  <Input 
+                    type="number" 
+                    value={playerNumber} 
+                    onChange={e=>setPlayerNumber(e.target.value)} 
+                    placeholder="e.g. 15"
+                  />
+                </div>
+              </div>
+            )}
           </div>
-          <p className="text-[11px] text-white/50">
-            When off, only your squad is shown with a simple opponent score tracker.
-          </p>
         </div>
 
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -44,6 +44,9 @@ export default function Game(){
   const [awayTeamLogo, setAwayTeamLogo] = useState<string | undefined>(undefined)
   // --- Single/dual team tracking state
   const [bothTeams, setBothTeams] = useState(true)
+  const [singlePlayerMode, setSinglePlayerMode] = useState(false)
+  const [singlePlayerName, setSinglePlayerName] = useState<string>('')
+  const [singlePlayerNumber, setSinglePlayerNumber] = useState<number>(0)
   const [oppScoreNote, setOppScoreNote] = useState<string>('') // unused, for extensibility
   const [authWarning, setAuthWarning] = useState<string | null>(null)
 
@@ -414,29 +417,72 @@ export default function Game(){
     })()
   }, [gameId, location.search])
 
-  // Ensure selection stays on home in single‑team mode
+  // Ensure selection stays on home in single‑team mode and LOCK to single player in single player mode
   useEffect(() => {
-    if (!bothTeams) {
-      setSel(prev => (prev && prev.side === 'home') ? prev : (home[0] ? { side: 'home', num: home[0].number } : null))
+    if (!bothTeams || singlePlayerMode) {
+      if (singlePlayerMode && singlePlayerNumber > 0) {
+        // Auto-select the single player and LOCK selection
+        setSel({ side: 'home', num: singlePlayerNumber })
+      } else {
+        setSel(prev => (prev && prev.side === 'home') ? prev : (home[0] ? { side: 'home', num: home[0].number } : null))
+      }
     }
-  }, [bothTeams, home])
+  }, [bothTeams, home, singlePlayerMode, singlePlayerNumber])
 
-  // If there are no away players at all, fall back to single‑team view
+  // LOCK selection in single player mode - prevent any selection changes
   useEffect(() => {
-    if (away.length === 0) {
+    if (singlePlayerMode && singlePlayerNumber > 0) {
+      setSel({ side: 'home', num: singlePlayerNumber })
+    }
+  }, [sel, singlePlayerMode, singlePlayerNumber])
+
+  // Detect single player mode from URL and localStorage
+  useEffect(() => {
+    if (!gameId) return
+    
+    // Check URL parameters for single player mode
+    const urlParams = new URLSearchParams(location.search)
+    const modeParam = urlParams.get('mode')
+    const playerParam = urlParams.get('player')
+    const numberParam = urlParams.get('number')
+    
+    if (modeParam === 'single_player') {
+      setSinglePlayerMode(true)
+      setBothTeams(false)
+      if (playerParam) setSinglePlayerName(decodeURIComponent(playerParam))
+      if (numberParam) setSinglePlayerNumber(parseInt(numberParam, 10))
+    } else {
+      // Check localStorage for single player mode
+      try {
+        const singlePlayerPref = localStorage.getItem(`game:singlePlayer:${gameId}`)
+        if (singlePlayerPref === '1') {
+          setSinglePlayerMode(true)
+          setBothTeams(false)
+          const playerName = localStorage.getItem(`game:playerName:${gameId}`) || ''
+          const playerNumber = localStorage.getItem(`game:playerNumber:${gameId}`) || '0'
+          setSinglePlayerName(playerName)
+          setSinglePlayerNumber(parseInt(playerNumber, 10))
+        }
+      } catch {}
+    }
+  }, [gameId, location.search])
+
+  // If there are no away players at all, fall back to single‑team view (but not single player)
+  useEffect(() => {
+    if (away.length === 0 && !singlePlayerMode) {
       setBothTeams(false)
     }
-  }, [away.length])
+  }, [away.length, singlePlayerMode])
 
   // If away players later appear (e.g. dual‑team game), restore the user's preference (default: both teams)
   useEffect(() => {
-    if (away.length > 0) {
+    if (away.length > 0 && !singlePlayerMode) {
       let pref: string | null = null
       try { pref = localStorage.getItem(`game:trackBoth:${gameId}`) } catch {}
       const wantBoth = pref ? (pref === '1' || pref === 'true') : true
       if (wantBoth) setBothTeams(true)
     }
-  }, [away.length, gameId])
+  }, [away.length, gameId, singlePlayerMode])
 
   // Load + subscribe to events
   useEffect(()=>{ 
@@ -577,6 +623,20 @@ export default function Game(){
   }
   const th=useMemo(()=>totals('home', seg),[events, seg])
   const ta=useMemo(()=>totals('away', seg),[events, seg])
+  
+  // Single player totals
+  const singlePlayerTotals = useMemo(() => {
+    if (!singlePlayerMode || singlePlayerNumber === 0) return null
+    const playerEvents = events.filter(e => e.team_side === 'home' && e.player_number === singlePlayerNumber && (seg === 'TOTAL' || e.quarter === seg))
+    const playerTotals = Object.fromEntries(STAT_DEFS.map(s => [s.key, 0])) as Totals
+    for (const e of playerEvents) {
+      // @ts-ignore
+      playerTotals[e.stat_key] = (playerTotals[e.stat_key] ?? 0) + 1
+    }
+    // @ts-ignore
+    playerTotals['D' as StatKey] = (playerTotals['K' as StatKey] ?? 0) + (playerTotals['HB' as StatKey] ?? 0)
+    return playerTotals
+  }, [singlePlayerMode, singlePlayerNumber, events, seg])
 
   // -------- Live header helpers (score + clock) --------
   type Score = { g: number; b: number; pts: number }
@@ -786,10 +846,41 @@ export default function Game(){
             </div>
           </div>
 
-          {/* Center: meta (title + clock + controls) */}
+          {/* Center: meta (title + clock + controls) OR single player stats */}
           <div className={`flex-1 flex flex-col items-center justify-center ${hdrCompact ? 'min-h-[72px]' : 'min-h-[132px]'}`}>
-            {/* Wide toolbar only when not compact */}
-            {!hdrCompact && (
+            {/* Single Player Mode Header */}
+            {singlePlayerMode && singlePlayerTotals && (
+              <div className="text-center space-y-2">
+                {/* Player Name */}
+                <div className={`font-semibold text-white ${hdrCompact ? 'text-lg' : 'text-2xl'}`}>
+                  #{singlePlayerNumber} {singlePlayerName}
+                </div>
+                {/* Total Disposals - Highlighted */}
+                <div className="flex items-center justify-center gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className={`font-bold text-emerald-400 ${hdrCompact ? 'text-3xl' : 'text-5xl'}`}>
+                      {singlePlayerTotals['D' as StatKey] || 0}
+                    </div>
+                    <div className={`text-emerald-300/80 font-medium ${hdrCompact ? 'text-xs' : 'text-sm'}`}>
+                      DISPOSALS
+                    </div>
+                  </div>
+                </div>
+                {/* Key Stats Summary */}
+                {!hdrCompact && (
+                  <div className="flex items-center justify-center gap-4 text-sm opacity-80">
+                    <span>K: {singlePlayerTotals.K || 0}</span>
+                    <span>HB: {singlePlayerTotals.HB || 0}</span>
+                    <span>M: {singlePlayerTotals.M || 0}</span>
+                    <span>T: {singlePlayerTotals.T || 0}</span>
+                    <span>G: {singlePlayerTotals.G || 0}</span>
+                    <span>B: {singlePlayerTotals.B || 0}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Normal header - Wide toolbar only when not compact and not single player mode */}
+            {!singlePlayerMode && !hdrCompact && (
               <div className="mb-2 w-full max-w-[760px]">
                 <div className="flex items-center justify-center gap-2">
                   <Link
@@ -926,7 +1017,44 @@ export default function Game(){
         </div>
       )}
 
-      {bothTeams ? (
+      {singlePlayerMode ? (
+        /* Single Player Mode Layout */
+        <div className="max-w-2xl mx-auto">
+          <div className="card mb-4">
+            <div className="text-center mb-4">
+              <h3 className="text-xl font-semibold">#{singlePlayerNumber} {singlePlayerName}</h3>
+              <p className="text-sm opacity-70">Single Player Tracking - {segLabel}</p>
+            </div>
+            
+            {lastHomeSelectedEvt && (
+              <div className="mb-4 flex items-center justify-between rounded-md border border-white/10 bg-white/5 px-3 py-2">
+                <div className="text-sm opacity-80">
+                  Last: <span className="font-semibold">{lastHomeSelectedEvt.stat_key}</span>
+                  <span className="opacity-60"> · Q{lastHomeSelectedEvt.quarter}</span>
+                  <span className="opacity-60"> · {new Date(lastHomeSelectedEvt.timestamp_ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <button
+                  className="h-7 px-2.5 rounded-md border border-white/15 bg-white/10 hover:bg-white/15 text-sm"
+                  onClick={() => undoById(lastHomeSelectedEvt.id)}
+                  title="Undo last action"
+                >Undo</button>
+              </div>
+            )}
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm opacity-80">Record Stat</div>
+                <button
+                  onClick={() => setHelpOpen(true)}
+                  className="inline-flex items-center justify-center h-6 w-6 rounded-full border border-white/20 bg-white/10 text-xs hover:bg-white/15"
+                  title="How this works"
+                >?</button>
+              </div>
+              <StatPad onLog={log} />
+            </div>
+          </div>
+        </div>
+      ) : bothTeams ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <TeamCol
             title={homeTeamName || 'Home'}
