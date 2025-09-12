@@ -2,6 +2,51 @@ import { Link } from "react-router-dom"
 import { useEffect, useState } from "react"
 const authLink = (path: string) => `/login?next=${encodeURIComponent(path)}`
 
+// Icon components
+function BoltIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
+      <path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  )
+}
+function SparkleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
+      <path d="M12 3l2.5 5L20 11.5 15 14l-2.5 5L10 14 4 11.5 9.5 8 12 3z" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  )
+}
+function UsersIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
+      <path d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8zM20 21v-2a4 4 0 00-3-3.87" stroke="currentColor" strokeWidth="2"/>
+    </svg>
+  )
+}
+function ShareIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
+      <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+function DocumentIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+function DevicePhoneMobileIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
+      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
+      <line x1="12" y1="18" x2="12.01" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
 export default function Landing() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
   const [scrolled, setScrolled] = useState(false)
@@ -19,10 +64,11 @@ export default function Landing() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
   const gallery = [
-    { src: "/mockups/hub.png", caption: "Hub — manage games & sharing" },
-    { src: "/mockups/mobile-game.png", caption: "In‑game logging (mobile)" },
-    { src: "/mockups/live-viewer.png", caption: "Live viewer — share with fans" },
-    { src: "/mockups/summary.png", caption: "Post‑game summary & PDF export" }
+    { src: "/mockups/hub.png", caption: "Game Hub — Manage all your games, teams, and sharing settings in one place" },
+    { src: "/mockups/new-game.png", caption: "Quick Setup — Create new games in seconds with opponent, venue, and squad selection" },
+    { src: "/mockups/mobile-game.png", caption: "One-Tap Logging — Record disposals, contested/effectiveness, and scores instantly on mobile" },
+    { src: "/mockups/live-viewer.png", caption: "Live Sharing — Real-time viewer link for fans, parents, and committee members" },
+    { src: "/mockups/summary.png", caption: "Professional Reports — Complete stats summary with PDF export for post-game analysis" }
   ]
   const [idx, setIdx] = useState(0)
   const next = () => setIdx((i) => (i + 1) % gallery.length)
@@ -146,10 +192,10 @@ export default function Landing() {
                   <div className="p-3 text-xs opacity-80">Live viewer (read‑only link)</div>
                 </div>
 
-                {/* Mobile game UI mockup */}
+                {/* New Game creation mockup */}
                 <div className="rounded-xl border border-white/10 bg-slate-900/60 overflow-hidden transition transform hover:-translate-y-1 hover:shadow-2xl">
-                  <div className="aspect-[9/16] md:aspect-[10/16] mx-auto w-full bg-[url('/mockups/mobile-game.png')] bg-cover bg-top transition-transform duration-500 hover:scale-[1.02]" />
-                  <div className="p-3 text-xs opacity-80">In‑game logging (mobile)</div>
+                  <div className="aspect-[16/10] bg-[url('/mockups/new-game.png')] bg-cover bg-center transition-transform duration-500 hover:scale-[1.02]" />
+                  <div className="p-3 text-xs opacity-80">Quick game creation</div>
                 </div>
               </div>
 
@@ -171,19 +217,37 @@ export default function Landing() {
           <h2 className="text-2xl md:text-3xl font-bold">Built for game day</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             <Feature
-              title="One-tap stat logging"
-              text="Large, color-coded tiles with ripple feedback. K/HB flow captures contested & effectiveness without slowing you down."
+              title="Lightning-fast logging"
+              text="Record Kicks, Handballs, Marks, Tackles, Goals & Behinds with one tap. Modifiers (GBG, CON, UC, EF, IF) flow seamlessly without breaking rhythm."
               icon={<BoltIcon/>}
             />
             <Feature
-              title="Single or both teams"
-              text="Track your team only or mirror the UI to capture opponent quick stats alongside."
+              title="Flexible team modes"
+              text="Single player tracking with sleek athletic header, or dual-team mode to capture both sides. Switch modes anytime during the game."
               icon={<SparkleIcon/>}
             />
             <Feature
-              title="Squad & presets"
-              text="Load a full squad once, then auto-populate new games. Edit numbers and names mid-game if needed."
+              title="Smart squad management"
+              text="Save squads once, reuse forever. Auto-populate games with your regular lineup. Change numbers and names on-the-fly if needed."
               icon={<UsersIcon/>}
+            />
+          </div>
+          
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <Feature
+              title="Real-time sharing"
+              text="Generate instant viewer links for fans, parents, and committee. Live scores and stats update automatically—no downloads required."
+              icon={<ShareIcon/>}
+            />
+            <Feature
+              title="Professional exports"
+              text="PDF reports with detailed player stats, quarter breakdowns, and match summary. Export to Excel for further analysis."
+              icon={<DocumentIcon/>}
+            />
+            <Feature
+              title="Mobile-first design"
+              text="Optimized for touch with large stat tiles, responsive layout, and one-handed operation. Works perfectly on phones and tablets."
+              icon={<DevicePhoneMobileIcon/>}
             />
           </div>
         </div>
@@ -493,6 +557,28 @@ function UsersIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
       <path d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8zM20 21v-2a4 4 0 00-3-3.87" stroke="currentColor" strokeWidth="2"/>
+    </svg>
+  )
+}
+function ShareIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
+      <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+function DocumentIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+function DevicePhoneMobileIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-90">
+      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
+      <line x1="12" y1="18" x2="12.01" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
