@@ -11,10 +11,12 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',   // expose dev server to your local network (Wi‑Fi)
-    port: 5173,        // change if this port is taken
+    port: 5000,        // Replit requires port 5000 for frontend
     strictPort: true,  // fail instead of picking a random port
     cors: true,        // allow cross‑origin requests from LAN devices
-    // If HMR on iPad Safari has trouble, set hmr.host to your Mac's LAN IP:
-    // hmr: { host: '192.168.0.23' },
+    // Configure for Replit proxy setup
+    hmr: {
+      clientPort: 443, // Use HTTPS port for Replit
+    },
   },
 })
