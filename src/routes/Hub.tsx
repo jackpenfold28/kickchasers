@@ -473,253 +473,261 @@ export default function Hub(){
             </div>
           </div>
 
-          {/* Section title */}
-          <div className="mt-4 text-center">
-            <h2 className="text-lg font-bold text-white tracking-wide">
-              {activeTab==='games' ? 'Games' : activeTab==='team' ? `Season Averages${avgFilter!=='all' ? ` — ${avgFilter}` : ''}` : 'Season Leaders'}
-            </h2>
+        </div>
+      </div>
+
+      {/* Tab content with sliding transitions */}
+      <div className="relative overflow-hidden">
+        <div 
+          className="flex transition-transform duration-300 ease-out"
+          style={{ 
+            transform: `translateX(${activeTab === 'games' ? '0%' : activeTab === 'team' ? '-100%' : '-200%'})`,
+            width: '300%'
+          }}
+        >
+          {/* Games Tab Content */}
+          <div className="w-1/3 flex-shrink-0 space-y-5">
+            {/* Floating stat highlights */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Disposals / game */}
+              <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 text-white shadow-[0_6px_20px_rgba(56,189,248,.25)]">
+                <div className="text-[10px] sm:text-xs tracking-widest font-medium mb-1 uppercase/70">Disposals / Game</div>
+                <div className="text-2xl font-semibold tabular-nums drop-shadow-sm">{perGame.D.toFixed(1)}</div>
+              </div>
+              {/* Inside 50s / game */}
+              <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-violet-700 text-white shadow-[0_6px_20px_rgba(168,85,247,.25)]">
+                <div className="text-[10px] sm:text-xs tracking-widest font-medium mb-1 uppercase/70">Inside 50s / Game</div>
+                <div className="text-2xl font-semibold tabular-nums drop-shadow-sm">{perGame.I50.toFixed(1)}</div>
+              </div>
+              {/* Leader — Disposals */}
+              <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-emerald-400 via-teal-500 to-green-700 text-white shadow-[0_6px_20px_rgba(16,185,129,.25)]">
+                <div className="text-[10px] sm:text-xs tracking-widest font-medium mb-1 uppercase/70">Leader — Disposals</div>
+                <div className="flex items-baseline justify-between gap-2">
+                  <div className="font-medium truncate drop-shadow-sm">{(leadersByStat['D']?.[0]?.name) || '—'}</div>
+                  <div className="text-2xl font-semibold tabular-nums drop-shadow-sm">{leadersByStat['D']?.[0]?.total ?? '—'}</div>
+                </div>
+              </div>
+              {/* Leader — Tackles */}
+              <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-rose-400 via-red-500 to-amber-600 text-white shadow-[0_6px_20px_rgba(244,63,94,.25)]">
+                <div className="text-[10px] sm:text-xs tracking-widest font-medium mb-1 uppercase/70">Leader — Tackles</div>
+                <div className="flex items-baseline justify-between gap-2">
+                  <div className="font-medium truncate drop-shadow-sm">{(leadersByStat['T']?.[0]?.name) || '—'}</div>
+                  <div className="text-2xl font-semibold tabular-nums drop-shadow-sm">{leadersByStat['T']?.[0]?.total ?? '—'}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Previous Games Section */}
+            <section className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 sm:p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,.06)]">
+              <div className="flex items-center justify-between mb-3">
+                <div className="h2">Previous Games</div>
+                <div className="text-sm opacity-70">{games.length} total</div>
+              </div>
+              {loading && <div className="opacity-70">Loading…</div>}
+              {!loading && games.length===0 && <div className="opacity-70">No games yet.</div>}
+
+              <ul className="divide-y divide-white/10">
+                {games.map(g=>(
+                  <li key={g.id} className="py-3 px-2 rounded-xl transition-colors hover:bg-white/5 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="font-medium">{new Date(g.date).toLocaleDateString()} — vs {g.opponent}</div>
+                      <div className="text-sm opacity-70 flex items-center gap-2">
+                        <span>{g.venue}</span>
+                        <span className="inline-flex items-center gap-1">
+                          <span className={`inline-block size-1.5 rounded-full ${g.status==='live'?'bg-emerald-400':g.status==='final'?'bg-white/40':'bg-sky-400'}`} />
+                          {g.status.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-2">
+                        <button 
+                          className="btn btn-primary text-sm px-3 py-1.5" 
+                          onClick={()=>nav(`/game/${g.id}`)}
+                        >
+                          {g.status === 'live' ? 'Resume' : g.status === 'final' ? 'View' : 'Start'}
+                        </button>
+                        <Link 
+                          className="btn btn-secondary text-sm px-3 py-1.5" 
+                          to={`/summary/${g.id}`}
+                        >
+                          Summary
+                        </Link>
+                      </div>
+                      <div className="h-6 w-px bg-white/10 mx-1"></div>
+                      <button 
+                        className="btn btn-ghost hover:bg-red-600/60 text-sm px-2 py-1.5 text-red-400" 
+                        onClick={()=>onDelete(g.id)}
+                        title="Delete game"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </div>
+
+          {/* Team Averages Tab Content */}
+          <div className="w-1/3 flex-shrink-0 space-y-5">
+            <section className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 sm:p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,.06)]">
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <div className="tracking-widest text-xs text-white/80">SEASON AVERAGES</div>
+                <div className="flex items-center gap-3">
+                  <span className="px-2 py-1 rounded-full text-[11px] tabular-nums bg-white/5 ring-1 ring-white/10 text-white/80">
+                    {record.wins}–{record.losses}{record.draws?`–${record.draws}`:''}
+                  </span>
+                  <div className="inline-flex rounded-full overflow-hidden ring-1 ring-white/10">
+                    {(['all','wins','losses'] as const).map(k => (
+                      <button
+                        key={k}
+                        onClick={()=>setAvgFilter(k)}
+                        aria-pressed={avgFilter===k}
+                        className={`px-3 py-1 text-xs transition-colors ${
+                          avgFilter===k
+                            ? 'bg-gradient-to-r from-sky-500/30 to-purple-500/30 text-white ring-1 ring-white/20'
+                            : 'bg-white/[.04] hover:bg-white/[.08] text-white/70'
+                        }`}
+                      >
+                        {k.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+                {([
+                  ['D','DISPOSALS'],
+                  ['K','KICKS'],
+                  ['HB','HANDBALLS'],
+                  ['M','MARKS'],
+                  ['T','TACKLES'],
+                  ['G','GOALS'],
+                  ['B','BEHINDS'],
+                  ['I50','INSIDE 50S'],
+                  ['R50','REBOUND 50s'],
+                  ['CL','CLEARANCES'],
+                  ['FF','FREES FOR'],
+                  ['FA','FREES AGAINST'],
+                  ['AF','AFL FANTASY'],
+                ] as [keyof typeof perGame, string][]).map(([key,label])=> {
+                  const bgGradient =
+                    avgFilter==='wins' ? 'from-emerald-600 via-emerald-700 to-emerald-900'
+                  : avgFilter==='losses' ? 'from-rose-600 via-rose-700 to-rose-900'
+                  : (STAT_GRADIENTS[key] || 'from-slate-600 to-slate-800');
+
+                  let arrow: JSX.Element | null = null;
+                  if (avgFilter !== 'all') {
+                    const baseline = avgFilter==='wins' ? perGameLosses[key] : perGameWins[key];
+                    const cur = perGame[key];
+                    const EPS = 1e-6;
+                    if (baseline !== undefined) {
+                      if (cur - baseline > EPS) {
+                        arrow = <span className="ml-2 text-emerald-400 align-middle">▲</span>;
+                      } else if (baseline - cur > EPS) {
+                        arrow = <span className="ml-2 text-rose-400 align-middle">▼</span>;
+                      }
+                    }
+                  }
+                  return (
+                    <div
+                      key={key}
+                      className={`rounded-xl p-4 text-center ring-1 ring-white/15 text-white shadow-[0_6px_20px_rgba(0,0,0,.25)] bg-gradient-to-br ${bgGradient} `}
+                    >
+                      <div className="text-[10px] sm:text-xs tracking-widest font-semibold mb-1 uppercase drop-shadow">
+                        {label}
+                      </div>
+                      <div className="text-2xl font-bold tabular-nums drop-shadow-sm">
+                        {perGame[key].toFixed(1)}{arrow}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              {/* Advanced block */}
+              <div className="mt-4 mb-2 tracking-widest text-[10px] sm:text-xs text-white/70">ADVANCED</div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+                {([
+                  ['CON','CONTESTED'],
+                  ['UC','UNCONTESTED'],
+                  ['GBG','GBG'],
+                  ['MUC','MARKS UC'],
+                  ['MC','MARKS C'],
+                  ['KEF','KICKS EF'],
+                  ['KIF','KICKS IF'],
+                  ['HEF','HANDBALLS EF'],
+                  ['HIF','HANDBALLS IF'],
+                ] as [keyof typeof perGame, string][]).map(([key,label])=>{
+                  const bgGradient = (STAT_GRADIENTS as any)[key] || 'from-slate-600 to-slate-800';
+                  return (
+                    <div key={key} className={`rounded-xl p-4 text-center ring-1 ring-white/15 text-white shadow-[0_6px_20px_rgba(0,0,0,.25)] bg-gradient-to-br ${bgGradient}`}>
+                      <div className="text-[10px] sm:text-xs tracking-widest font-semibold mb-1 uppercase drop-shadow">{label}</div>
+                      <div className="text-2xl font-bold tabular-nums drop-shadow-sm">{(perGame as any)[key].toFixed(1)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+
+          {/* Player Leaders Tab Content */}
+          <div className="w-1/3 flex-shrink-0 space-y-5">
+            <section className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 sm:p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,.06)]">
+              <div className="mb-3 tracking-widest text-xs text-white/80">SEASON LEADERS</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {(['D','K','HB','M','T','G','B','CL','I50','R50','FF','FA','CON','UC','GBG','MUC','MC','KEF','KIF','HEF','HIF'] as const).map(k => {
+                  const list = leadersByStat[k] || [];
+                  const first = list[0];
+                  const second = list[1];
+                  const third = list[2];
+                  const grad = STAT_GRADIENTS[k] || 'from-slate-500 via-slate-600 to-slate-700';
+                  return (
+                    <div key={k} className="rounded-xl p-4 ring-1 ring-white/10 bg-white/5 hover:bg-white/[.07] transition shadow-[inset_0_1px_0_0_rgba(255,255,255,.06)]">
+                      <div className="text-[10px] sm:text-xs tracking-widest font-semibold uppercase text-white/80 flex items-center gap-2">
+                        <span className="inline-flex items-center justify-center size-5 rounded-full bg-white/10 ring-1 ring-white/10 text-[10px]">{STAT_META[k]?.icon || '•'}</span>
+                        {STAT_META[k]?.label || k}
+                      </div>
+
+                      {!first ? (
+                        <div className="opacity-60 text-sm mt-3">No data yet.</div>
+                      ) : (
+                        <>
+                          {/* colorful clipped underline */}
+                          <div className={`mt-2 h-[3px] rounded-full bg-gradient-to-r ${grad}`} />
+
+                          {/* Leader row */}
+                          <div className="mt-3 flex items-baseline justify-between gap-3">
+                            <div className="text-lg sm:text-xl font-semibold truncate">{first.name}</div>
+                            <div className="text-2xl font-bold tabular-nums">{first.total}</div>
+                          </div>
+
+                          {/* Thin accent divider */}
+                          <div className={`mt-2 h-px bg-gradient-to-r ${grad} opacity-60`} />
+
+                          {/* 2nd / 3rd rows */}
+                          <div className="mt-3 grid grid-rows-2 gap-1 text-sm">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="truncate opacity-85">{second ? `2. ${second.name}` : '—'}</div>
+                              <div className="tabular-nums opacity-80">{second?.total ?? ''}</div>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="truncate opacity-70">{third ? `3. ${third.name}` : '—'}</div>
+                              <div className="tabular-nums opacity-70">{third?.total ?? ''}</div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
           </div>
         </div>
       </div>
 
-      {/* Floating stat highlights between nav and content */}
-      {activeTab==='games' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-          {/* Disposals / game */}
-          <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 text-white shadow-[0_6px_20px_rgba(56,189,248,.25)]">
-            <div className="text-[10px] sm:text-xs tracking-widest font-medium mb-1 uppercase/70">Disposals / Game</div>
-            <div className="text-2xl font-semibold tabular-nums drop-shadow-sm">{perGame.D.toFixed(1)}</div>
-          </div>
-          {/* Inside 50s / game */}
-          <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-violet-700 text-white shadow-[0_6px_20px_rgba(168,85,247,.25)]">
-            <div className="text-[10px] sm:text-xs tracking-widest font-medium mb-1 uppercase/70">Inside 50s / Game</div>
-            <div className="text-2xl font-semibold tabular-nums drop-shadow-sm">{perGame.I50.toFixed(1)}</div>
-          </div>
-          {/* Leader — Disposals */}
-          <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-emerald-400 via-teal-500 to-green-700 text-white shadow-[0_6px_20px_rgba(16,185,129,.25)]">
-            <div className="text-[10px] sm:text-xs tracking-widest font-medium mb-1 uppercase/70">Leader — Disposals</div>
-            <div className="flex items-baseline justify-between gap-2">
-              <div className="font-medium truncate drop-shadow-sm">{(leadersByStat['D']?.[0]?.name) || '—'}</div>
-              <div className="text-2xl font-semibold tabular-nums drop-shadow-sm">{leadersByStat['D']?.[0]?.total ?? '—'}</div>
-            </div>
-          </div>
-          {/* Leader — Tackles */}
-          <div className="rounded-xl p-4 text-center ring-1 ring-white/15 bg-gradient-to-br from-rose-400 via-red-500 to-amber-600 text-white shadow-[0_6px_20px_rgba(244,63,94,.25)]">
-            <div className="text-[10px] sm:text-xs tracking-widest font-medium mb-1 uppercase/70">Leader — Tackles</div>
-            <div className="flex items-baseline justify-between gap-2">
-              <div className="font-medium truncate drop-shadow-sm">{(leadersByStat['T']?.[0]?.name) || '—'}</div>
-              <div className="text-2xl font-semibold tabular-nums drop-shadow-sm">{leadersByStat['T']?.[0]?.total ?? '—'}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab==='team' && (
-        <section className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 sm:p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,.06)]">
-          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-            <div className="tracking-widest text-xs text-white/80">SEASON AVERAGES</div>
-            <div className="flex items-center gap-3">
-              <span className="px-2 py-1 rounded-full text-[11px] tabular-nums bg-white/5 ring-1 ring-white/10 text-white/80">
-                {record.wins}–{record.losses}{record.draws?`–${record.draws}`:''}
-              </span>
-              <div className="inline-flex rounded-full overflow-hidden ring-1 ring-white/10">
-                {(['all','wins','losses'] as const).map(k => (
-                  <button
-                    key={k}
-                    onClick={()=>setAvgFilter(k)}
-                    aria-pressed={avgFilter===k}
-                    className={`px-3 py-1 text-xs transition-colors ${
-                      avgFilter===k
-                        ? 'bg-gradient-to-r from-sky-500/30 to-purple-500/30 text-white ring-1 ring-white/20'
-                        : 'bg-white/[.04] hover:bg-white/[.08] text-white/70'
-                    }`}
-                  >
-                    {k.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-            {([
-              ['D','DISPOSALS'],
-              ['K','KICKS'],
-              ['HB','HANDBALLS'],
-              ['M','MARKS'],
-              ['T','TACKLES'],
-              ['G','GOALS'],
-              ['B','BEHINDS'],
-              ['I50','INSIDE 50S'],
-              ['R50','REBOUND 50s'],
-              ['CL','CLEARANCES'],
-              ['FF','FREES FOR'],
-              ['FA','FREES AGAINST'],
-              ['AF','AFL FANTASY'],
-            ] as [keyof typeof perGame, string][]).map(([key,label])=> {
-              const bgGradient =
-                avgFilter==='wins' ? 'from-emerald-600 via-emerald-700 to-emerald-900'
-              : avgFilter==='losses' ? 'from-rose-600 via-rose-700 to-rose-900'
-              : (STAT_GRADIENTS[key] || 'from-slate-600 to-slate-800');
-
-              let arrow: JSX.Element | null = null;
-              if (avgFilter !== 'all') {
-                const baseline = avgFilter==='wins' ? perGameLosses[key] : perGameWins[key];
-                const cur = perGame[key];
-                const EPS = 1e-6;
-                if (baseline !== undefined) {
-                  if (cur - baseline > EPS) {
-                    arrow = <span className="ml-2 text-emerald-400 align-middle">▲</span>;
-                  } else if (baseline - cur > EPS) {
-                    arrow = <span className="ml-2 text-rose-400 align-middle">▼</span>;
-                  }
-                }
-              }
-              return (
-                <div
-                  key={key}
-                  className={`rounded-xl p-4 text-center ring-1 ring-white/15 text-white shadow-[0_6px_20px_rgba(0,0,0,.25)] bg-gradient-to-br ${bgGradient} `}
-                >
-                  <div className="text-[10px] sm:text-xs tracking-widest font-semibold mb-1 uppercase drop-shadow">
-                    {label}
-                  </div>
-                  <div className="text-2xl font-bold tabular-nums drop-shadow-sm">
-                    {perGame[key].toFixed(1)}{arrow}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-          {/* Advanced block */}
-          <div className="mt-4 mb-2 tracking-widest text-[10px] sm:text-xs text-white/70">ADVANCED</div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-            {([
-              ['CON','CONTESTED'],
-              ['UC','UNCONTESTED'],
-              ['GBG','GBG'],
-              ['MUC','MARKS UC'],
-              ['MC','MARKS C'],
-              ['KEF','KICKS EF'],
-              ['KIF','KICKS IF'],
-              ['HEF','HANDBALLS EF'],
-              ['HIF','HANDBALLS IF'],
-            ] as [keyof typeof perGame, string][]).map(([key,label])=>{
-              const bgGradient = (STAT_GRADIENTS as any)[key] || 'from-slate-600 to-slate-800';
-              return (
-                <div key={key} className={`rounded-xl p-4 text-center ring-1 ring-white/15 text-white shadow-[0_6px_20px_rgba(0,0,0,.25)] bg-gradient-to-br ${bgGradient}`}>
-                  <div className="text-[10px] sm:text-xs tracking-widest font-semibold mb-1 uppercase drop-shadow">{label}</div>
-                  <div className="text-2xl font-bold tabular-nums drop-shadow-sm">{(perGame as any)[key].toFixed(1)}</div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {activeTab==='players' && (
-        <section className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 sm:p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,.06)]">
-          <div className="mb-3 tracking-widest text-xs text-white/80">SEASON LEADERS</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {(['D','K','HB','M','T','G','B','CL','I50','R50','FF','FA','CON','UC','GBG','MUC','MC','KEF','KIF','HEF','HIF'] as const).map(k => {
-              const list = leadersByStat[k] || [];
-              const first = list[0];
-              const second = list[1];
-              const third = list[2];
-              const grad = STAT_GRADIENTS[k] || 'from-slate-500 via-slate-600 to-slate-700';
-              return (
-                <div key={k} className="rounded-xl p-4 ring-1 ring-white/10 bg-white/5 hover:bg-white/[.07] transition shadow-[inset_0_1px_0_0_rgba(255,255,255,.06)]">
-                  <div className="text-[10px] sm:text-xs tracking-widest font-semibold uppercase text-white/80 flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center size-5 rounded-full bg-white/10 ring-1 ring-white/10 text-[10px]">{STAT_META[k]?.icon || '•'}</span>
-                    {STAT_META[k]?.label || k}
-                  </div>
-
-                  {!first ? (
-                    <div className="opacity-60 text-sm mt-3">No data yet.</div>
-                  ) : (
-                    <>
-                      {/* colorful clipped underline */}
-                      <div className={`mt-2 h-[3px] rounded-full bg-gradient-to-r ${grad}`} />
-
-                      {/* Leader row */}
-                      <div className="mt-3 flex items-baseline justify-between gap-3">
-                        <div className="text-lg sm:text-xl font-semibold truncate">{first.name}</div>
-                        <div className="text-2xl font-bold tabular-nums">{first.total}</div>
-                      </div>
-
-                      {/* Thin accent divider */}
-                      <div className={`mt-2 h-px bg-gradient-to-r ${grad} opacity-60`} />
-
-                      {/* 2nd / 3rd rows */}
-                      <div className="mt-3 grid grid-rows-2 gap-1 text-sm">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="truncate opacity-85">{second ? `2. ${second.name}` : '—'}</div>
-                          <div className="tabular-nums opacity-80">{second?.total ?? ''}</div>
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="truncate opacity-70">{third ? `3. ${third.name}` : '—'}</div>
-                          <div className="tabular-nums opacity-70">{third?.total ?? ''}</div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {activeTab==='games' && (
-        <section className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-4 sm:p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,.06)]">
-          <div className="flex items-center justify-between mb-3">
-            <div className="h2">Previous Games</div>
-            <div className="text-sm opacity-70">{games.length} total</div>
-          </div>
-          {loading && <div className="opacity-70">Loading…</div>}
-          {!loading && games.length===0 && <div className="opacity-70">No games yet.</div>}
-
-          <ul className="divide-y divide-white/10">
-            {games.map(g=>(
-              <li key={g.id} className="py-3 px-2 rounded-xl transition-colors hover:bg-white/5 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="font-medium">{new Date(g.date).toLocaleDateString()} — vs {g.opponent}</div>
-                  <div className="text-sm opacity-70 flex items-center gap-2">
-                    <span>{g.venue}</span>
-                    <span className="inline-flex items-center gap-1">
-                      <span className={`inline-block size-1.5 rounded-full ${g.status==='live'?'bg-emerald-400':g.status==='final'?'bg-white/40':'bg-sky-400'}`} />
-                      {g.status.toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-2">
-                    <button 
-                      className="btn btn-primary text-sm px-3 py-1.5" 
-                      onClick={()=>nav(`/game/${g.id}`)}
-                    >
-                      {g.status === 'live' ? 'Resume' : g.status === 'final' ? 'View' : 'Start'}
-                    </button>
-                    <Link 
-                      className="btn btn-secondary text-sm px-3 py-1.5" 
-                      to={`/summary/${g.id}`}
-                    >
-                      Summary
-                    </Link>
-                  </div>
-                  <div className="h-6 w-px bg-white/10 mx-1"></div>
-                  <button 
-                    className="btn btn-ghost hover:bg-red-600/60 text-sm px-2 py-1.5 text-red-400" 
-                    onClick={()=>onDelete(g.id)}
-                    title="Delete game"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
       </main>
     </div>
   )
