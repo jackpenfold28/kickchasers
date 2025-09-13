@@ -337,13 +337,13 @@ export default function Squad() {
             </div>
             
             {/* Players Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {players.map((p, i) => (
                 <div key={i} className="group rounded-lg bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/[0.08] transition-all duration-200">
                   <div className="flex items-center gap-3">
                     {/* Player Number */}
                     <div className="flex-shrink-0">
-                      <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">NUM</label>
+                      <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">#</label>
                       <input
                         type="number"
                         value={p.number}
