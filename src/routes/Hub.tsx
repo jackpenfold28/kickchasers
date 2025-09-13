@@ -68,28 +68,28 @@ const STAT_GRADIENTS: Record<string, string> = {
 
 // Stat metadata map for labels and icons
 const STAT_META: Record<string, {label: string; icon: string}> = {
-  D:   { label: 'Disposals',    icon: '🟦' },
-  K:   { label: 'Kicks',        icon: '👟' },
-  HB:  { label: 'Handballs',    icon: '🤲' },
-  M:   { label: 'Marks',        icon: '✋' },
-  T:   { label: 'Tackles',      icon: '🤼' },
-  G:   { label: 'Goals',        icon: '🥅' },
-  B:   { label: 'Behinds',      icon: '🎯' },
-  I50: { label: 'Inside 50s',   icon: '↘️' },
-  R50: { label: 'Rebound 50s',  icon: '↗️' },
-  CL:  { label: 'Clearances',   icon: '🚀' },
-  FF:  { label: 'Frees For',    icon: '👍' },
-  FA:  { label: 'Frees Against',icon: '👎' },
-  AF:  { label: 'AFL Fantasy',  icon: '📊' },
-  CON: { label: 'Contested', icon: '🧨' },
-  UC:  { label: 'Uncontested', icon: '🎯' },
-  GBG: { label: 'GBG', icon: '🟢' },
-  MUC: { label: 'Marks UC', icon: '📐' },
-  MC:  { label: 'Marks C', icon: '📏' },
-  KEF: { label: 'Kicks EF', icon: '✅' },
-  KIF: { label: 'Kicks IF', icon: '❌' },
-  HEF: { label: 'Handballs EF', icon: '✅' },
-  HIF: { label: 'Handballs IF', icon: '❌' },
+  D:   { label: 'Disposals',    icon: 'D' },
+  K:   { label: 'Kicks',        icon: 'K' },
+  HB:  { label: 'Handballs',    icon: 'H' },
+  M:   { label: 'Marks',        icon: 'M' },
+  T:   { label: 'Tackles',      icon: 'T' },
+  G:   { label: 'Goals',        icon: 'G' },
+  B:   { label: 'Behinds',      icon: 'B' },
+  I50: { label: 'Inside 50s',   icon: 'I' },
+  R50: { label: 'Rebound 50s',  icon: 'R' },
+  CL:  { label: 'Clearances',   icon: 'C' },
+  FF:  { label: 'Frees For',    icon: '+' },
+  FA:  { label: 'Frees Against',icon: '-' },
+  AF:  { label: 'AFL Fantasy',  icon: 'F' },
+  CON: { label: 'Contested', icon: 'C' },
+  UC:  { label: 'Uncontested', icon: 'U' },
+  GBG: { label: 'GBG', icon: 'G' },
+  MUC: { label: 'Marks UC', icon: 'U' },
+  MC:  { label: 'Marks C', icon: 'C' },
+  KEF: { label: 'Kicks EF', icon: '+' },
+  KIF: { label: 'Kicks IF', icon: '-' },
+  HEF: { label: 'Handballs EF', icon: '+' },
+  HIF: { label: 'Handballs IF', icon: '-' },
 };
 
 type Game = {
@@ -414,7 +414,7 @@ export default function Hub(){
                 <img src={logoUrl} alt="team logo" className="w-full h-full object-cover" />
               </div>
             ) : (
-              <div className="h-16 w-16 rounded-2xl bg-white/10 grid place-items-center">🏉</div>
+              <div className="h-16 w-16 rounded-2xl bg-white/10 grid place-items-center text-white/60 text-xs font-semibold">LOGO</div>
             )}
             <div>
               <div className="text-sm opacity-80">Welcome back</div>
@@ -440,35 +440,44 @@ export default function Hub(){
         </div>
       </header>
 
-      {/* Sticky mini-nav */}
+      {/* Interactive tab navigation */}
       <div className="relative">
-        <div className="sticky top-0 z-20 -mx-6 px-6 py-3 backdrop-blur-xl 
-        bg-[linear-gradient(90deg,rgba(56,189,248,.12)_0%,rgba(147,51,234,.12)_100%)] 
-        border-b border-white/10 flex items-center justify-between relative overflow-hidden">
-          <div className="flex items-center gap-2 relative z-10">
-            <h2 className="text-sm tracking-widest font-semibold text-white uppercase drop-shadow-md">
+        <div className="sticky top-0 z-20 -mx-6 px-6 py-4 backdrop-blur-xl 
+        bg-[linear-gradient(90deg,rgba(56,189,248,.08)_0%,rgba(147,51,234,.08)_100%)] 
+        border-b border-white/5">
+          
+          {/* Tab pills container */}
+          <div className="flex items-center justify-center">
+            <div className="inline-flex items-center gap-1 p-1 rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-sm">
+              {([
+                ['games','Games'],
+                ['team','Team Averages'],
+                ['players','Player Leaders'],
+              ] as const).map(([key,label]) => (
+                <button
+                  key={key}
+                  onClick={()=>{ setActiveTab(key); nav(`/hub?tab=${key}`) }}
+                  aria-pressed={activeTab===key}
+                  className={`relative px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ease-out
+                    ${activeTab===key 
+                      ? 'bg-white text-slate-900 shadow-lg shadow-white/20 scale-[1.02]' 
+                      : 'text-white/70 hover:text-white/90 hover:bg-white/5'}
+                  `}
+                >
+                  <span className="relative z-10">{label}</span>
+                  {activeTab===key && (
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white to-white/95 shadow-[0_4px_20px_rgba(255,255,255,.15)]" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Section title */}
+          <div className="mt-4 text-center">
+            <h2 className="text-lg font-bold text-white tracking-wide">
               {activeTab==='games' ? 'Games' : activeTab==='team' ? `Season Averages${avgFilter!=='all' ? ` — ${avgFilter}` : ''}` : 'Season Leaders'}
             </h2>
-          </div>
-          <div className="flex items-center gap-2 justify-end relative z-10">
-            {([
-              ['games','Games'],
-              ['team','Team Averages'],
-              ['players','Player Leaders'],
-            ] as const).map(([key,label]) => (
-              <button
-                key={key}
-                onClick={()=>{ setActiveTab(key); nav(`/hub?tab=${key}`) }}
-                aria-pressed={activeTab===key}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors active:scale-[.97] 
-                  ${activeTab===key 
-                    ? 'bg-gradient-to-r from-sky-500/30 to-purple-500/30 text-white shadow-md ring-1 ring-white/20' 
-                    : 'bg-white/[.04] hover:bg-white/[.08] text-white/70 ring-1 ring-white/10'}
-                `}
-              >
-                {label}
-              </button>
-            ))}
           </div>
         </div>
       </div>
@@ -688,13 +697,13 @@ export default function Hub(){
                       className="btn btn-primary text-sm px-3 py-1.5" 
                       onClick={()=>nav(`/game/${g.id}`)}
                     >
-                      {g.status === 'live' ? '🔴 Resume' : g.status === 'final' ? '📊 View' : '▶️ Start'}
+                      {g.status === 'live' ? 'Resume' : g.status === 'final' ? 'View' : 'Start'}
                     </button>
                     <Link 
                       className="btn btn-secondary text-sm px-3 py-1.5" 
                       to={`/summary/${g.id}`}
                     >
-                      📈 Summary
+                      Summary
                     </Link>
                   </div>
                   <div className="h-6 w-px bg-white/10 mx-1"></div>
@@ -703,7 +712,7 @@ export default function Hub(){
                     onClick={()=>onDelete(g.id)}
                     title="Delete game"
                   >
-                    🗑️
+                    Delete
                   </button>
                 </div>
               </li>
