@@ -398,9 +398,11 @@ export default function Hub(){
   }
 
   return (
-    <div className="relative min-h-screen">
-      <main className="max-w-5xl mx-auto p-6 space-y-5">
-      <header className="flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-black/20 border-b border-white/10">
+        <div className="max-w-5xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
         <div className="flex items-center gap-5">
           <img
             src="/kickchasers_logo.png"
@@ -437,8 +439,12 @@ export default function Hub(){
             <Link to="/new" className="btn btn-primary">+ New Game</Link>
             <button className="btn btn-ghost hover:bg-red-600/70" onClick={onLogout}>Log out</button>
           </div>
+          </div>
+        </div>
         </div>
       </header>
+
+      <main className="max-w-5xl mx-auto p-6 space-y-5">
 
       {/* Interactive tab navigation */}
       <div className="relative">
