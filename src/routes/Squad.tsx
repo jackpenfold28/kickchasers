@@ -201,120 +201,206 @@ export default function Squad() {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6 space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="h1">Your Squads</h1>
-        <button
-          className="btn border-white/15 bg-white/5 hover:bg-white/10"
-          onClick={() => nav('/hub')}
-        >
-          ← Back to Hub
-        </button>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
-        <label className="text-sm opacity-80">Active squad</label>
-        <div className="relative">
-          <select
-            className="input appearance-none py-2 pl-3 pr-10 rounded-md bg-white/10 border border-white/15 hover:bg-white/[0.15] focus:outline-none focus:ring-2 focus:ring-rose-500/60 focus:border-rose-500/50 transition w-56"
-            value={currentSet}
-            onChange={(e) => setCurrentSet(e.target.value)}
-          >
-            {sets.map((s) => (
-              <option key={s.name} value={s.name}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          {/* chevron icon */}
-          <svg
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-70"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.17l3.71-2.94a.75.75 0 1 1 .94 1.17l-4.24 3.36a.75.75 0 0 1-.94 0L5.25 8.4a.75.75 0 0 1-.02-1.19z" />
-          </svg>
-        </div>
-        <button className="btn" onClick={createSet} disabled={!canAddMoreSets}>
-          + New
-        </button>
-        <button className="btn" onClick={renameSet}>Rename</button>
-        <button className="btn hover:bg-red-600/70" onClick={deleteSet}>Delete</button>
-        <span className="ml-auto text-xs opacity-70">{sets.length}/5 squads</span>
-      </div>
-
-      {loading && <div>Loading…</div>}
-
-      {errorMsg && (
-        <div className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-rose-200">
-          <div className="flex items-start justify-between gap-3">
-            <p className="font-medium">{errorMsg}</p>
-            <button className="btn" onClick={() => setErrorMsg(null)}>Dismiss</button>
-          </div>
-        </div>
-      )}
-
-      {savedAt && (
-        <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-emerald-200 flex items-center justify-between gap-3">
-          <div>
-            <p className="font-medium">Squad "{currentSet}" saved</p>
-            <p className="text-xs opacity-80">{savedAt.toLocaleString()}</p>
-          </div>
-          <div className="flex gap-2">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      {/* Header */}
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-black/20 border-b border-white/10">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="h1">Squad Management</h1>
             <button
-              className="btn btn-primary"
+              className="btn btn-secondary"
               onClick={() => nav('/hub')}
             >
-              Go to Hub
-            </button>
-            <button
-              className="btn"
-              onClick={() => setSavedAt(null)}
-            >
-              Keep Editing
+              ← Back to Hub
             </button>
           </div>
         </div>
-      )}
+      </header>
 
-      {!loading && (
-        <>
-          <p className="text-xs opacity-70 mb-2">Up to 60 players.</p>
-          {players.map((p, i) => (
-            <div key={i} className="flex gap-3 items-center mb-2">
-              <input
-                type="number"
-                value={p.number}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value || "0", 10);
-                  updatePlayer(i, "number", Number.isFinite(val) ? val : 0);
-                }}
-                className="input w-24 py-2 px-3"
-              />
-              <input
-                type="text"
-                value={p.name}
-                onChange={(e) => updatePlayer(i, "name", e.target.value)}
-                placeholder="Player name"
-                className="input flex-1 py-2 px-3"
-              />
-              <button className="btn hover:bg-red-600/60" onClick={() => deletePlayer(i)}>
-                Delete
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Squad Tab Navigation */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-white">Your Squads</h2>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-white/60">{sets.length}/5 squads</span>
+              <button 
+                className="btn btn-primary"
+                onClick={createSet} 
+                disabled={!canAddMoreSets}
+              >
+                + Create Squad
               </button>
             </div>
-          ))}
-
-          <div className="flex gap-3 mt-4">
-            <button className="btn" onClick={addPlayer} disabled={players.length >= 60}>
-              + Add Player
+          </div>
+          
+          {/* Tab Navigation */}
+          <div className="relative">
+            <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-sm overflow-x-auto scrollbar-hide">
+              {sets.map((squad) => (
+                <button
+                  key={squad.name}
+                  onClick={() => setCurrentSet(squad.name)}
+                  className={`relative px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ease-out whitespace-nowrap flex-shrink-0
+                    ${
+                      currentSet === squad.name
+                        ? 'bg-white text-slate-900 shadow-lg shadow-white/20 scale-[1.02]'
+                        : 'text-white/70 hover:text-white/90 hover:bg-white/5'
+                    }
+                  `}
+                >
+                  <span className="relative z-10">{squad.name.toUpperCase()}</span>
+                  {currentSet === squad.name && (
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white to-white/95 shadow-[0_4px_20px_rgba(255,255,255,.15)]" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Squad Actions */}
+          <div className="flex items-center gap-3 mt-4">
+            <button 
+              className="btn btn-secondary"
+              onClick={renameSet}
+            >
+              Rename Squad
             </button>
-            <button className="btn btn-primary" onClick={save} disabled={saving}>
-              {saving ? "Saving…" : `Save "${currentSet}"`}
+            <button 
+              className="btn btn-ghost hover:bg-red-600/70"
+              onClick={deleteSet}
+            >
+              Delete Squad
             </button>
           </div>
-        </>
-      )}
+        </div>
+
+        {/* Status Messages */}
+        {loading && (
+          <div className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-6 text-center">
+            <div className="text-white/70">Loading squad data...</div>
+          </div>
+        )}
+
+        {errorMsg && (
+          <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 ring-1 ring-rose-400/20 px-6 py-4 text-rose-200">
+            <div className="flex items-start justify-between gap-3">
+              <p className="font-medium">{errorMsg}</p>
+              <button className="btn btn-secondary" onClick={() => setErrorMsg(null)}>Dismiss</button>
+            </div>
+          </div>
+        )}
+
+        {savedAt && (
+          <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 ring-1 ring-emerald-400/20 px-6 py-4 text-emerald-200">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold">Squad "{currentSet}" saved successfully</p>
+                <p className="text-sm opacity-80">{savedAt.toLocaleString()}</p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => nav('/hub')}
+                >
+                  Go to Hub
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setSavedAt(null)}
+                >
+                  Keep Editing
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Players Section */}
+        {!loading && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-white">Players</h3>
+                <p className="text-sm text-white/60">Up to 60 players per squad</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-white/60">{players.length}/60</span>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={addPlayer} 
+                  disabled={players.length >= 60}
+                >
+                  + Add Player
+                </button>
+              </div>
+            </div>
+            
+            {/* Players Grid */}
+            <div className="grid gap-3">
+              {players.map((p, i) => (
+                <div key={i} className="group rounded-xl bg-white/5 ring-1 ring-white/10 p-4 hover:bg-white/[0.08] transition-all duration-200">
+                  <div className="flex items-center gap-4">
+                    {/* Player Number */}
+                    <div className="flex-shrink-0">
+                      <label className="text-xs text-white/60 block mb-1">NUMBER</label>
+                      <input
+                        type="number"
+                        value={p.number}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value || "0", 10);
+                          updatePlayer(i, "number", Number.isFinite(val) ? val : 0);
+                        }}
+                        className="input w-20 h-10 text-center font-semibold bg-white/10 border-white/20 focus:border-white/40"
+                        min="1"
+                        max="99"
+                      />
+                    </div>
+                    
+                    {/* Player Name */}
+                    <div className="flex-1">
+                      <label className="text-xs text-white/60 block mb-1">PLAYER NAME</label>
+                      <input
+                        type="text"
+                        value={p.name}
+                        onChange={(e) => updatePlayer(i, "name", e.target.value)}
+                        placeholder="Enter player name"
+                        className="input w-full h-10 bg-white/10 border-white/20 focus:border-white/40"
+                      />
+                    </div>
+                    
+                    {/* Delete Button */}
+                    <button 
+                      className="btn btn-ghost hover:bg-red-600/70 opacity-0 group-hover:opacity-100 transition-opacity" 
+                      onClick={() => deletePlayer(i)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+              
+              {players.length === 0 && (
+                <div className="text-center py-12 text-white/50">
+                  <p className="text-lg mb-2">No players added yet</p>
+                  <p className="text-sm">Click "Add Player" to start building your squad</p>
+                </div>
+              )}
+            </div>
+            
+            {/* Bottom Actions */}
+            <div className="flex items-center justify-center pt-6">
+              <button 
+                className="btn btn-primary text-lg px-8 py-3" 
+                onClick={save} 
+                disabled={saving}
+              >
+                {saving ? "Saving..." : `Save "${currentSet}" Squad`}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
