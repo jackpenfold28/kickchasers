@@ -336,54 +336,245 @@ export default function Squad() {
               </div>
             </div>
             
-            {/* Players Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {players.map((p, i) => (
-                <div key={i} className="group rounded-lg bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/[0.08] transition-all duration-200">
-                  <div className="flex items-center gap-3">
-                    {/* Player Number */}
-                    <div className="flex-shrink-0">
-                      <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">#</label>
-                      <input
-                        type="number"
-                        value={p.number}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value || "0", 10);
-                          updatePlayer(i, "number", Number.isFinite(val) ? val : 0);
-                        }}
-                        className="input w-16 h-8 text-center text-sm font-semibold bg-white/10 border-white/20 focus:border-white/40"
-                        min="1"
-                        max="99"
-                      />
-                    </div>
-                    
-                    {/* Player Name */}
-                    <div className="flex-1 min-w-0">
-                      <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">Name</label>
-                      <input
-                        type="text"
-                        value={p.name}
-                        onChange={(e) => updatePlayer(i, "name", e.target.value)}
-                        placeholder="Player name"
-                        className="input w-full h-8 text-sm bg-white/10 border-white/20 focus:border-white/40"
-                      />
-                    </div>
-                    
-                    {/* Delete Button */}
+            {/* Players by Position */}
+            <div className="space-y-8">
+              {/* Forwards Section */}
+              {(players.length > 0 || players.slice(0, 6).length > 0) && (
+                <div>
+                  <div className="text-center mb-4">
+                    <h4 className="text-lg font-semibold text-white mb-2">FORWARDS</h4>
+                    <div className="h-px bg-white/20 w-full"></div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {players.slice(0, 6).map((p, i) => (
+                      <div key={i} className="group rounded-lg bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/[0.08] transition-all duration-200">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">#</label>
+                            <input
+                              type="number"
+                              value={p.number}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value || "0", 10);
+                                updatePlayer(i, "number", Number.isFinite(val) ? val : 0);
+                              }}
+                              className="input w-16 h-8 text-center text-sm font-semibold bg-white/10 border-white/20 focus:border-white/40"
+                              min="1"
+                              max="99"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">Name</label>
+                            <input
+                              type="text"
+                              value={p.name}
+                              onChange={(e) => updatePlayer(i, "name", e.target.value)}
+                              placeholder="Player name"
+                              className="input w-full h-8 text-sm bg-white/10 border-white/20 focus:border-white/40"
+                            />
+                          </div>
+                          <button 
+                            className="btn btn-ghost text-xs px-2 py-1 hover:bg-red-600/70 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" 
+                            onClick={() => deletePlayer(i)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {players.length < 6 && (
+                      <button 
+                        className="rounded-lg border-2 border-dashed border-white/30 p-3 hover:border-white/50 hover:bg-white/5 transition-all duration-200 flex items-center justify-center text-white/60 hover:text-white/80"
+                        onClick={addPlayer}
+                        disabled={players.length >= 60}
+                      >
+                        <span className="text-2xl">+</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Midfield Section */}
+              {players.length > 6 && (
+                <div>
+                  <div className="text-center mb-4">
+                    <h4 className="text-lg font-semibold text-white mb-2">MIDFIELD</h4>
+                    <div className="h-px bg-white/20 w-full"></div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {players.slice(6, 12).map((p, i) => (
+                      <div key={i + 6} className="group rounded-lg bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/[0.08] transition-all duration-200">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">#</label>
+                            <input
+                              type="number"
+                              value={p.number}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value || "0", 10);
+                                updatePlayer(i + 6, "number", Number.isFinite(val) ? val : 0);
+                              }}
+                              className="input w-16 h-8 text-center text-sm font-semibold bg-white/10 border-white/20 focus:border-white/40"
+                              min="1"
+                              max="99"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">Name</label>
+                            <input
+                              type="text"
+                              value={p.name}
+                              onChange={(e) => updatePlayer(i + 6, "name", e.target.value)}
+                              placeholder="Player name"
+                              className="input w-full h-8 text-sm bg-white/10 border-white/20 focus:border-white/40"
+                            />
+                          </div>
+                          <button 
+                            className="btn btn-ghost text-xs px-2 py-1 hover:bg-red-600/70 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" 
+                            onClick={() => deletePlayer(i + 6)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {players.length >= 6 && players.length < 12 && (
+                      <button 
+                        className="rounded-lg border-2 border-dashed border-white/30 p-3 hover:border-white/50 hover:bg-white/5 transition-all duration-200 flex items-center justify-center text-white/60 hover:text-white/80"
+                        onClick={addPlayer}
+                        disabled={players.length >= 60}
+                      >
+                        <span className="text-2xl">+</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Forwards Section (2nd) */}
+              {players.length > 12 && (
+                <div>
+                  <div className="text-center mb-4">
+                    <h4 className="text-lg font-semibold text-white mb-2">FORWARDS</h4>
+                    <div className="h-px bg-white/20 w-full"></div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {players.slice(12, 18).map((p, i) => (
+                      <div key={i + 12} className="group rounded-lg bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/[0.08] transition-all duration-200">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">#</label>
+                            <input
+                              type="number"
+                              value={p.number}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value || "0", 10);
+                                updatePlayer(i + 12, "number", Number.isFinite(val) ? val : 0);
+                              }}
+                              className="input w-16 h-8 text-center text-sm font-semibold bg-white/10 border-white/20 focus:border-white/40"
+                              min="1"
+                              max="99"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">Name</label>
+                            <input
+                              type="text"
+                              value={p.name}
+                              onChange={(e) => updatePlayer(i + 12, "name", e.target.value)}
+                              placeholder="Player name"
+                              className="input w-full h-8 text-sm bg-white/10 border-white/20 focus:border-white/40"
+                            />
+                          </div>
+                          <button 
+                            className="btn btn-ghost text-xs px-2 py-1 hover:bg-red-600/70 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" 
+                            onClick={() => deletePlayer(i + 12)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {players.length >= 12 && players.length < 18 && (
+                      <button 
+                        className="rounded-lg border-2 border-dashed border-white/30 p-3 hover:border-white/50 hover:bg-white/5 transition-all duration-200 flex items-center justify-center text-white/60 hover:text-white/80"
+                        onClick={addPlayer}
+                        disabled={players.length >= 60}
+                      >
+                        <span className="text-2xl">+</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Interchange Section */}
+              {players.length > 18 && (
+                <div>
+                  <div className="text-center mb-4">
+                    <h4 className="text-lg font-semibold text-white mb-2">INTERCHANGE</h4>
+                    <div className="h-px bg-white/20 w-full"></div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {players.slice(18).map((p, i) => (
+                      <div key={i + 18} className="group rounded-lg bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/[0.08] transition-all duration-200">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0">
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">#</label>
+                            <input
+                              type="number"
+                              value={p.number}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value || "0", 10);
+                                updatePlayer(i + 18, "number", Number.isFinite(val) ? val : 0);
+                              }}
+                              className="input w-16 h-8 text-center text-sm font-semibold bg-white/10 border-white/20 focus:border-white/40"
+                              min="1"
+                              max="99"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">Name</label>
+                            <input
+                              type="text"
+                              value={p.name}
+                              onChange={(e) => updatePlayer(i + 18, "name", e.target.value)}
+                              placeholder="Player name"
+                              className="input w-full h-8 text-sm bg-white/10 border-white/20 focus:border-white/40"
+                            />
+                          </div>
+                          <button 
+                            className="btn btn-ghost text-xs px-2 py-1 hover:bg-red-600/70 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" 
+                            onClick={() => deletePlayer(i + 18)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                     <button 
-                      className="btn btn-ghost text-xs px-2 py-1 hover:bg-red-600/70 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" 
-                      onClick={() => deletePlayer(i)}
+                      className="rounded-lg border-2 border-dashed border-white/30 p-3 hover:border-white/50 hover:bg-white/5 transition-all duration-200 flex items-center justify-center text-white/60 hover:text-white/80"
+                      onClick={addPlayer}
+                      disabled={players.length >= 60}
                     >
-                      ×
+                      <span className="text-2xl">+</span>
                     </button>
                   </div>
                 </div>
-              ))}
+              )}
               
               {players.length === 0 && (
                 <div className="text-center py-12 text-white/50">
                   <p className="text-lg mb-2">No players added yet</p>
-                  <p className="text-sm">Click "Add Player" to start building your squad</p>
+                  <p className="text-sm mb-4">Click "Add Player" to start building your squad</p>
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={addPlayer} 
+                    disabled={players.length >= 60}
+                  >
+                    + Add First Player
+                  </button>
                 </div>
               )}
             </div>
