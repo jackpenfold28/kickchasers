@@ -364,7 +364,7 @@ export default function Squad() {
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">Name</label>
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide text-center">NAME</label>
                             <input
                               type="text"
                               value={p.name}
@@ -421,7 +421,7 @@ export default function Squad() {
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">Name</label>
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide text-center">NAME</label>
                             <input
                               type="text"
                               value={p.name}
@@ -452,11 +452,11 @@ export default function Squad() {
                 </div>
               )}
 
-              {/* Forwards Section (2nd) */}
+              {/* Defence Section */}
               {players.length > 12 && (
                 <div>
                   <div className="text-center mb-4">
-                    <h4 className="text-lg font-semibold text-white mb-2">FORWARDS</h4>
+                    <h4 className="text-lg font-semibold text-white mb-2">DEFENCE</h4>
                     <div className="h-px bg-white/20 w-full"></div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -478,7 +478,7 @@ export default function Squad() {
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">Name</label>
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide text-center">NAME</label>
                             <input
                               type="text"
                               value={p.name}
@@ -535,7 +535,7 @@ export default function Squad() {
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">Name</label>
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide text-center">NAME</label>
                             <input
                               type="text"
                               value={p.name}
