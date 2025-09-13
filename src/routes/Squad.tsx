@@ -350,7 +350,7 @@ export default function Squad() {
                       <div key={i} className="group rounded-lg bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/[0.08] transition-all duration-200">
                         <div className="flex items-center gap-3">
                           <div className="flex-shrink-0">
-                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">#</label>
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide text-center">NUMBER</label>
                             <input
                               type="number"
                               value={p.number}
@@ -407,7 +407,7 @@ export default function Squad() {
                       <div key={i + 6} className="group rounded-lg bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/[0.08] transition-all duration-200">
                         <div className="flex items-center gap-3">
                           <div className="flex-shrink-0">
-                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">#</label>
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide text-center">NUMBER</label>
                             <input
                               type="number"
                               value={p.number}
@@ -464,7 +464,7 @@ export default function Squad() {
                       <div key={i + 12} className="group rounded-lg bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/[0.08] transition-all duration-200">
                         <div className="flex items-center gap-3">
                           <div className="flex-shrink-0">
-                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">#</label>
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide text-center">NUMBER</label>
                             <input
                               type="number"
                               value={p.number}
@@ -521,7 +521,7 @@ export default function Squad() {
                       <div key={i + 18} className="group rounded-lg bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/[0.08] transition-all duration-200">
                         <div className="flex items-center gap-3">
                           <div className="flex-shrink-0">
-                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">#</label>
+                            <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide text-center">NUMBER</label>
                             <input
                               type="number"
                               value={p.number}
