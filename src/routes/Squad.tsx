@@ -337,13 +337,13 @@ export default function Squad() {
             </div>
             
             {/* Players Grid */}
-            <div className="grid gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {players.map((p, i) => (
-                <div key={i} className="group rounded-xl bg-white/5 ring-1 ring-white/10 p-4 hover:bg-white/[0.08] transition-all duration-200">
-                  <div className="flex items-center gap-4">
+                <div key={i} className="group rounded-lg bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/[0.08] transition-all duration-200">
+                  <div className="flex items-center gap-3">
                     {/* Player Number */}
                     <div className="flex-shrink-0">
-                      <label className="text-xs text-white/60 block mb-1">NUMBER</label>
+                      <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">NUM</label>
                       <input
                         type="number"
                         value={p.number}
@@ -351,30 +351,30 @@ export default function Squad() {
                           const val = parseInt(e.target.value || "0", 10);
                           updatePlayer(i, "number", Number.isFinite(val) ? val : 0);
                         }}
-                        className="input w-20 h-10 text-center font-semibold bg-white/10 border-white/20 focus:border-white/40"
+                        className="input w-16 h-8 text-center text-sm font-semibold bg-white/10 border-white/20 focus:border-white/40"
                         min="1"
                         max="99"
                       />
                     </div>
                     
                     {/* Player Name */}
-                    <div className="flex-1">
-                      <label className="text-xs text-white/60 block mb-1">PLAYER NAME</label>
+                    <div className="flex-1 min-w-0">
+                      <label className="text-[10px] text-white/50 block mb-1 uppercase tracking-wide">Name</label>
                       <input
                         type="text"
                         value={p.name}
                         onChange={(e) => updatePlayer(i, "name", e.target.value)}
-                        placeholder="Enter player name"
-                        className="input w-full h-10 bg-white/10 border-white/20 focus:border-white/40"
+                        placeholder="Player name"
+                        className="input w-full h-8 text-sm bg-white/10 border-white/20 focus:border-white/40"
                       />
                     </div>
                     
                     {/* Delete Button */}
                     <button 
-                      className="btn btn-ghost hover:bg-red-600/70 opacity-0 group-hover:opacity-100 transition-opacity" 
+                      className="btn btn-ghost text-xs px-2 py-1 hover:bg-red-600/70 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" 
                       onClick={() => deletePlayer(i)}
                     >
-                      Delete
+                      ×
                     </button>
                   </div>
                 </div>
