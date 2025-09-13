@@ -447,18 +447,18 @@ export default function Hub(){
         border-b border-white/5">
           
           {/* Tab pills container */}
-          <div className="flex items-center justify-center">
-            <div className="inline-flex items-center gap-1 p-1 rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-sm">
+          <div className="w-full">
+            <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-sm">
               {([
-                ['games','Games'],
-                ['team','Team Averages'],
-                ['players','Player Leaders'],
+                ['games','GAMES'],
+                ['team','TEAM AVERAGES'],
+                ['players','PLAYER LEADERS'],
               ] as const).map(([key,label]) => (
                 <button
                   key={key}
                   onClick={()=>{ setActiveTab(key); nav(`/hub?tab=${key}`) }}
                   aria-pressed={activeTab===key}
-                  className={`relative px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ease-out
+                  className={`relative flex-1 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ease-out
                     ${activeTab===key 
                       ? 'bg-white text-slate-900 shadow-lg shadow-white/20 scale-[1.02]' 
                       : 'text-white/70 hover:text-white/90 hover:bg-white/5'}
@@ -481,7 +481,7 @@ export default function Hub(){
         <div 
           className="flex transition-transform duration-300 ease-out"
           style={{ 
-            transform: `translateX(${activeTab === 'games' ? '0%' : activeTab === 'team' ? '-100%' : '-200%'})`,
+            transform: `translateX(-${activeTab === 'games' ? 0 : activeTab === 'team' ? 33.3333 : 66.6667}%)`,
             width: '300%'
           }}
         >
