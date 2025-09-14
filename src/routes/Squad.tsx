@@ -349,13 +349,15 @@ export default function Squad() {
               display: flex; 
               align-items: center; 
               justify-content: center; 
-              font-family: 'Arial Black', 'Helvetica', sans-serif;
+              font-family: 'Impact', 'Arial Black', sans-serif;
               font-size: ${numberSize}; 
-              font-weight: 900; 
+              font-weight: normal; 
               color: ${primaryTextColor}; 
               text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
               text-align: center;
-              line-height: 1;
+              line-height: 0.9;
+              padding-top: 2px;
+              box-sizing: border-box;
             ">
               ${player.number}
             </div>
@@ -366,15 +368,16 @@ export default function Squad() {
               display: flex; 
               align-items: center; 
               justify-content: center; 
-              font-family: 'Arial Black', 'Helvetica', sans-serif;
+              font-family: 'Impact', 'Arial Black', sans-serif;
               font-size: ${nameSize}; 
-              font-weight: 900; 
+              font-weight: normal; 
               color: ${secondaryTextColor}; 
               text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
               letter-spacing: 0.5px;
               text-align: center;
-              line-height: 1;
-              padding: 0 8px;
+              line-height: 0.9;
+              padding: 2px 8px 0 8px;
+              box-sizing: border-box;
             ">
               ${playerName.toUpperCase()}
             </div>
