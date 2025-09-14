@@ -100,7 +100,12 @@ export default function Squad() {
     setSavedAt(null); setErrorMsg(null);
     setSets((prev) => [...prev, { name: proposed }]);
     setCurrentSet(proposed);
-    setPlayers([]);
+    // Create 22 default player spots for AFL team size
+    const defaultPlayers = Array.from({ length: 22 }, (_, i) => ({
+      number: i + 1,
+      name: ""
+    }));
+    setPlayers(defaultPlayers);
   };
 
   const renameSet = async () => {
