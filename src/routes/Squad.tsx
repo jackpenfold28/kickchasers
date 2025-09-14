@@ -286,50 +286,89 @@ export default function Squad() {
         return map[char] || char;
       });
 
+      // Function to determine contrasting text color
+      const getContrastColor = (hexColor: string) => {
+        // Remove # if present
+        const hex = hexColor.replace('#', '');
+        
+        // Convert to RGB
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        
+        // Calculate brightness using relative luminance formula
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        
+        // Return white for dark colors, black for light colors
+        return brightness > 128 ? '#000000' : '#ffffff';
+      };
+
+      // Create a slightly darker shade for gradient
+      const darkenColor = (hexColor: string, amount: number = 20) => {
+        const hex = hexColor.replace('#', '');
+        const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - amount);
+        const g = Math.max(0, parseInt(hex.substr(2, 2), 16) - amount);
+        const b = Math.max(0, parseInt(hex.substr(4, 2), 16) - amount);
+        
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+      };
+
       // Create player card for grid layout (jersey-style horizontal banner)
       const createPlayerCard = (player: Player, format: 'square' | 'widescreen') => {
         const playerName = sanitize(player.name || `Player ${player.number}`);
         const cardHeight = format === 'square' ? '50px' : '60px';
-        const numberSize = format === 'square' ? '20px' : '24px';
-        const nameSize = format === 'square' ? '14px' : '16px';
+        const numberSize = format === 'square' ? '18px' : '22px';
+        const nameSize = format === 'square' ? '13px' : '15px';
         const cardMargin = format === 'square' ? '3px' : '5px';
         const numberBoxWidth = format === 'square' ? '45px' : '55px';
+        
+        // Use team colors
+        const primaryColor = teamColors.primary || '#1e3a8a';
+        const secondaryColor = teamColors.secondary || '#3b82f6';
+        const primaryDark = darkenColor(primaryColor, 30);
+        const secondaryDark = darkenColor(secondaryColor, 30);
+        
+        // Get contrasting text colors
+        const primaryTextColor = getContrastColor(primaryColor);
+        const secondaryTextColor = getContrastColor(secondaryColor);
         
         return `
           <div style="
             display: flex; 
             height: ${cardHeight}; 
             margin: ${cardMargin}; 
-            border-radius: 6px; 
+            border-radius: 3px; 
             overflow: hidden; 
-            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+            border: 1px solid rgba(0,0,0,0.3);
           ">
-            <!-- Number section (yellow/gold box) -->
+            <!-- Number section -->
             <div style="
-              background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); 
+              background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryDark} 100%); 
               width: ${numberBoxWidth}; 
               display: flex; 
               align-items: center; 
               justify-content: center; 
+              font-family: 'Arial Black', 'Helvetica', sans-serif;
               font-size: ${numberSize}; 
               font-weight: 900; 
-              color: #1f2937; 
-              text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+              color: ${primaryTextColor}; 
+              text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
             ">
               ${player.number}
             </div>
-            <!-- Name section (dark red/maroon background) -->
+            <!-- Name section -->
             <div style="
-              background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%); 
+              background: linear-gradient(135deg, ${secondaryColor} 0%, ${secondaryDark} 100%); 
               flex: 1; 
               display: flex; 
               align-items: center; 
               padding-left: 12px; 
+              font-family: 'Arial Black', 'Helvetica', sans-serif;
               font-size: ${nameSize}; 
-              font-weight: 700; 
-              color: white; 
-              text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+              font-weight: 900; 
+              color: ${secondaryTextColor}; 
+              text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
               letter-spacing: 0.5px;
             ">
               ${playerName.toUpperCase()}
