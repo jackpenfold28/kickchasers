@@ -287,12 +287,17 @@ export default function Squad() {
       });
 
       // Create player card for grid layout
-      const createPlayerCard = (player: Player) => {
+      const createPlayerCard = (player: Player, format: 'square' | 'widescreen') => {
         const playerName = sanitize(player.name || `Player ${player.number}`);
+        const cardPadding = format === 'square' ? '12px' : '16px';
+        const numberSize = format === 'square' ? '22px' : '28px';
+        const nameSize = format === 'square' ? '14px' : '18px';
+        const cardMargin = format === 'square' ? '4px' : '8px';
+        
         return `
-          <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 16px; margin: 8px; text-align: center; backdrop-filter: blur(10px);">
-            <div style="font-size: 28px; font-weight: 900; color: white; margin-bottom: 8px;">${player.number}</div>
-            <div style="font-size: 18px; color: rgba(255,255,255,0.95); font-weight: 600;">${playerName}</div>
+          <div style="background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: ${cardPadding}; margin: ${cardMargin}; text-align: center; backdrop-filter: blur(15px); box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+            <div style="font-size: ${numberSize}; font-weight: 900; color: white; margin-bottom: 6px; text-shadow: 1px 1px 3px rgba(0,0,0,0.7);">${player.number}</div>
+            <div style="font-size: ${nameSize}; color: rgba(255,255,255,0.95); font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${playerName}</div>
           </div>
         `;
       };
@@ -301,12 +306,16 @@ export default function Squad() {
       const createSection = (title: string, players: Player[]) => {
         if (players.length === 0) return '';
         
-        const playerCards = players.map(player => createPlayerCard(player)).join('');
+        const playerCards = players.map(player => createPlayerCard(player, format)).join('');
+        const sectionMargin = format === 'square' ? '20px' : '30px';
+        const titleSize = format === 'square' ? '14px' : '16px';
+        const titleMargin = format === 'square' ? '12px' : '16px';
+        const gridGap = format === 'square' ? '6px' : '8px';
         
         return `
-          <div style="margin-bottom: 30px;">
-            <h3 style="color: rgba(255,255,255,0.8); font-size: 16px; font-weight: bold; margin-bottom: 16px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">${title}</h3>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+          <div style="margin-bottom: ${sectionMargin};">
+            <h3 style="color: rgba(255,255,255,0.9); font-size: ${titleSize}; font-weight: bold; margin-bottom: ${titleMargin}; text-align: center; text-transform: uppercase; letter-spacing: 1px; text-shadow: 1px 1px 3px rgba(0,0,0,0.7);">${title}</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: ${gridGap};">
               ${playerCards}
             </div>
           </div>
@@ -324,11 +333,11 @@ export default function Squad() {
       lineupElement.style.top = '-9999px';
       lineupElement.style.width = `${dimensions.width}px`;
       lineupElement.style.height = `${dimensions.height}px`;
-      lineupElement.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #1d4ed8 100%)';
+      lineupElement.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)';
       lineupElement.style.color = 'white';
       lineupElement.style.fontFamily = 'Arial, sans-serif';
       lineupElement.style.overflow = 'hidden';
-      lineupElement.style.padding = '40px';
+      lineupElement.style.padding = format === 'square' ? '30px' : '40px';
       lineupElement.style.boxSizing = 'border-box';
 
       const safeCurrentSet = sanitize(currentSet);
@@ -338,16 +347,16 @@ export default function Squad() {
 
       lineupElement.innerHTML = `
         <!-- Header -->
-        <div style="text-align: center; margin-bottom: 40px;">
-          <h1 style="font-size: 48px; font-weight: bold; margin: 0; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">${safeCurrentSet} vs ${safeOpponent}</h1>
-          <div style="font-size: 16px; color: rgba(255,255,255,0.8); margin-top: 12px; line-height: 1.4;">
+        <div style="text-align: center; margin-bottom: ${format === 'square' ? '25px' : '35px'};">
+          <h1 style="font-size: ${format === 'square' ? '36px' : '48px'}; font-weight: bold; margin: 0; color: white; text-shadow: 2px 2px 8px rgba(0,0,0,0.8);">${safeCurrentSet} vs ${safeOpponent}</h1>
+          <div style="font-size: ${format === 'square' ? '14px' : '16px'}; color: rgba(255,255,255,0.85); margin-top: 8px; line-height: 1.3;">
             ${safeVenue ? `<div>${safeVenue}</div>` : ''}
             ${safeGameTime ? `<div>${safeGameTime}</div>` : ''}
           </div>
         </div>
 
         <!-- Main Content -->
-        <div style="max-width: 800px; margin: 0 auto;">
+        <div style="max-width: ${format === 'square' ? '100%' : '900px'}; margin: 0 auto;">
           ${createSection('FORWARDS', sections.forwards)}
           ${createSection('MIDFIELDERS', sections.midfield)}
           ${createSection('DEFENCE', sections.defence)}
@@ -355,8 +364,8 @@ export default function Squad() {
         </div>
 
         <!-- Footer -->
-        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3);">
-          <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Generated with AFL Stats App</div>
+        <div style="text-align: center; margin-top: ${format === 'square' ? '20px' : '30px'}; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+          <div style="font-size: 12px; color: rgba(255,255,255,0.6);">Generated with AFL Stats App</div>
         </div>
       `;
 
