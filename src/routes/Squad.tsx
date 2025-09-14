@@ -550,6 +550,9 @@ export default function Squad() {
 
       document.body.appendChild(lineupElement);
 
+      // Wait for fonts to load before capture
+      await document.fonts.ready;
+      
       // Generate the image
       const canvas = await html2canvas(lineupElement, {
         backgroundColor: null,
