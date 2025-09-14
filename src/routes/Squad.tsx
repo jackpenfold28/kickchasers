@@ -337,7 +337,7 @@ export default function Squad() {
             display: flex; 
             height: ${cardHeight}; 
             margin: ${cardMargin}; 
-            border-radius: 3px; 
+            border-radius: 5px; 
             overflow: hidden; 
             box-shadow: 0 2px 8px rgba(0,0,0,0.6);
             border: 1px solid rgba(0,0,0,0.3);
@@ -354,6 +354,8 @@ export default function Squad() {
               font-weight: 900; 
               color: ${primaryTextColor}; 
               text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+              text-align: center;
+              line-height: 1;
             ">
               ${player.number}
             </div>
@@ -370,6 +372,9 @@ export default function Squad() {
               color: ${secondaryTextColor}; 
               text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
               letter-spacing: 0.5px;
+              text-align: center;
+              line-height: 1;
+              padding: 0 8px;
             ">
               ${playerName.toUpperCase()}
             </div>
