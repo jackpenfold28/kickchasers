@@ -265,62 +265,19 @@ export default function Squad() {
       return;
     }
 
-    // Check position distribution and warn about empty positions
-    const positionCounts = {
-      FWD: selectedPlayers.filter(p => p.position === 'FWD').length,
-      MID: selectedPlayers.filter(p => p.position === 'MID').length,
-      DEF: selectedPlayers.filter(p => p.position === 'DEF').length,
-      INT: selectedPlayers.filter(p => p.position === 'INT').length,
-    };
-    
-    const emptyPositions = [];
-    if (positionCounts.FWD === 0) emptyPositions.push('Forwards');
-    if (positionCounts.MID === 0) emptyPositions.push('Midfield');
-    if (positionCounts.DEF === 0) emptyPositions.push('Defence');
-    if (positionCounts.INT === 0) emptyPositions.push('Interchange');
-    
-    if (emptyPositions.length > 0) {
-      const message = `The following positions are empty: ${emptyPositions.join(', ')}. Continue generating the lineup anyway?`;
-      if (!confirm(message)) {
-        return;
-      }
-    }
-
     try {
-      // Map players to AFL field positions
+      // Group players by position for simple grid layout
       const forwards = selectedPlayers.filter(p => p.position === 'FWD').map(p => p.player);
       const midfield = selectedPlayers.filter(p => p.position === 'MID').map(p => p.player);
       const defence = selectedPlayers.filter(p => p.position === 'DEF').map(p => p.player);
       const interchange = selectedPlayers.filter(p => p.position === 'INT').map(p => p.player);
 
-      // AFL field positions mapping to match Adelaide Crows reference
-      const fieldPositions = {
-        // Forward line - top arc
-        FF: forwards[0] || null,      // Full Forward (center top)
-        LFP: forwards[1] || null,     // Left Forward Pocket  
-        RFP: forwards[2] || null,     // Right Forward Pocket
-        CHF: forwards[3] || null,     // Centre Half Forward
-        LHF: forwards[4] || null,     // Left Half Forward
-        RHF: forwards[5] || null,     // Right Half Forward
-        
-        // Midfield - center area
-        LW: midfield[0] || null,      // Left Wing
-        C: midfield[1] || null,       // Centre
-        RW: midfield[2] || null,      // Right Wing
-        
-        // Defense line - bottom arc  
-        CHB: defence[0] || null,      // Centre Half Back
-        LHB: defence[1] || null,      // Left Half Back
-        RHB: defence[2] || null,      // Right Half Back
-        FB: defence[3] || null,       // Full Back (center bottom)
-        LBP: defence[4] || null,      // Left Back Pocket
-        RBP: defence[5] || null,      // Right Back Pocket
-        
-        // Followers (ruck/rovers) - separate section
-        FOLLOWERS: midfield.slice(3) || [],
-        
-        // Interchange
-        INTERCHANGE: interchange || [],
+      // Simple sections for grid layout
+      const sections = {
+        forwards,
+        midfield, 
+        defence,
+        interchange
       };
 
       // Sanitize function for XSS prevention
@@ -329,222 +286,71 @@ export default function Squad() {
         return map[char] || char;
       });
 
-      // Create player box component with accurate Adelaide Crows styling
-      const createPlayerBox = (player: Player | null, position: string, widthPercent = '8%', heightPx = 30) => {
-        if (!player) {
-          return `<div style="width: ${widthPercent}; height: ${heightPx}px; background: rgba(247,196,0,0.2); border: 2px dashed rgba(247,196,0,0.4); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: rgba(247,196,0,0.6); font-weight: 900; letter-spacing: 0.5px;">${position}</div>`;
-        }
+      // Create player card for grid layout
+      const createPlayerCard = (player: Player) => {
+        const playerName = sanitize(player.name || `Player ${player.number}`);
+        return `
+          <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 16px; margin: 8px; text-align: center; backdrop-filter: blur(10px);">
+            <div style="font-size: 24px; font-weight: bold; color: white; margin-bottom: 4px;">#${player.number}</div>
+            <div style="font-size: 14px; color: rgba(255,255,255,0.9); font-weight: 500;">${playerName}</div>
+          </div>
+        `;
+      };
 
-        const playerName = sanitize((player.name || 'Player ' + player.number).split(' ').pop() || '').toUpperCase();
+      // Create section with players in 3-column grid
+      const createSection = (title: string, players: Player[]) => {
+        if (players.length === 0) return '';
+        
+        const playerCards = players.map(player => createPlayerCard(player)).join('');
         
         return `
-          <div style="width: ${widthPercent}; height: ${heightPx}px; background: #F7C400; border: 2px solid #E6B800; border-radius: 3px; display: flex; align-items: center; justify-content: center; color: black; font-weight: 900; font-size: 11px; box-shadow: 0 2px 4px rgba(0,0,0,0.4); font-family: 'Oswald', Impact, 'Arial Black', Arial, sans-serif; letter-spacing: 0.3px; font-stretch: condensed;">
-            <div style="display: flex; align-items: center; gap: 2px;">
-              <span style="font-size: 14px; font-weight: 900;">${player.number}.</span>
-              <span style="font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">${playerName}</span>
+          <div style="margin-bottom: 30px;">
+            <h3 style="color: rgba(255,255,255,0.8); font-size: 16px; font-weight: bold; margin-bottom: 16px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">${title}</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+              ${playerCards}
             </div>
           </div>
         `;
       };
 
-      // Create followers list component
-      const createFollowersList = (followers: Player[]) => {
-        if (followers.length === 0) return '';
-        return `
-          <div style="background: rgba(0,0,0,0.7); padding: 15px; border-radius: 8px; margin: 20px;">
-            <h4 style="color: #FFD700; font-size: 14px; font-weight: bold; margin: 0 0 10px 0;">FOLLOWERS</h4>
-            ${followers.map((player, index) => `
-              <div style="color: white; font-size: 12px; margin: 3px 0; font-weight: bold;">
-                ${player.number}. ${sanitize((player.name || 'Player ' + player.number).split(' ').pop() || '').toUpperCase()}
-              </div>
-            `).join('')}
-          </div>
-        `;
-      };
-
-      // Create interchange list component  
-      const createInterchangeList = (interchange: Player[]) => {
-        if (interchange.length === 0) return '';
-        return `
-          <div style="background: rgba(0,0,0,0.7); padding: 15px; border-radius: 8px; margin: 20px;">
-            <h4 style="color: #FFD700; font-size: 14px; font-weight: bold; margin: 0 0 10px 0;">INTER. FROM</h4>
-            ${interchange.map((player, index) => `
-              <div style="color: white; font-size: 12px; margin: 3px 0; font-weight: bold;">
-                ${player.number}. ${sanitize((player.name || 'Player ' + player.number).split(' ').pop() || '').toUpperCase()}
-              </div>
-            `).join('')}
-          </div>
-        `;
-      };
 
       // Set dimensions based on format
       const dimensions = format === 'square' ? { width: 1080, height: 1080 } : { width: 1920, height: 1080 };
       
-      // Create a temporary element for the AFL field
+      // Create a temporary element for the simple grid lineup
       const lineupElement = document.createElement('div');
       lineupElement.style.position = 'absolute';
       lineupElement.style.left = '-9999px';
       lineupElement.style.top = '-9999px';
       lineupElement.style.width = `${dimensions.width}px`;
       lineupElement.style.height = `${dimensions.height}px`;
-      lineupElement.style.background = `
-        linear-gradient(135deg, #001F3F 0%, #002B5C 50%, #001122 100%),
-        linear-gradient(90deg, transparent 48%, rgba(227,24,55,0.15) 50%, transparent 52%),
-        radial-gradient(circle at 70% 30%, rgba(247,196,0,0.1) 0%, transparent 50%)
-      `;
-      lineupElement.style.backgroundSize = '100% 100%, 100px 100px, 400px 400px';
+      lineupElement.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #1d4ed8 100%)';
       lineupElement.style.color = 'white';
-      // Load condensed webfont for reliable rendering (avoid duplicates)
-      if (!document.querySelector('link[href*="Oswald"]')) {
-        const fontLink = document.createElement('link');
-        fontLink.href = 'https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap';
-        fontLink.rel = 'stylesheet';
-        document.head.appendChild(fontLink);
-      }
-      
-      lineupElement.style.fontFamily = '"Oswald", Impact, "Arial Black", Arial, sans-serif';
+      lineupElement.style.fontFamily = 'Arial, sans-serif';
       lineupElement.style.overflow = 'hidden';
+      lineupElement.style.padding = '40px';
+      lineupElement.style.boxSizing = 'border-box';
 
-      const safeOpponent = opponent ? sanitize(opponent) : '';
-      const safeVenue = venue ? sanitize(venue) : '';
-      const safeGameTime = gameTime ? sanitize(gameTime) : '';
       const safeCurrentSet = sanitize(currentSet);
 
       lineupElement.innerHTML = `
-        <!-- Header matching Adelaide Crows reference -->
-        <div style="position: relative; height: 120px; display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; background: linear-gradient(135deg, #001F3F 0%, #002B5C 100%);">
-          <!-- Team Logo -->
-          <div style="display: flex; align-items: center; gap: 20px;">
-            <div style="width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #001F3F;">LOGO</div>
-          </div>
-          
-          <!-- Team Selection Title -->
-          <div style="text-align: right;">
-            <h1 style="font-size: 52px; font-weight: 900; margin: 0; color: #F7C400; text-shadow: 3px 3px 6px rgba(0,0,0,0.8); letter-spacing: 3px; font-family: 'Oswald', Impact, 'Arial Black', Arial, sans-serif; font-stretch: condensed;">TEAM</h1>
-            <h1 style="font-size: 52px; font-weight: 900; margin: -12px 0 0 0; color: #F7C400; text-shadow: 3px 3px 6px rgba(0,0,0,0.8); letter-spacing: 3px; font-family: 'Oswald', Impact, 'Arial Black', Arial, sans-serif; font-stretch: condensed;">SELECTION</h1>
-            <div style="font-size: 12px; color: rgba(255,255,255,0.9); margin-top: 8px; font-weight: bold; letter-spacing: 1px;">BROUGHT TO YOU BY</div>
-          </div>
-          
-          <!-- Sponsor Logo Placeholder -->
-          <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.9); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #001F3F;">SPONSOR</div>
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 40px;">
+          <h1 style="font-size: 48px; font-weight: bold; margin: 0; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">AFL LINEUP</h1>
+          <div style="font-size: 20px; color: rgba(255,255,255,0.9); margin-top: 8px; font-weight: bold; letter-spacing: 2px;">${safeCurrentSet}</div>
         </div>
 
-        <!-- Main Content Area -->
-        <div style="position: relative; height: ${dimensions.height - 120}px; display: flex;">
-          
-          <!-- Left Section - Followers -->
-          <div style="width: 200px; padding: 30px 20px;">
-            ${createFollowersList(fieldPositions.FOLLOWERS)}
-          </div>
-
-          <!-- Center Section - AFL Field -->
-          <div style="flex: 1; position: relative; padding: 20px;">
-            
-            <!-- AFL Oval with proper proportions -->
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 85%; border: 4px solid white; border-radius: 50%; background: rgba(255,255,255,0.02);"></div>
-            
-            <!-- Center Circle (AFL Standard Size) -->
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 6%; height: 7%; border: 3px solid white; border-radius: 50%; background: transparent;"></div>
-            
-            <!-- Inner Center Circle -->
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 2.5%; height: 3%; border: 2px solid white; border-radius: 50%; background: transparent;"></div>
-            
-            <!-- 50m Arc (Top Goal End) -->
-            <div style="position: absolute; top: 15%; left: 50%; transform: translateX(-50%); width: 40%; height: 20%; border: 2px solid rgba(255,255,255,0.4); border-radius: 50% 50% 50% 50%; background: transparent; clip-path: polygon(0% 50%, 100% 50%, 100% 100%, 0% 100%);"></div>
-            
-            <!-- 50m Arc (Bottom Goal End) -->
-            <div style="position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); width: 40%; height: 20%; border: 2px solid rgba(255,255,255,0.4); border-radius: 50% 50% 50% 50%; background: transparent; clip-path: polygon(0% 0%, 100% 0%, 100% 50%, 0% 50%);"></div>
-            
-            <!-- Goal Squares (Top) -->
-            <div style="position: absolute; top: 8%; left: 50%; transform: translateX(-50%); width: 15%; height: 8%; border: 3px solid white; background: transparent;"></div>
-            
-            <!-- Goal Squares (Bottom) -->
-            <div style="position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%); width: 15%; height: 8%; border: 3px solid white; background: transparent;"></div>
-            
-            <!-- Goal Posts (Top) - 2 tall goal posts, 2 shorter behind posts -->
-            <div style="position: absolute; top: 2%; left: 50%; transform: translateX(-50%); display: flex; gap: 15px;">
-              <div style="width: 5px; height: 25px; background: white;"></div>
-              <div style="width: 5px; height: 60px; background: white;"></div>
-              <div style="width: 5px; height: 60px; background: white;"></div>
-              <div style="width: 5px; height: 25px; background: white;"></div>
-            </div>
-            
-            <!-- Goal Posts (Bottom) - 2 tall goal posts, 2 shorter behind posts -->
-            <div style="position: absolute; bottom: 2%; left: 50%; transform: translateX(-50%); display: flex; gap: 15px;">
-              <div style="width: 5px; height: 25px; background: white;"></div>
-              <div style="width: 5px; height: 60px; background: white;"></div>
-              <div style="width: 5px; height: 60px; background: white;"></div>
-              <div style="width: 5px; height: 25px; background: white;"></div>
-            </div>
-            
-            <!-- Center Square (Perfect Square) -->
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10%; height: 10%; border: 3px solid white; background: transparent;"></div>
-
-            <!-- Forward Line (Top) -->
-            <div style="position: absolute; top: 12%; left: 50%; transform: translateX(-50%);">
-              ${createPlayerBox(fieldPositions.FF, 'FF', '10%', 35)}
-            </div>
-            <div style="position: absolute; top: 14%; left: 30%; transform: translateX(-50%);">
-              ${createPlayerBox(fieldPositions.LFP, 'LFP', '8%', 30)}
-            </div>
-            <div style="position: absolute; top: 14%; right: 30%; transform: translateX(50%);">
-              ${createPlayerBox(fieldPositions.RFP, 'RFP', '8%', 30)}
-            </div>
-            
-            <!-- Half Forward Line -->
-            <div style="position: absolute; top: 28%; left: 50%; transform: translateX(-50%);">
-              ${createPlayerBox(fieldPositions.CHF, 'CHF', '10%', 35)}
-            </div>
-            <div style="position: absolute; top: 30%; left: 20%; transform: translateX(-50%);">
-              ${createPlayerBox(fieldPositions.LHF, 'LHF', '8%', 30)}
-            </div>
-            <div style="position: absolute; top: 30%; right: 20%; transform: translateX(50%);">
-              ${createPlayerBox(fieldPositions.RHF, 'RHF', '8%', 30)}
-            </div>
-
-            <!-- Center Line -->
-            <div style="position: absolute; top: 50%; left: 15%; transform: translate(-50%, -50%);">
-              ${createPlayerBox(fieldPositions.LW, 'LW', '8%', 30)}
-            </div>
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-              ${createPlayerBox(fieldPositions.C, 'C', '8%', 30)}
-            </div>
-            <div style="position: absolute; top: 50%; right: 15%; transform: translate(50%, -50%);">
-              ${createPlayerBox(fieldPositions.RW, 'RW', '8%', 30)}
-            </div>
-
-            <!-- Half Back Line -->
-            <div style="position: absolute; bottom: 30%; left: 50%; transform: translateX(-50%);">
-              ${createPlayerBox(fieldPositions.CHB, 'CHB', '10%', 35)}
-            </div>
-            <div style="position: absolute; bottom: 28%; left: 20%; transform: translateX(-50%);">
-              ${createPlayerBox(fieldPositions.LHB, 'LHB', '8%', 30)}
-            </div>
-            <div style="position: absolute; bottom: 28%; right: 20%; transform: translateX(50%);">
-              ${createPlayerBox(fieldPositions.RHB, 'RHB', '8%', 30)}
-            </div>
-
-            <!-- Back Line -->
-            <div style="position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%);">
-              ${createPlayerBox(fieldPositions.FB, 'FB', '10%', 35)}
-            </div>
-            <div style="position: absolute; bottom: 14%; left: 30%; transform: translateX(-50%);">
-              ${createPlayerBox(fieldPositions.LBP, 'LBP', '8%', 30)}
-            </div>
-            <div style="position: absolute; bottom: 14%; right: 30%; transform: translateX(50%);">
-              ${createPlayerBox(fieldPositions.RBP, 'RBP', '8%', 30)}
-            </div>
-          </div>
-
-          <!-- Right Section - Interchange -->
-          <div style="width: 200px; padding: 30px 20px;">
-            ${createInterchangeList(fieldPositions.INTERCHANGE)}
-          </div>
+        <!-- Main Content -->
+        <div style="max-width: 800px; margin: 0 auto;">
+          ${createSection('FORWARDS', sections.forwards)}
+          ${createSection('MIDFIELDERS', sections.midfield)}
+          ${createSection('DEFENCE', sections.defence)}
+          ${createSection('INTERCHANGE', sections.interchange)}
         </div>
 
         <!-- Footer -->
-        <div style="position: absolute; bottom: 10px; right: 20px; font-size: 10px; color: rgba(255,255,255,0.5);">
-          Generated with AFL Stats App
+        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3);">
+          <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Generated with AFL Stats App</div>
         </div>
       `;
 
