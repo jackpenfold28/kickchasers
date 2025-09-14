@@ -317,8 +317,8 @@ export default function Squad() {
       const createPlayerCard = (player: Player, format: 'square' | 'widescreen') => {
         const playerName = sanitize(player.name || `Player ${player.number}`);
         const cardHeight = format === 'square' ? '50px' : '60px';
-        const numberSize = format === 'square' ? '18px' : '22px';
-        const nameSize = format === 'square' ? '13px' : '15px';
+        const numberSize = format === 'square' ? '24px' : '28px';
+        const nameSize = format === 'square' ? '16px' : '18px';
         const cardMargin = format === 'square' ? '3px' : '5px';
         const numberBoxWidth = format === 'square' ? '45px' : '55px';
         
@@ -353,7 +353,7 @@ export default function Squad() {
               font-size: ${numberSize}; 
               font-weight: 900; 
               color: ${primaryTextColor}; 
-              text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+              text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
             ">
               ${player.number}
             </div>
@@ -363,12 +363,12 @@ export default function Squad() {
               flex: 1; 
               display: flex; 
               align-items: center; 
-              padding-left: 12px; 
+              justify-content: center; 
               font-family: 'Arial Black', 'Helvetica', sans-serif;
               font-size: ${nameSize}; 
               font-weight: 900; 
               color: ${secondaryTextColor}; 
-              text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+              text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
               letter-spacing: 0.5px;
             ">
               ${playerName.toUpperCase()}
@@ -408,7 +408,7 @@ export default function Squad() {
       lineupElement.style.top = '-9999px';
       lineupElement.style.width = `${dimensions.width}px`;
       lineupElement.style.height = `${dimensions.height}px`;
-      lineupElement.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)';
+      lineupElement.style.background = 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2d2d2d 100%)';
       lineupElement.style.color = 'white';
       lineupElement.style.fontFamily = 'Arial, sans-serif';
       lineupElement.style.overflow = 'hidden';
