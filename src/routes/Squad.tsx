@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
+import html2canvas from "html2canvas";
 
 type Player = { id?: string; number: number; name: string };
 type SquadSet = { name: string };
@@ -14,6 +15,11 @@ export default function Squad() {
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showSharingModal, setShowSharingModal] = useState(false);
+  const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
+  const [venue, setVenue] = useState("");
+  const [opponent, setOpponent] = useState("");
+  const [gameTime, setGameTime] = useState("");
   const nav = useNavigate();
 
   useEffect(() => {
@@ -165,9 +171,9 @@ export default function Squad() {
     setSavedAt(null);
     setErrorMsg(null);
 
-    // Basic validation
+    // Basic validation - only save players with actual names
     const cleaned = players
-      .filter((p) => (p.name && p.name.trim().length) || (Number.isFinite(p.number) && p.number > 0))
+      .filter((p) => p.name && p.name.trim().length > 0 && Number.isFinite(p.number) && p.number > 0)
       .map((p) => ({
         user_id: user.user.id,
         number: Number(p.number) || 0,
@@ -202,6 +208,91 @@ export default function Squad() {
       setErrorMsg(e?.message || "Could not save squad");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const openSharingModal = () => {
+    setSelectedPlayers([]);
+    setVenue("");
+    setOpponent("");
+    setGameTime("");
+    setShowSharingModal(true);
+  };
+
+  const togglePlayerSelection = (player: Player) => {
+    setSelectedPlayers(prev => {
+      const isSelected = prev.some(p => p.number === player.number);
+      if (isSelected) {
+        return prev.filter(p => p.number !== player.number);
+      } else if (prev.length < 25) {
+        return [...prev, player];
+      }
+      return prev;
+    });
+  };
+
+  const generateLineupImage = async () => {
+    if (selectedPlayers.length === 0) {
+      alert("Please select at least one player for the lineup.");
+      return;
+    }
+
+    try {
+      // Create a temporary element for the lineup
+      const lineupElement = document.createElement('div');
+      lineupElement.style.position = 'absolute';
+      lineupElement.style.left = '-9999px';
+      lineupElement.style.top = '-9999px';
+      lineupElement.style.width = '600px';
+      lineupElement.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)';
+      lineupElement.style.color = 'white';
+      lineupElement.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+      lineupElement.style.padding = '40px';
+      lineupElement.style.borderRadius = '20px';
+
+      lineupElement.innerHTML = `
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="font-size: 32px; font-weight: bold; margin: 0 0 10px 0;">AFL LINEUP</h1>
+          <h2 style="font-size: 24px; font-weight: 600; margin: 0 0 20px 0;">${currentSet.toUpperCase()}</h2>
+          ${opponent ? `<p style="font-size: 18px; margin: 5px 0;">vs ${opponent}</p>` : ''}
+          ${venue ? `<p style="font-size: 16px; margin: 5px 0;">@ ${venue}</p>` : ''}
+          ${gameTime ? `<p style="font-size: 16px; margin: 5px 0;">${gameTime}</p>` : ''}
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+          ${selectedPlayers.sort((a, b) => a.number - b.number).map(player => `
+            <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 15px; text-align: center;">
+              <div style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">#${player.number}</div>
+              <div style="font-size: 14px; font-weight: 500;">${player.name || 'Player ' + player.number}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="text-align: center; margin-top: 30px; font-size: 14px; opacity: 0.7;">
+          Generated with AFL Stats App
+        </div>
+      `;
+
+      document.body.appendChild(lineupElement);
+
+      // Generate the image
+      const canvas = await html2canvas(lineupElement, {
+        backgroundColor: null,
+        scale: 2,
+        logging: false,
+        useCORS: true
+      });
+
+      document.body.removeChild(lineupElement);
+
+      // Download the image
+      const link = document.createElement('a');
+      link.download = `${currentSet.toLowerCase().replace(/\s+/g, '-')}-lineup.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      setShowSharingModal(false);
+    } catch (error) {
+      console.error('Error generating lineup image:', error);
+      alert('Failed to generate lineup image. Please try again.');
     }
   };
 
@@ -331,6 +422,13 @@ export default function Squad() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-white/60">{players.length}/60</span>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={openSharingModal}
+                  disabled={players.filter(p => p.name.trim()).length === 0}
+                >
+                  Share Lineup
+                </button>
                 <button 
                   className="btn btn-primary" 
                   onClick={addPlayer} 
@@ -597,6 +695,118 @@ export default function Squad() {
           </div>
         )}
       </div>
+
+      {/* Social Media Sharing Modal */}
+      {showSharingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-white/20 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-white">Share Team Lineup</h3>
+              <button
+                className="btn btn-ghost"
+                onClick={() => setShowSharingModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Game Details */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">Venue</label>
+                <input
+                  type="text"
+                  value={venue}
+                  onChange={(e) => setVenue(e.target.value)}
+                  placeholder="e.g., MCG, Optus Stadium"
+                  className="input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">Opponent</label>
+                <input
+                  type="text"
+                  value={opponent}
+                  onChange={(e) => setOpponent(e.target.value)}
+                  placeholder="e.g., Richmond Tigers"
+                  className="input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">Game Time</label>
+                <input
+                  type="text"
+                  value={gameTime}
+                  onChange={(e) => setGameTime(e.target.value)}
+                  placeholder="e.g., Saturday 2:30pm"
+                  className="input w-full"
+                />
+              </div>
+            </div>
+
+            {/* Player Selection */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-medium text-white">Select Players ({selectedPlayers.length}/25)</h4>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setSelectedPlayers([])}
+                >
+                  Clear All
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {players.filter(p => p.name.trim()).map((player, i) => {
+                  const isSelected = selectedPlayers.some(p => p.number === player.number);
+                  const canSelect = selectedPlayers.length < 25 || isSelected;
+                  
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => togglePlayerSelection(player)}
+                      disabled={!canSelect}
+                      className={`p-3 rounded-lg border transition-all duration-200 text-left
+                        ${isSelected 
+                          ? 'bg-blue-600/30 border-blue-400/50 text-white' 
+                          : canSelect
+                            ? 'bg-white/5 border-white/20 text-white/80 hover:bg-white/10 hover:border-white/30'
+                            : 'bg-white/5 border-white/10 text-white/40 cursor-not-allowed'
+                        }
+                      `}
+                    >
+                      <div className="font-semibold">#{player.number}</div>
+                      <div className="text-sm truncate">{player.name}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-white/60">
+                Select up to 25 players to include in your lineup image
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowSharingModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={generateLineupImage}
+                  disabled={selectedPlayers.length === 0}
+                >
+                  Generate & Download
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
