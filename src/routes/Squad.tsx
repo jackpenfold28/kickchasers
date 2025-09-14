@@ -303,24 +303,16 @@ export default function Squad() {
         });
         
         return `
-          <div style="margin-bottom: 30px;">
-            <div style="text-align: center; margin-bottom: 16px;">
-              <h4 style="font-size: 18px; font-weight: bold; color: ${teamColors.accent}; margin: 0 0 8px 0; letter-spacing: 2px;">${title}</h4>
-              <div style="height: 1px; background: rgba(255,255,255,0.2); width: 100%; margin: 0 auto;"></div>
+          <div style="margin-bottom: 35px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <h4 style="font-size: 22px; font-weight: 800; color: ${teamColors.accent}; margin: 0 0 10px 0; letter-spacing: 3px;">${title}</h4>
+              <div style="height: 2px; background: ${teamColors.accent}; width: 120px; margin: 0 auto;"></div>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
               ${sortedPositionPlayers.map(player => `
-                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; transition: all 0.2s;">
-                  <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="flex-shrink: 0;">
-                      <div style="color: rgba(255,255,255,0.5); font-size: 10px; font-weight: bold; margin-bottom: 4px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">NUMBER</div>
-                      <div style="width: 32px; height: 32px; text-align: center; font-size: 14px; font-weight: bold; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: ${teamColors.accent};">${player.number}</div>
-                    </div>
-                    <div style="flex: 1; min-width: 0;">
-                      <div style="color: rgba(255,255,255,0.5); font-size: 10px; font-weight: bold; margin-bottom: 4px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">NAME</div>
-                      <div style="font-size: 14px; color: ${teamColors.accent}; font-weight: 500;">${sanitize(player.name || 'Player ' + player.number)}</div>
-                    </div>
-                  </div>
+                <div style="background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 16px; text-align: center;">
+                  <div style="width: 50px; height: 50px; text-align: center; font-size: 24px; font-weight: 900; background: ${teamColors.accent}; color: ${teamColors.primary}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">${player.number}</div>
+                  <div style="font-size: 16px; color: ${teamColors.accent}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">${sanitize((player.name || 'Player ' + player.number).toUpperCase())}</div>
                 </div>
               `).join('')}
               ${Array.from({ length: Math.max(0, (Math.ceil(sortedPositionPlayers.length / 3) * 3) - sortedPositionPlayers.length) }, () => `
@@ -358,16 +350,12 @@ export default function Squad() {
       const safeCurrentSet = sanitize(currentSet);
 
       lineupElement.innerHTML = `
-        <div style="text-align: center; margin-bottom: 30px; position: relative;">
-          <div style="background: linear-gradient(45deg, ${teamColors.primary} 0%, ${teamColors.secondary} 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px solid ${teamColors.secondary};">
-            <h1 style="font-size: 32px; font-weight: bold; margin: 0 0 10px 0; color: ${teamColors.accent}; letter-spacing: 4px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">SELECTION</h1>
-            <div style="width: 100px; height: 4px; background: ${teamColors.accent}; margin: 0 auto 15px auto; border-radius: 2px;"></div>
-            <h2 style="font-size: 24px; font-weight: 600; margin: 0; color: ${teamColors.accent}; text-transform: uppercase;">${safeCurrentSet}</h2>
-          </div>
-          <div style="background: ${teamColors.primary}80; padding: 15px; border-radius: 8px; border: 1px solid ${teamColors.secondary}40;">
-            ${safeOpponent ? `<p style="font-size: 16px; margin: 5px 0; color: ${teamColors.accent}; font-weight: bold;">vs ${safeOpponent.toUpperCase()}</p>` : ''}
-            ${safeVenue ? `<p style="font-size: 14px; margin: 3px 0; color: ${teamColors.accent};">@ ${safeVenue}</p>` : ''}
-            ${safeGameTime ? `<p style="font-size: 14px; margin: 3px 0; color: ${teamColors.accent};">${safeGameTime}</p>` : ''}
+        <div style="text-align: center; margin-bottom: 40px; position: relative;">
+          <h1 style="font-size: 36px; font-weight: 900; margin: 0 0 20px 0; color: ${teamColors.accent}; letter-spacing: 3px; text-transform: uppercase;">${safeCurrentSet}</h1>
+          <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 0 auto; max-width: 500px;">
+            ${safeOpponent ? `<p style="font-size: 20px; margin: 8px 0; color: ${teamColors.accent}; font-weight: bold;">vs ${safeOpponent.toUpperCase()}</p>` : ''}
+            ${safeVenue ? `<p style="font-size: 16px; margin: 6px 0; color: ${teamColors.accent}; opacity: 0.9;">@ ${safeVenue}</p>` : ''}
+            ${safeGameTime ? `<p style="font-size: 16px; margin: 6px 0; color: ${teamColors.accent}; opacity: 0.9;">${safeGameTime}</p>` : ''}
           </div>
         </div>
         
