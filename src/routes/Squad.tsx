@@ -318,7 +318,7 @@ export default function Squad() {
         const playerName = sanitize(player.name || `Player ${player.number}`);
         const cardHeight = format === 'square' ? '50px' : '60px';
         const numberSize = format === 'square' ? '24px' : '28px';
-        const nameSize = format === 'square' ? '16px' : '18px';
+        const nameSize = format === 'square' ? '18px' : '20px';
         const cardMargin = format === 'square' ? '3px' : '5px';
         const numberBoxWidth = format === 'square' ? '45px' : '55px';
         
@@ -355,11 +355,14 @@ export default function Squad() {
               color: ${primaryTextColor}; 
               text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
               text-align: center;
-              line-height: 0.9;
-              padding-top: 2px;
-              box-sizing: border-box;
+              line-height: 1;
+              height: 100%;
+              position: relative;
             ">
-              ${player.number}
+              <span style="
+                display: block;
+                transform: translateY(-1px);
+              ">${player.number}</span>
             </div>
             <!-- Name section -->
             <div style="
@@ -375,11 +378,15 @@ export default function Squad() {
               text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
               letter-spacing: 0.5px;
               text-align: center;
-              line-height: 0.9;
-              padding: 2px 8px 0 8px;
-              box-sizing: border-box;
+              line-height: 1;
+              height: 100%;
+              position: relative;
+              padding: 0 8px;
             ">
-              ${playerName.toUpperCase()}
+              <span style="
+                display: block;
+                transform: translateY(-1px);
+              ">${playerName.toUpperCase()}</span>
             </div>
           </div>
         `;
