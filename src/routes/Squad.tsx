@@ -20,6 +20,7 @@ export default function Squad() {
   const [venue, setVenue] = useState("");
   const [opponent, setOpponent] = useState("");
   const [gameTime, setGameTime] = useState("");
+  const [exportFormat, setExportFormat] = useState<'square' | 'widescreen'>('square');
   const [teamColors, setTeamColors] = useState({ primary: "#1e3a8a", secondary: "#3b82f6", accent: "#ffffff" });
   const nav = useNavigate();
 
@@ -212,11 +213,12 @@ export default function Squad() {
     }
   };
 
-  const openSharingModal = () => {
-    setSelectedPlayers([]);
+  const openSharingModal = (format: 'square' | 'widescreen' = 'square') => {
+    // Don't clear selectedPlayers - keep the user's selection for export
     setVenue("");
     setOpponent("");
     setGameTime("");
+    setExportFormat(format);
     setTeamColors({ primary: "#1e3a8a", secondary: "#3b82f6", accent: "#ffffff" });
     setShowSharingModal(true);
   };
@@ -257,7 +259,7 @@ export default function Squad() {
     return selected?.position;
   };
 
-  const generateLineupImage = async () => {
+  const generateLineupImage = async (format: 'square' | 'widescreen' = 'square') => {
     if (selectedPlayers.length === 0) {
       alert("Please select at least one player for the lineup.");
       return;
@@ -285,64 +287,85 @@ export default function Squad() {
     }
 
     try {
-      // Organize players by their assigned position for the lineup
+      // Map players to AFL field positions
       const forwards = selectedPlayers.filter(p => p.position === 'FWD').map(p => p.player);
       const midfield = selectedPlayers.filter(p => p.position === 'MID').map(p => p.player);
       const defence = selectedPlayers.filter(p => p.position === 'DEF').map(p => p.player);
       const interchange = selectedPlayers.filter(p => p.position === 'INT').map(p => p.player);
 
-      const createPositionSection = (title: string, players: Player[]) => {
-        if (players.length === 0) return '';
-        // Sort players within each position by number
-        const sortedPositionPlayers = players.sort((a, b) => a.number - b.number);
+      // AFL field positions mapping
+      const fieldPositions = {
+        // Forward line (6 positions)
+        FF: forwards[0] || null,      // Full Forward
+        LF: forwards[1] || null,      // Left Forward Pocket
+        RF: forwards[2] || null,      // Right Forward Pocket
+        CHF: forwards[3] || null,     // Centre Half Forward
+        LHF: forwards[4] || null,     // Left Half Forward
+        RHF: forwards[5] || null,     // Right Half Forward
         
-        // Sanitize function for XSS prevention
-        const sanitize = (str: string) => str.replace(/[<>&"']/g, (char) => {
-          const map = { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' };
-          return map[char] || char;
-        });
+        // Midfield line (6 positions)
+        LW: midfield[0] || null,      // Left Wing
+        C: midfield[1] || null,       // Centre
+        RW: midfield[2] || null,      // Right Wing
+        RUC: midfield[3] || null,     // Ruck
+        RUCK2: midfield[4] || null,   // Second Ruck/Rover
+        ROV: midfield[5] || null,     // Rover
         
-        return `
-          <div style="margin-bottom: 35px;">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <h4 style="font-size: 22px; font-weight: 800; color: ${teamColors.accent}; margin: 0 0 10px 0; letter-spacing: 3px;">${title}</h4>
-              <div style="height: 2px; background: ${teamColors.accent}; width: 120px; margin: 0 auto;"></div>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
-              ${sortedPositionPlayers.map(player => `
-                <div style="background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 16px; text-align: center;">
-                  <div style="width: 50px; height: 50px; text-align: center; font-size: 24px; font-weight: 900; background: ${teamColors.accent}; color: ${teamColors.primary}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">${player.number}</div>
-                  <div style="font-size: 16px; color: ${teamColors.accent}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">${sanitize((player.name || 'Player ' + player.number).toUpperCase())}</div>
-                </div>
-              `).join('')}
-              ${Array.from({ length: Math.max(0, (Math.ceil(sortedPositionPlayers.length / 3) * 3) - sortedPositionPlayers.length) }, () => `
-                <div style="background: transparent; border: 2px dashed rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: center;">
-                  <span style="color: rgba(255,255,255,0.3); font-size: 20px;">+</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
+        // Defence line (6 positions)
+        LHB: defence[0] || null,      // Left Half Back
+        CHB: defence[1] || null,      // Centre Half Back
+        RHB: defence[2] || null,      // Right Half Back
+        LB: defence[3] || null,       // Left Back Pocket
+        FB: defence[4] || null,       // Full Back
+        RB: defence[5] || null,       // Right Back Pocket
+        
+        // Interchange (4 positions)
+        INT1: interchange[0] || null,
+        INT2: interchange[1] || null,
+        INT3: interchange[2] || null,
+        INT4: interchange[3] || null,
       };
 
-      // Create a temporary element for the lineup
-      const lineupElement = document.createElement('div');
-      lineupElement.style.position = 'absolute';
-      lineupElement.style.left = '-9999px';
-      lineupElement.style.top = '-9999px';
-      lineupElement.style.width = '650px';
-      lineupElement.style.background = `linear-gradient(135deg, ${teamColors.primary} 0%, #1a1a2e 50%, ${teamColors.primary} 100%)`;
-      lineupElement.style.color = teamColors.accent;
-      lineupElement.style.fontFamily = 'system-ui, -apple-system, sans-serif';
-      lineupElement.style.padding = '30px';
-      lineupElement.style.borderRadius = '15px';
-      lineupElement.style.border = `3px solid ${teamColors.secondary}`;
-
-      // Sanitize user inputs to prevent XSS
+      // Sanitize function for XSS prevention
       const sanitize = (str: string) => str.replace(/[<>&"']/g, (char) => {
         const map = { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' };
         return map[char] || char;
       });
+
+      // Create player box component
+      const createPlayerBox = (player: Player | null, position: string) => {
+        if (!player) {
+          return `<div style="width: 80px; height: 60px; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: rgba(255,255,255,0.5);">${position}</div>`;
+        }
+
+        const playerName = sanitize((player.name || 'Player ' + player.number).split(' ').pop() || '').toUpperCase();
+        
+        return `
+          <div style="width: 80px; height: 60px; background: linear-gradient(135deg, ${teamColors.primary} 0%, ${teamColors.secondary} 100%); border: 2px solid ${teamColors.accent}; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+            <div style="font-size: 20px; font-weight: 900; line-height: 1;">${player.number}</div>
+            <div style="font-size: 10px; font-weight: 700; text-align: center; line-height: 1; margin-top: 2px;">${playerName}</div>
+          </div>
+        `;
+      };
+
+      // Set dimensions based on format
+      const dimensions = format === 'square' ? { width: 1080, height: 1080 } : { width: 1920, height: 1080 };
+      
+      // Create a temporary element for the AFL field
+      const lineupElement = document.createElement('div');
+      lineupElement.style.position = 'absolute';
+      lineupElement.style.left = '-9999px';
+      lineupElement.style.top = '-9999px';
+      lineupElement.style.width = `${dimensions.width}px`;
+      lineupElement.style.height = `${dimensions.height}px`;
+      lineupElement.style.background = `
+        radial-gradient(ellipse at center, #228B22 0%, #006400 50%, #004500 100%),
+        linear-gradient(45deg, transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%)
+      `;
+      lineupElement.style.backgroundSize = '100% 100%, 20px 20px';
+      lineupElement.style.color = 'white';
+      lineupElement.style.fontFamily = 'Arial, sans-serif';
+      lineupElement.style.overflow = 'hidden';
 
       const safeOpponent = opponent ? sanitize(opponent) : '';
       const safeVenue = venue ? sanitize(venue) : '';
@@ -350,21 +373,88 @@ export default function Squad() {
       const safeCurrentSet = sanitize(currentSet);
 
       lineupElement.innerHTML = `
-        <div style="text-align: center; margin-bottom: 40px; position: relative;">
-          <h1 style="font-size: 36px; font-weight: 900; margin: 0 0 20px 0; color: ${teamColors.accent}; letter-spacing: 3px; text-transform: uppercase;">${safeCurrentSet}</h1>
-          <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 0 auto; max-width: 500px;">
-            ${safeOpponent ? `<p style="font-size: 20px; margin: 8px 0; color: ${teamColors.accent}; font-weight: bold;">vs ${safeOpponent.toUpperCase()}</p>` : ''}
-            ${safeVenue ? `<p style="font-size: 16px; margin: 6px 0; color: ${teamColors.accent}; opacity: 0.9;">@ ${safeVenue}</p>` : ''}
-            ${safeGameTime ? `<p style="font-size: 16px; margin: 6px 0; color: ${teamColors.accent}; opacity: 0.9;">${safeGameTime}</p>` : ''}
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, ${teamColors.primary} 0%, ${teamColors.secondary} 100%); padding: 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid ${teamColors.accent};">
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: ${teamColors.primary};">LOGO</div>
+            <div>
+              <h1 style="font-size: 32px; font-weight: 900; margin: 0; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">TEAM SELECTION</h1>
+              <p style="font-size: 16px; margin: 5px 0 0 0; color: rgba(255,255,255,0.9);">${safeCurrentSet}</p>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            ${safeOpponent ? `<p style="font-size: 18px; margin: 0; color: white; font-weight: bold;">vs ${safeOpponent.toUpperCase()}</p>` : ''}
+            ${safeVenue ? `<p style="font-size: 14px; margin: 2px 0; color: rgba(255,255,255,0.9);">@ ${safeVenue}</p>` : ''}
+            ${safeGameTime ? `<p style="font-size: 14px; margin: 2px 0; color: rgba(255,255,255,0.9);">${safeGameTime}</p>` : ''}
           </div>
         </div>
-        
-        ${createPositionSection('FORWARDS', forwards)}
-        ${createPositionSection('MIDFIELD', midfield)}
-        ${createPositionSection('DEFENCE', defence)}
-        ${createPositionSection('INTERCHANGE', interchange)}
-        
-        <div style="text-align: center; margin-top: 20px; font-size: 11px; opacity: 0.7; color: ${teamColors.accent};">
+
+        <!-- AFL Field Oval -->
+        <div style="position: relative; height: ${dimensions.height - 140}px; padding: 40px;">
+          <!-- Goal posts and field markings -->
+          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; height: 600px; border: 3px solid white; border-radius: 50%; background: rgba(0,0,0,0.1);"></div>
+          
+          <!-- Centre circle -->
+          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; border: 2px solid white; border-radius: 50%;"></div>
+          
+          <!-- Goal squares -->
+          <div style="position: absolute; top: 50%; left: 140px; transform: translateY(-50%); width: 80px; height: 80px; border: 2px solid white;"></div>
+          <div style="position: absolute; top: 50%; right: 140px; transform: translateY(-50%); width: 80px; height: 80px; border: 2px solid white;"></div>
+
+          <!-- Forward Line -->
+          <div style="position: absolute; left: 80px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 15px; align-items: center;">
+            <div style="display: flex; gap: 20px;">
+              ${createPlayerBox(fieldPositions.LF, 'LF')}
+              ${createPlayerBox(fieldPositions.FF, 'FF')}
+              ${createPlayerBox(fieldPositions.RF, 'RF')}
+            </div>
+            <div style="display: flex; gap: 40px; margin-top: 30px;">
+              ${createPlayerBox(fieldPositions.LHF, 'LHF')}
+              ${createPlayerBox(fieldPositions.CHF, 'CHF')}
+              ${createPlayerBox(fieldPositions.RHF, 'RHF')}
+            </div>
+          </div>
+
+          <!-- Midfield Line -->
+          <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; gap: 20px; align-items: center;">
+            <div style="display: flex; gap: 60px;">
+              ${createPlayerBox(fieldPositions.LW, 'LW')}
+              ${createPlayerBox(fieldPositions.RW, 'RW')}
+            </div>
+            <div style="display: flex; gap: 30px;">
+              ${createPlayerBox(fieldPositions.RUC, 'RUC')}
+              ${createPlayerBox(fieldPositions.C, 'C')}
+              ${createPlayerBox(fieldPositions.ROV, 'ROV')}
+            </div>
+            ${fieldPositions.RUCK2 ? `<div>${createPlayerBox(fieldPositions.RUCK2, 'R2')}</div>` : ''}
+          </div>
+
+          <!-- Defence Line -->
+          <div style="position: absolute; right: 80px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 15px; align-items: center;">
+            <div style="display: flex; gap: 40px; margin-bottom: 30px;">
+              ${createPlayerBox(fieldPositions.LHB, 'LHB')}
+              ${createPlayerBox(fieldPositions.CHB, 'CHB')}
+              ${createPlayerBox(fieldPositions.RHB, 'RHB')}
+            </div>
+            <div style="display: flex; gap: 20px;">
+              ${createPlayerBox(fieldPositions.LB, 'LB')}
+              ${createPlayerBox(fieldPositions.FB, 'FB')}
+              ${createPlayerBox(fieldPositions.RB, 'RB')}
+            </div>
+          </div>
+
+          <!-- Interchange -->
+          <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px;">
+            <div style="color: white; font-weight: bold; margin-right: 10px; align-self: center;">INTERCHANGE:</div>
+            ${createPlayerBox(fieldPositions.INT1, 'INT')}
+            ${createPlayerBox(fieldPositions.INT2, 'INT')}
+            ${createPlayerBox(fieldPositions.INT3, 'INT')}
+            ${createPlayerBox(fieldPositions.INT4, 'INT')}
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="position: absolute; bottom: 10px; right: 20px; font-size: 12px; color: rgba(255,255,255,0.7);">
           Generated with AFL Stats App
         </div>
       `;
@@ -374,9 +464,11 @@ export default function Squad() {
       // Generate the image
       const canvas = await html2canvas(lineupElement, {
         backgroundColor: null,
-        scale: 2,
+        scale: 1,
         logging: false,
-        useCORS: true
+        useCORS: true,
+        width: dimensions.width,
+        height: dimensions.height
       });
 
       document.body.removeChild(lineupElement);
@@ -520,13 +612,28 @@ export default function Squad() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-white/60">{players.length}/60</span>
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={openSharingModal}
-                  disabled={players.filter(p => p.name.trim()).length === 0}
-                >
-                  Share Lineup
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openSharingModal('square');
+                    }}
+                    disabled={players.filter(p => p.name.trim()).length === 0}
+                  >
+                    📱 Square Export
+                  </button>
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openSharingModal('widescreen');
+                    }}
+                    disabled={players.filter(p => p.name.trim()).length === 0}
+                  >
+                    🖥️ Widescreen Export
+                  </button>
+                </div>
                 <button 
                   className="btn btn-primary" 
                   onClick={addPlayer} 
@@ -1050,10 +1157,13 @@ export default function Squad() {
                 </button>
                 <button
                   className="btn btn-primary"
-                  onClick={generateLineupImage}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    generateLineupImage(exportFormat);
+                  }}
                   disabled={selectedPlayers.length === 0}
                 >
-                  Generate & Download
+                  Generate & Download {exportFormat === 'square' ? '(1080x1080)' : '(1920x1080)'}
                 </button>
               </div>
             </div>
