@@ -286,18 +286,54 @@ export default function Squad() {
         return map[char] || char;
       });
 
-      // Create player card for grid layout
+      // Create player card for grid layout (jersey-style horizontal banner)
       const createPlayerCard = (player: Player, format: 'square' | 'widescreen') => {
         const playerName = sanitize(player.name || `Player ${player.number}`);
-        const cardPadding = format === 'square' ? '12px' : '16px';
-        const numberSize = format === 'square' ? '22px' : '28px';
-        const nameSize = format === 'square' ? '14px' : '18px';
-        const cardMargin = format === 'square' ? '4px' : '8px';
+        const cardHeight = format === 'square' ? '50px' : '60px';
+        const numberSize = format === 'square' ? '20px' : '24px';
+        const nameSize = format === 'square' ? '14px' : '16px';
+        const cardMargin = format === 'square' ? '3px' : '5px';
+        const numberBoxWidth = format === 'square' ? '45px' : '55px';
         
         return `
-          <div style="background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: ${cardPadding}; margin: ${cardMargin}; text-align: center; backdrop-filter: blur(15px); box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-            <div style="font-size: ${numberSize}; font-weight: 900; color: white; margin-bottom: 6px; text-shadow: 1px 1px 3px rgba(0,0,0,0.7);">${player.number}</div>
-            <div style="font-size: ${nameSize}; color: rgba(255,255,255,0.95); font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${playerName}</div>
+          <div style="
+            display: flex; 
+            height: ${cardHeight}; 
+            margin: ${cardMargin}; 
+            border-radius: 6px; 
+            overflow: hidden; 
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+          ">
+            <!-- Number section (yellow/gold box) -->
+            <div style="
+              background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); 
+              width: ${numberBoxWidth}; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+              font-size: ${numberSize}; 
+              font-weight: 900; 
+              color: #1f2937; 
+              text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            ">
+              ${player.number}
+            </div>
+            <!-- Name section (dark red/maroon background) -->
+            <div style="
+              background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%); 
+              flex: 1; 
+              display: flex; 
+              align-items: center; 
+              padding-left: 12px; 
+              font-size: ${nameSize}; 
+              font-weight: 700; 
+              color: white; 
+              text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+              letter-spacing: 0.5px;
+            ">
+              ${playerName.toUpperCase()}
+            </div>
           </div>
         `;
       };
