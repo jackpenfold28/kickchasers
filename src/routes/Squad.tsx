@@ -291,8 +291,8 @@ export default function Squad() {
         const playerName = sanitize(player.name || `Player ${player.number}`);
         return `
           <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 16px; margin: 8px; text-align: center; backdrop-filter: blur(10px);">
-            <div style="font-size: 24px; font-weight: bold; color: white; margin-bottom: 4px;">#${player.number}</div>
-            <div style="font-size: 14px; color: rgba(255,255,255,0.9); font-weight: 500;">${playerName}</div>
+            <div style="font-size: 28px; font-weight: 900; color: white; margin-bottom: 8px;">${player.number}</div>
+            <div style="font-size: 18px; color: rgba(255,255,255,0.95); font-weight: 600;">${playerName}</div>
           </div>
         `;
       };
@@ -332,12 +332,18 @@ export default function Squad() {
       lineupElement.style.boxSizing = 'border-box';
 
       const safeCurrentSet = sanitize(currentSet);
+      const safeOpponent = opponent ? sanitize(opponent) : 'Opponent';
+      const safeVenue = venue ? sanitize(venue) : '';
+      const safeGameTime = gameTime ? sanitize(gameTime) : '';
 
       lineupElement.innerHTML = `
         <!-- Header -->
         <div style="text-align: center; margin-bottom: 40px;">
-          <h1 style="font-size: 48px; font-weight: bold; margin: 0; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">AFL LINEUP</h1>
-          <div style="font-size: 20px; color: rgba(255,255,255,0.9); margin-top: 8px; font-weight: bold; letter-spacing: 2px;">${safeCurrentSet}</div>
+          <h1 style="font-size: 48px; font-weight: bold; margin: 0; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">${safeCurrentSet} vs ${safeOpponent}</h1>
+          <div style="font-size: 16px; color: rgba(255,255,255,0.8); margin-top: 12px; line-height: 1.4;">
+            ${safeVenue ? `<div>${safeVenue}</div>` : ''}
+            ${safeGameTime ? `<div>${safeGameTime}</div>` : ''}
+          </div>
         </div>
 
         <!-- Main Content -->
