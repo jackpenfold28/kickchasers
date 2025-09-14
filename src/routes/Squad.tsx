@@ -16,7 +16,7 @@ export default function Squad() {
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showSharingModal, setShowSharingModal] = useState(false);
-  const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
+  const [selectedPlayers, setSelectedPlayers] = useState<{player: Player, position: 'FWD' | 'MID' | 'DEF' | 'INT'}[]>([]);
   const [venue, setVenue] = useState("");
   const [opponent, setOpponent] = useState("");
   const [gameTime, setGameTime] = useState("");
@@ -221,16 +221,40 @@ export default function Squad() {
     setShowSharingModal(true);
   };
 
-  const togglePlayerSelection = (player: Player) => {
+  const addPlayerToPosition = (player: Player, position: 'FWD' | 'MID' | 'DEF' | 'INT') => {
     setSelectedPlayers(prev => {
-      const isSelected = prev.some(p => p.number === player.number);
-      if (isSelected) {
-        return prev.filter(p => p.number !== player.number);
-      } else if (prev.length < 25) {
-        return [...prev, player];
+      // Remove player if already selected
+      const filtered = prev.filter(p => p.player.number !== player.number);
+      
+      // Check position limits: FWD(6), MID(6), DEF(6), INT(4)
+      const positionLimits = { FWD: 6, MID: 6, DEF: 6, INT: 4 };
+      const positionCounts = {
+        FWD: filtered.filter(p => p.position === 'FWD').length,
+        MID: filtered.filter(p => p.position === 'MID').length,
+        DEF: filtered.filter(p => p.position === 'DEF').length,
+        INT: filtered.filter(p => p.position === 'INT').length,
+      };
+      
+      // Check if position is full or overall limit reached
+      if (filtered.length >= 25 || positionCounts[position] >= positionLimits[position]) {
+        return prev; // Don't add if limits exceeded
       }
-      return prev;
+      
+      return [...filtered, { player, position }];
     });
+  };
+
+  const removePlayerFromSelection = (player: Player) => {
+    setSelectedPlayers(prev => prev.filter(p => p.player.number !== player.number));
+  };
+
+  const isPlayerSelected = (player: Player) => {
+    return selectedPlayers.some(p => p.player.number === player.number);
+  };
+
+  const getPlayerPosition = (player: Player) => {
+    const selected = selectedPlayers.find(p => p.player.number === player.number);
+    return selected?.position;
   };
 
   const generateLineupImage = async () => {
@@ -239,42 +263,69 @@ export default function Squad() {
       return;
     }
 
-    try {
-      // Organize players by their position in the squad (based on array index, not jersey number)
-      const sortedPlayers = [...selectedPlayers].sort((a, b) => a.number - b.number);
-      
-      // Map selected players to their position based on where they appear in the players array
-      const forwards = selectedPlayers.filter(player => {
-        const index = players.findIndex(p => p.number === player.number);
-        return index >= 0 && index <= 5;
-      });
-      const midfield = selectedPlayers.filter(player => {
-        const index = players.findIndex(p => p.number === player.number);
-        return index >= 6 && index <= 11;
-      });
-      const defence = selectedPlayers.filter(player => {
-        const index = players.findIndex(p => p.number === player.number);
-        return index >= 12 && index <= 17;
-      });
-      const interchange = selectedPlayers.filter(player => {
-        const index = players.findIndex(p => p.number === player.number);
-        return index >= 18;
-      });
+    // Check position distribution and warn about empty positions
+    const positionCounts = {
+      FWD: selectedPlayers.filter(p => p.position === 'FWD').length,
+      MID: selectedPlayers.filter(p => p.position === 'MID').length,
+      DEF: selectedPlayers.filter(p => p.position === 'DEF').length,
+      INT: selectedPlayers.filter(p => p.position === 'INT').length,
+    };
+    
+    const emptyPositions = [];
+    if (positionCounts.FWD === 0) emptyPositions.push('Forwards');
+    if (positionCounts.MID === 0) emptyPositions.push('Midfield');
+    if (positionCounts.DEF === 0) emptyPositions.push('Defence');
+    if (positionCounts.INT === 0) emptyPositions.push('Interchange');
+    
+    if (emptyPositions.length > 0) {
+      const message = `The following positions are empty: ${emptyPositions.join(', ')}. Continue generating the lineup anyway?`;
+      if (!confirm(message)) {
+        return;
+      }
+    }
 
-      const createPositionSection = (title: string, players: Player[], shortCode: string) => {
+    try {
+      // Organize players by their assigned position for the lineup
+      const forwards = selectedPlayers.filter(p => p.position === 'FWD').map(p => p.player);
+      const midfield = selectedPlayers.filter(p => p.position === 'MID').map(p => p.player);
+      const defence = selectedPlayers.filter(p => p.position === 'DEF').map(p => p.player);
+      const interchange = selectedPlayers.filter(p => p.position === 'INT').map(p => p.player);
+
+      const createPositionSection = (title: string, players: Player[]) => {
         if (players.length === 0) return '';
         // Sort players within each position by number
         const sortedPositionPlayers = players.sort((a, b) => a.number - b.number);
+        
+        // Sanitize function for XSS prevention
+        const sanitize = (str: string) => str.replace(/[<>&"']/g, (char) => {
+          const map = { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' };
+          return map[char] || char;
+        });
+        
         return `
-          <div style="margin-bottom: 25px;">
-            <div style="background: linear-gradient(90deg, ${teamColors.secondary}40 0%, ${teamColors.primary}60 50%, ${teamColors.secondary}40 100%); padding: 8px 0; margin-bottom: 12px; border-radius: 4px;">
-              <h3 style="color: ${teamColors.accent}; font-size: 14px; font-weight: bold; text-align: center; letter-spacing: 3px; margin: 0;">${title}</h3>
+          <div style="margin-bottom: 30px;">
+            <div style="text-align: center; margin-bottom: 16px;">
+              <h4 style="font-size: 18px; font-weight: bold; color: ${teamColors.accent}; margin: 0 0 8px 0; letter-spacing: 2px;">${title}</h4>
+              <div style="height: 1px; background: rgba(255,255,255,0.2); width: 100%; margin: 0 auto;"></div>
             </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
               ${sortedPositionPlayers.map(player => `
-                <div style="background: ${teamColors.primary}; border-left: 4px solid ${teamColors.secondary}; padding: 6px 12px; min-width: 140px; text-align: left;">
-                  <div style="color: ${teamColors.secondary}; font-size: 10px; font-weight: bold; margin-bottom: 1px;">${shortCode}:</div>
-                  <div style="color: ${teamColors.accent}; font-size: 16px; font-weight: bold;">${player.number}. ${(player.name || 'Player ' + player.number).toUpperCase()}</div>
+                <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; transition: all 0.2s;">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="flex-shrink: 0;">
+                      <div style="color: rgba(255,255,255,0.5); font-size: 10px; font-weight: bold; margin-bottom: 4px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">NUMBER</div>
+                      <div style="width: 32px; height: 32px; text-align: center; font-size: 14px; font-weight: bold; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: ${teamColors.accent};">${player.number}</div>
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                      <div style="color: rgba(255,255,255,0.5); font-size: 10px; font-weight: bold; margin-bottom: 4px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">NAME</div>
+                      <div style="font-size: 14px; color: ${teamColors.accent}; font-weight: 500;">${sanitize(player.name || 'Player ' + player.number)}</div>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+              ${Array.from({ length: Math.max(0, (Math.ceil(sortedPositionPlayers.length / 3) * 3) - sortedPositionPlayers.length) }, () => `
+                <div style="background: transparent; border: 2px dashed rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: center;">
+                  <span style="color: rgba(255,255,255,0.3); font-size: 20px;">+</span>
                 </div>
               `).join('')}
             </div>
@@ -295,24 +346,35 @@ export default function Squad() {
       lineupElement.style.borderRadius = '15px';
       lineupElement.style.border = `3px solid ${teamColors.secondary}`;
 
+      // Sanitize user inputs to prevent XSS
+      const sanitize = (str: string) => str.replace(/[<>&"']/g, (char) => {
+        const map = { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' };
+        return map[char] || char;
+      });
+
+      const safeOpponent = opponent ? sanitize(opponent) : '';
+      const safeVenue = venue ? sanitize(venue) : '';
+      const safeGameTime = gameTime ? sanitize(gameTime) : '';
+      const safeCurrentSet = sanitize(currentSet);
+
       lineupElement.innerHTML = `
         <div style="text-align: center; margin-bottom: 30px; position: relative;">
           <div style="background: linear-gradient(45deg, ${teamColors.primary} 0%, ${teamColors.secondary} 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px solid ${teamColors.secondary};">
             <h1 style="font-size: 32px; font-weight: bold; margin: 0 0 10px 0; color: ${teamColors.accent}; letter-spacing: 4px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">SELECTION</h1>
             <div style="width: 100px; height: 4px; background: ${teamColors.accent}; margin: 0 auto 15px auto; border-radius: 2px;"></div>
-            <h2 style="font-size: 24px; font-weight: 600; margin: 0; color: ${teamColors.accent}; text-transform: uppercase;">${currentSet}</h2>
+            <h2 style="font-size: 24px; font-weight: 600; margin: 0; color: ${teamColors.accent}; text-transform: uppercase;">${safeCurrentSet}</h2>
           </div>
           <div style="background: ${teamColors.primary}80; padding: 15px; border-radius: 8px; border: 1px solid ${teamColors.secondary}40;">
-            ${opponent ? `<p style="font-size: 16px; margin: 5px 0; color: ${teamColors.accent}; font-weight: bold;">vs ${opponent.toUpperCase()}</p>` : ''}
-            ${venue ? `<p style="font-size: 14px; margin: 3px 0; color: ${teamColors.accent};">@ ${venue}</p>` : ''}
-            ${gameTime ? `<p style="font-size: 14px; margin: 3px 0; color: ${teamColors.accent};">${gameTime}</p>` : ''}
+            ${safeOpponent ? `<p style="font-size: 16px; margin: 5px 0; color: ${teamColors.accent}; font-weight: bold;">vs ${safeOpponent.toUpperCase()}</p>` : ''}
+            ${safeVenue ? `<p style="font-size: 14px; margin: 3px 0; color: ${teamColors.accent};">@ ${safeVenue}</p>` : ''}
+            ${safeGameTime ? `<p style="font-size: 14px; margin: 3px 0; color: ${teamColors.accent};">${safeGameTime}</p>` : ''}
           </div>
         </div>
         
-        ${createPositionSection('FORWARDS', forwards, 'F')}
-        ${createPositionSection('MIDFIELD', midfield, 'M')}
-        ${createPositionSection('DEFENCE', defence, 'D')}
-        ${createPositionSection('INTERCHANGE', interchange, 'INT')}
+        ${createPositionSection('FORWARDS', forwards)}
+        ${createPositionSection('MIDFIELD', midfield)}
+        ${createPositionSection('DEFENCE', defence)}
+        ${createPositionSection('INTERCHANGE', interchange)}
         
         <div style="text-align: center; margin-top: 20px; font-size: 11px; opacity: 0.7; color: ${teamColors.accent};">
           Generated with AFL Stats App
@@ -893,7 +955,15 @@ export default function Squad() {
             {/* Player Selection */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-medium text-white">Select Players ({selectedPlayers.length}/25)</h4>
+                <div>
+                  <h4 className="text-lg font-medium text-white">Select Players ({selectedPlayers.length}/25)</h4>
+                  <div className="flex items-center gap-4 mt-1 text-sm text-white/70">
+                    <span>FWD: {selectedPlayers.filter(p => p.position === 'FWD').length}/6</span>
+                    <span>MID: {selectedPlayers.filter(p => p.position === 'MID').length}/6</span>
+                    <span>DEF: {selectedPlayers.filter(p => p.position === 'DEF').length}/6</span>
+                    <span>INT: {selectedPlayers.filter(p => p.position === 'INT').length}/4</span>
+                  </div>
+                </div>
                 <button
                   className="btn btn-secondary"
                   onClick={() => setSelectedPlayers([])}
@@ -902,28 +972,77 @@ export default function Squad() {
                 </button>
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="space-y-2">
                 {players.filter(p => p.name.trim()).map((player, i) => {
-                  const isSelected = selectedPlayers.some(p => p.number === player.number);
-                  const canSelect = selectedPlayers.length < 25 || isSelected;
+                  const isSelected = isPlayerSelected(player);
+                  const selectedPosition = getPlayerPosition(player);
+                  
+                  // Position limits: FWD(6), MID(6), DEF(6), INT(4)
+                  const positionLimits = { FWD: 6, MID: 6, DEF: 6, INT: 4 };
+                  const positionCounts = {
+                    FWD: selectedPlayers.filter(p => p.position === 'FWD').length,
+                    MID: selectedPlayers.filter(p => p.position === 'MID').length,
+                    DEF: selectedPlayers.filter(p => p.position === 'DEF').length,
+                    INT: selectedPlayers.filter(p => p.position === 'INT').length,
+                  };
                   
                   return (
-                    <button
+                    <div
                       key={i}
-                      onClick={() => togglePlayerSelection(player)}
-                      disabled={!canSelect}
-                      className={`p-3 rounded-lg border transition-all duration-200 text-left
+                      className={`p-3 rounded-lg border transition-all duration-200 flex items-center justify-between
                         ${isSelected 
-                          ? 'bg-blue-600/30 border-blue-400/50 text-white' 
-                          : canSelect
-                            ? 'bg-white/5 border-white/20 text-white/80 hover:bg-white/10 hover:border-white/30'
-                            : 'bg-white/5 border-white/10 text-white/40 cursor-not-allowed'
+                          ? 'bg-blue-600/30 border-blue-400/50' 
+                          : 'bg-white/5 border-white/20'
                         }
                       `}
                     >
-                      <div className="font-semibold">#{player.number}</div>
-                      <div className="text-sm truncate">{player.name}</div>
-                    </button>
+                      <div className="flex items-center gap-3">
+                        <div className="text-white">
+                          <div className="font-semibold">#{player.number}</div>
+                          <div className="text-sm">{player.name}</div>
+                        </div>
+                        {isSelected && (
+                          <div className="text-xs bg-blue-500 text-white px-2 py-1 rounded">
+                            {selectedPosition}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-1">
+                        {(['FWD', 'MID', 'DEF', 'INT'] as const).map(position => {
+                          const positionFull = positionCounts[position] >= positionLimits[position];
+                          const isDisabled = (selectedPlayers.length >= 25 && !isSelected) || (positionFull && selectedPosition !== position);
+                          
+                          return (
+                            <button
+                              key={position}
+                              onClick={() => {
+                                if (selectedPosition === position) {
+                                  removePlayerFromSelection(player);
+                                } else if (!isDisabled) {
+                                  addPlayerToPosition(player, position);
+                                }
+                              }}
+                              disabled={isDisabled}
+                              className={`px-2 py-1 text-xs rounded transition-all duration-200 relative
+                                ${selectedPosition === position 
+                                  ? 'bg-blue-500 text-white font-semibold' 
+                                  : isDisabled
+                                    ? 'bg-white/5 text-white/40 cursor-not-allowed'
+                                    : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
+                                }
+                              `}
+                              title={`${position} (${positionCounts[position]}/${positionLimits[position]})`}
+                            >
+                              {position}
+                              <span className="ml-1 text-xs opacity-60">
+                                {positionCounts[position]}/{positionLimits[position]}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
