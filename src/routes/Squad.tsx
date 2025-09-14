@@ -20,6 +20,7 @@ export default function Squad() {
   const [venue, setVenue] = useState("");
   const [opponent, setOpponent] = useState("");
   const [gameTime, setGameTime] = useState("");
+  const [teamColors, setTeamColors] = useState({ primary: "#1e3a8a", secondary: "#3b82f6", accent: "#ffffff" });
   const nav = useNavigate();
 
   useEffect(() => {
@@ -216,6 +217,7 @@ export default function Squad() {
     setVenue("");
     setOpponent("");
     setGameTime("");
+    setTeamColors({ primary: "#1e3a8a", secondary: "#3b82f6", accent: "#ffffff" });
     setShowSharingModal(true);
   };
 
@@ -238,35 +240,81 @@ export default function Squad() {
     }
 
     try {
+      // Organize players by their position in the squad (based on array index, not jersey number)
+      const sortedPlayers = [...selectedPlayers].sort((a, b) => a.number - b.number);
+      
+      // Map selected players to their position based on where they appear in the players array
+      const forwards = selectedPlayers.filter(player => {
+        const index = players.findIndex(p => p.number === player.number);
+        return index >= 0 && index <= 5;
+      });
+      const midfield = selectedPlayers.filter(player => {
+        const index = players.findIndex(p => p.number === player.number);
+        return index >= 6 && index <= 11;
+      });
+      const defence = selectedPlayers.filter(player => {
+        const index = players.findIndex(p => p.number === player.number);
+        return index >= 12 && index <= 17;
+      });
+      const interchange = selectedPlayers.filter(player => {
+        const index = players.findIndex(p => p.number === player.number);
+        return index >= 18;
+      });
+
+      const createPositionSection = (title: string, players: Player[], shortCode: string) => {
+        if (players.length === 0) return '';
+        // Sort players within each position by number
+        const sortedPositionPlayers = players.sort((a, b) => a.number - b.number);
+        return `
+          <div style="margin-bottom: 25px;">
+            <div style="background: linear-gradient(90deg, ${teamColors.secondary}40 0%, ${teamColors.primary}60 50%, ${teamColors.secondary}40 100%); padding: 8px 0; margin-bottom: 12px; border-radius: 4px;">
+              <h3 style="color: ${teamColors.accent}; font-size: 14px; font-weight: bold; text-align: center; letter-spacing: 3px; margin: 0;">${title}</h3>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+              ${sortedPositionPlayers.map(player => `
+                <div style="background: ${teamColors.primary}; border-left: 4px solid ${teamColors.secondary}; padding: 6px 12px; min-width: 140px; text-align: left;">
+                  <div style="color: ${teamColors.secondary}; font-size: 10px; font-weight: bold; margin-bottom: 1px;">${shortCode}:</div>
+                  <div style="color: ${teamColors.accent}; font-size: 16px; font-weight: bold;">${player.number}. ${(player.name || 'Player ' + player.number).toUpperCase()}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      };
+
       // Create a temporary element for the lineup
       const lineupElement = document.createElement('div');
       lineupElement.style.position = 'absolute';
       lineupElement.style.left = '-9999px';
       lineupElement.style.top = '-9999px';
-      lineupElement.style.width = '600px';
-      lineupElement.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)';
-      lineupElement.style.color = 'white';
+      lineupElement.style.width = '650px';
+      lineupElement.style.background = `linear-gradient(135deg, ${teamColors.primary} 0%, #1a1a2e 50%, ${teamColors.primary} 100%)`;
+      lineupElement.style.color = teamColors.accent;
       lineupElement.style.fontFamily = 'system-ui, -apple-system, sans-serif';
-      lineupElement.style.padding = '40px';
-      lineupElement.style.borderRadius = '20px';
+      lineupElement.style.padding = '30px';
+      lineupElement.style.borderRadius = '15px';
+      lineupElement.style.border = `3px solid ${teamColors.secondary}`;
 
       lineupElement.innerHTML = `
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="font-size: 32px; font-weight: bold; margin: 0 0 10px 0;">AFL LINEUP</h1>
-          <h2 style="font-size: 24px; font-weight: 600; margin: 0 0 20px 0;">${currentSet.toUpperCase()}</h2>
-          ${opponent ? `<p style="font-size: 18px; margin: 5px 0;">vs ${opponent}</p>` : ''}
-          ${venue ? `<p style="font-size: 16px; margin: 5px 0;">@ ${venue}</p>` : ''}
-          ${gameTime ? `<p style="font-size: 16px; margin: 5px 0;">${gameTime}</p>` : ''}
+        <div style="text-align: center; margin-bottom: 30px; position: relative;">
+          <div style="background: linear-gradient(45deg, ${teamColors.primary} 0%, ${teamColors.secondary} 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px solid ${teamColors.secondary};">
+            <h1 style="font-size: 32px; font-weight: bold; margin: 0 0 10px 0; color: ${teamColors.accent}; letter-spacing: 4px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">SELECTION</h1>
+            <div style="width: 100px; height: 4px; background: ${teamColors.accent}; margin: 0 auto 15px auto; border-radius: 2px;"></div>
+            <h2 style="font-size: 24px; font-weight: 600; margin: 0; color: ${teamColors.accent}; text-transform: uppercase;">${currentSet}</h2>
+          </div>
+          <div style="background: ${teamColors.primary}80; padding: 15px; border-radius: 8px; border: 1px solid ${teamColors.secondary}40;">
+            ${opponent ? `<p style="font-size: 16px; margin: 5px 0; color: ${teamColors.accent}; font-weight: bold;">vs ${opponent.toUpperCase()}</p>` : ''}
+            ${venue ? `<p style="font-size: 14px; margin: 3px 0; color: ${teamColors.accent};">@ ${venue}</p>` : ''}
+            ${gameTime ? `<p style="font-size: 14px; margin: 3px 0; color: ${teamColors.accent};">${gameTime}</p>` : ''}
+          </div>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-          ${selectedPlayers.sort((a, b) => a.number - b.number).map(player => `
-            <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 15px; text-align: center;">
-              <div style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">#${player.number}</div>
-              <div style="font-size: 14px; font-weight: 500;">${player.name || 'Player ' + player.number}</div>
-            </div>
-          `).join('')}
-        </div>
-        <div style="text-align: center; margin-top: 30px; font-size: 14px; opacity: 0.7;">
+        
+        ${createPositionSection('FORWARDS', forwards, 'F')}
+        ${createPositionSection('MIDFIELD', midfield, 'M')}
+        ${createPositionSection('DEFENCE', defence, 'D')}
+        ${createPositionSection('INTERCHANGE', interchange, 'INT')}
+        
+        <div style="text-align: center; margin-top: 20px; font-size: 11px; opacity: 0.7; color: ${teamColors.accent};">
           Generated with AFL Stats App
         </div>
       `;
@@ -285,7 +333,7 @@ export default function Squad() {
 
       // Download the image
       const link = document.createElement('a');
-      link.download = `${currentSet.toLowerCase().replace(/\s+/g, '-')}-lineup.png`;
+      link.download = `${currentSet.toLowerCase().replace(/\s+/g, '-')}-selection.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
 
@@ -741,6 +789,104 @@ export default function Squad() {
                   placeholder="e.g., Saturday 2:30pm"
                   className="input w-full"
                 />
+              </div>
+            </div>
+
+            {/* Team Colors */}
+            <div className="mb-6">
+              <h4 className="text-lg font-medium text-white mb-4">Team Colors</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-2">Primary Color</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={teamColors.primary}
+                      onChange={(e) => setTeamColors(prev => ({ ...prev, primary: e.target.value }))}
+                      className="w-12 h-10 rounded border border-white/20 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={teamColors.primary}
+                      onChange={(e) => setTeamColors(prev => ({ ...prev, primary: e.target.value }))}
+                      className="input flex-1 text-sm"
+                      placeholder="#1e3a8a"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-2">Secondary Color</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={teamColors.secondary}
+                      onChange={(e) => setTeamColors(prev => ({ ...prev, secondary: e.target.value }))}
+                      className="w-12 h-10 rounded border border-white/20 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={teamColors.secondary}
+                      onChange={(e) => setTeamColors(prev => ({ ...prev, secondary: e.target.value }))}
+                      className="input flex-1 text-sm"
+                      placeholder="#3b82f6"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-2">Text Color</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={teamColors.accent}
+                      onChange={(e) => setTeamColors(prev => ({ ...prev, accent: e.target.value }))}
+                      className="w-12 h-10 rounded border border-white/20 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={teamColors.accent}
+                      onChange={(e) => setTeamColors(prev => ({ ...prev, accent: e.target.value }))}
+                      className="input flex-1 text-sm"
+                      placeholder="#ffffff"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Preset Color Schemes */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-white/70 mb-2">Quick Presets</label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setTeamColors({ primary: "#000080", secondary: "#FFD700", accent: "#FFFFFF" })}
+                    className="px-3 py-1 rounded text-xs bg-blue-900 text-yellow-300 border border-yellow-400/30 hover:bg-blue-800"
+                  >
+                    West Coast
+                  </button>
+                  <button
+                    onClick={() => setTeamColors({ primary: "#8B0000", secondary: "#FFD700", accent: "#FFFFFF" })}
+                    className="px-3 py-1 rounded text-xs bg-red-900 text-yellow-300 border border-yellow-400/30 hover:bg-red-800"
+                  >
+                    Adelaide
+                  </button>
+                  <button
+                    onClick={() => setTeamColors({ primary: "#000000", secondary: "#FFFF00", accent: "#FFFFFF" })}
+                    className="px-3 py-1 rounded text-xs bg-black text-yellow-300 border border-yellow-400/30 hover:bg-gray-900"
+                  >
+                    Richmond
+                  </button>
+                  <button
+                    onClick={() => setTeamColors({ primary: "#000080", secondary: "#FFFFFF", accent: "#FFFFFF" })}
+                    className="px-3 py-1 rounded text-xs bg-blue-900 text-white border border-white/30 hover:bg-blue-800"
+                  >
+                    Carlton
+                  </button>
+                  <button
+                    onClick={() => setTeamColors({ primary: "#8B4513", secondary: "#FFD700", accent: "#FFFFFF" })}
+                    className="px-3 py-1 rounded text-xs bg-amber-800 text-yellow-300 border border-yellow-400/30 hover:bg-amber-700"
+                  >
+                    Hawthorn
+                  </button>
+                </div>
               </div>
             </div>
 
