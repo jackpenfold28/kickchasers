@@ -349,9 +349,9 @@ export default function Squad() {
               display: flex; 
               align-items: center; 
               justify-content: center; 
-              font-family: 'Impact', 'Arial Black', sans-serif;
+              font-family: 'Arial', sans-serif;
               font-size: ${numberSize}; 
-              font-weight: normal; 
+              font-weight: bold; 
               color: ${primaryTextColor}; 
               text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
               text-align: center;
@@ -361,7 +361,7 @@ export default function Squad() {
             ">
               <span style="
                 display: block;
-                transform: translateY(-1px);
+                transform: translateY(-3px);
               ">${player.number}</span>
             </div>
             <!-- Name section -->
@@ -371,9 +371,9 @@ export default function Squad() {
               display: flex; 
               align-items: center; 
               justify-content: center; 
-              font-family: 'Impact', 'Arial Black', sans-serif;
+              font-family: 'Arial', sans-serif;
               font-size: ${nameSize}; 
-              font-weight: normal; 
+              font-weight: bold; 
               color: ${secondaryTextColor}; 
               text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
               letter-spacing: 0.5px;
@@ -385,7 +385,7 @@ export default function Squad() {
             ">
               <span style="
                 display: block;
-                transform: translateY(-1px);
+                transform: translateY(-3px);
               ">${playerName.toUpperCase()}</span>
             </div>
           </div>
