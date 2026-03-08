@@ -2,9 +2,9 @@
 
 // src/lib/siteUrl.ts
 const fallback =
-  typeof window !== "undefined" ? window.location.origin : "https://kickchasers.com";
+  typeof window !== "undefined" ? window.location.origin : "http://localhost:5173";
 
-// In prod, prefer the env var; in dev it falls back to current origin.
+// In production, set VITE_PUBLIC_SITE_URL explicitly in Vercel.
 export const siteUrl =
   (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined) || fallback;
 
