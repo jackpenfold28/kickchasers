@@ -343,6 +343,14 @@ export default function NewGame(){
           <button className="btn bg-red-600 hover:bg-red-700 text-white" onClick={()=>nav(-1)}>Cancel</button>
           <div className="flex gap-3 justify-end">
             <button
+              className="btn bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => nav('/player/preview/preview')}
+              type="button"
+              title="Open the single-player tracker preview"
+            >
+              Single Player (Preview)
+            </button>
+            <button
               className={`btn btn-primary ${oppLogoUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
               onClick={()=>save()}
               disabled={oppLogoUploading || !loaded}

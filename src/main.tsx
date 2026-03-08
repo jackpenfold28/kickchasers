@@ -17,6 +17,7 @@ import Onboarding from './routes/Onboarding'
 import AuthCallback from './routes/auth/Callback'
 import Profile from './routes/Profile'
 import Summary from './routes/Summary'
+import PlayerGame from './routes/PlayerGame'
 
 const router=createBrowserRouter([
   { path:'/', element:<App/>, children:[
@@ -34,7 +35,8 @@ const router=createBrowserRouter([
     { path:'setup/:gameId', element:<Setup/> },
     { path:'game/:gameId', element:<Game/> },
     { path:'summary/:gameId', element:<Summary/> },
-    { path:'viewer/:gameId', element:<Viewer/> }
+    { path:'viewer/:gameId', element:<Viewer/> },
+    { path:'player/:gameId/:playerId', element:<PlayerGame/> }
   ]},
   { path:'auth/callback', element:<AuthCallback/> },
 ])
