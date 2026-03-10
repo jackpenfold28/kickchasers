@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
 @layer components {
   /* app shell */
   .app-bg {
@@ -125,10 +137,49 @@
   }
 
   /* landing page motion helpers */
-  .kc-rise { animation: kc-rise .7s ease-out both; }
-  .kc-rise-delayed { animation: kc-rise .7s ease-out .18s both; }
-  .kc-pulse { animation: kc-pulse 3.2s ease-in-out infinite; }
+  .kc-reveal {
+    --kc-reveal-delay: 0ms;
+    --kc-reveal-duration: 680ms;
+    --kc-reveal-distance: 24px;
+    opacity: 0;
+    transition:
+      opacity var(--kc-reveal-duration) cubic-bezier(0.22, 1, 0.36, 1) var(--kc-reveal-delay),
+      transform var(--kc-reveal-duration) cubic-bezier(0.22, 1, 0.36, 1) var(--kc-reveal-delay);
+    will-change: transform, opacity;
+  }
+  .kc-reveal--up { transform: translate3d(0, var(--kc-reveal-distance), 0); }
+  .kc-reveal--left { transform: translate3d(calc(var(--kc-reveal-distance) * -1), 0, 0); }
+  .kc-reveal--right { transform: translate3d(var(--kc-reveal-distance), 0, 0); }
+  .kc-reveal--in { opacity: 1; transform: translate3d(0, 0, 0); }
+
+  .kc-hero-reveal {
+    --kc-reveal-delay: 0ms;
+    --kc-reveal-duration: 700ms;
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+    animation: kc-hero-reveal var(--kc-reveal-duration) cubic-bezier(0.22, 1, 0.36, 1) var(--kc-reveal-delay) forwards;
+    will-change: transform, opacity;
+  }
+
+  .kc-glow-drift {
+    animation: kc-glow-drift 8s ease-in-out infinite;
+    will-change: transform;
+  }
 }
 @keyframes ripple { from { width:0; height:0; opacity:.35; } to { width:220px; height:220px; opacity:0; } }
-@keyframes kc-rise { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
-@keyframes kc-pulse { 0%,100% { filter: drop-shadow(0 0 0 rgba(57,255,20,0)); } 50% { filter: drop-shadow(0 0 18px rgba(57,255,20,0.28)); } }
+@keyframes kc-hero-reveal { from { opacity:0; transform: translate3d(0,18px,0); } to { opacity:1; transform: translate3d(0,0,0); } }
+@keyframes kc-glow-drift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -6px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kc-reveal,
+  .kc-hero-reveal,
+  .kc-glow-drift {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
