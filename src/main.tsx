@@ -28,6 +28,8 @@ import AdminPage from './routes/portal/AdminPage'
 import UpdateEmailPage from './routes/portal/settings/UpdateEmailPage'
 import RolesPage from './routes/portal/settings/RolesPage'
 import BlockedUsersPage from './routes/portal/settings/BlockedUsersPage'
+import LegalDocumentPage from './routes/LegalDocumentPage'
+import { legalDocuments } from './content/legalDocuments'
 
 const router = createBrowserRouter([
   {
@@ -36,6 +38,13 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Landing /> },
       { path: 'landing', element: <Landing /> },
+      { path: 'terms', element: <LegalDocumentPage document={legalDocuments.terms} /> },
+      { path: 'privacy', element: <LegalDocumentPage document={legalDocuments.privacy} /> },
+      {
+        path: 'community-guidelines',
+        element: <LegalDocumentPage document={legalDocuments['community-guidelines']} />,
+      },
+      { path: 'support', element: <LegalDocumentPage document={legalDocuments.support} /> },
       { path: 'login', element: <Login /> },
       { path: 'sign-in', element: <Login /> },
       { path: 'register', element: <Register /> },

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { ProductShot } from '../components/landing/ProductShot'
 import { HeroStaggerItem, Reveal } from '../components/landing/Motion'
+import { legalDocumentList } from '@/content/legalDocuments'
 
 const authLink = (path: string) => `/sign-in?redirect=${encodeURIComponent(path)}`
 
@@ -430,7 +431,7 @@ export default function Landing() {
             <img src="/kickchasers_logo.png" alt="KickChasers" className="h-10 w-auto" />
             <span className="text-sm text-slate-300">KickChasers</span>
           </div>
-          <nav className="flex flex-wrap gap-4 text-sm text-slate-300">
+          <nav className="flex flex-wrap gap-x-4 gap-y-3 text-sm text-slate-300">
             <Link to="/sign-in" className="hover:text-white">
               Sign In
             </Link>
@@ -440,8 +441,11 @@ export default function Landing() {
             <Link to={authLink('/hub')} className="hover:text-white">
               Portal
             </Link>
-            <span className="text-slate-500">Privacy</span>
-            <span className="text-slate-500">Terms</span>
+            {legalDocumentList.map((item) => (
+              <Link key={item.key} to={item.route} className="text-slate-400 transition hover:text-white">
+                {item.title}
+              </Link>
+            ))}
           </nav>
           <p className="text-sm text-slate-500">© {new Date().getFullYear()} KickChasers. All rights reserved.</p>
         </div>
