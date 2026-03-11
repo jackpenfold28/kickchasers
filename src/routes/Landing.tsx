@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { ProductShot } from '../components/landing/ProductShot'
 import { HeroStaggerItem, Reveal } from '../components/landing/Motion'
 
-const authLink = (path: string) => `/login?next=${encodeURIComponent(path)}`
+const authLink = (path: string) => `/sign-in?redirect=${encodeURIComponent(path)}`
 
 const navItems = [
   { label: 'Features', href: '#features', id: 'features' },
@@ -117,16 +117,16 @@ export default function Landing() {
 
           <div className="flex items-center gap-2 text-sm sm:gap-3">
             <Link
-              to="/login"
+              to="/sign-in"
               className="rounded-xl border border-white/25 bg-white/[0.03] px-4 py-2 text-slate-100 transition-colors hover:border-white/35 hover:bg-white/[0.1] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/50"
             >
-              Log In
+              Sign In
             </Link>
             <Link
-              to="/register"
+              to="/sign-up"
               className="rounded-xl border border-[#7CFF64]/65 bg-[#39FF14]/92 px-4 py-2 font-semibold text-white shadow-[0_6px_18px_rgba(57,255,20,0.25)] transition hover:bg-[#50FF2F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]"
             >
-              Create Account
+              Sign Up
             </Link>
           </div>
         </div>
@@ -390,7 +390,7 @@ export default function Landing() {
                   ))}
                 </div>
                 <Link
-                  to="/register"
+                  to="/sign-up"
                   className={`mt-7 inline-flex rounded-xl px-4 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/55 ${
                     tier.highlight
                       ? 'bg-[#39FF14] text-[#07111F] hover:brightness-110'
@@ -415,7 +415,7 @@ export default function Landing() {
           </Reveal>
           <Reveal direction="up" delay={90}>
             <Link
-              to="/register"
+              to="/sign-up"
               className="mt-6 inline-flex rounded-xl bg-[#39FF14] px-8 py-3 text-base font-semibold text-[#07111F] shadow-[0_14px_30px_rgba(57,255,20,0.2)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]"
             >
               Create Your Account
@@ -431,11 +431,11 @@ export default function Landing() {
             <span className="text-sm text-slate-300">KickChasers</span>
           </div>
           <nav className="flex flex-wrap gap-4 text-sm text-slate-300">
-            <Link to="/login" className="hover:text-white">
-              Login
+            <Link to="/sign-in" className="hover:text-white">
+              Sign In
             </Link>
-            <Link to="/register" className="hover:text-white">
-              Register
+            <Link to="/sign-up" className="hover:text-white">
+              Sign Up
             </Link>
             <Link to={authLink('/hub')} className="hover:text-white">
               Portal

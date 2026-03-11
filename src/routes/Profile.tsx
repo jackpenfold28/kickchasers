@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/Input'
 
@@ -11,25 +11,28 @@ type ProfileRow = {
   team_logo_path: string | null
 }
 
-export default function Profile(){
+export default function Profile() {
   const nav = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [working, setWorking] = useState(false)
   const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPath, setLogoPath] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
 
   useEffect(() => {
-    (async () => {
+    ;(async () => {
       const { data: userData } = await supabase.auth.getUser()
       const user = userData?.user
       if (!user) {
-        nav('/login', { replace: true })
+        nav('/sign-in', { replace: true })
         return
       }
+      setEmail(user.email || '')
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -51,7 +54,7 @@ export default function Profile(){
     })()
   }, [nav])
 
-  function pickLogo(e: React.ChangeEvent<HTMLInputElement>){
+  function pickLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0] || null
     setLogoFile(f)
     if (f) {
@@ -61,42 +64,37 @@ export default function Profile(){
     }
   }
 
-  async function save(){
+  async function save() {
     setSaving(true)
 
     const { data: userData } = await supabase.auth.getUser()
     const user = userData?.user
     if (!user) {
       setSaving(false)
-      nav('/login', { replace: true })
+      nav('/sign-in', { replace: true })
       return
     }
 
     let nextLogoPath = logoPath || null
-
     if (logoFile) {
       const ext = logoFile.name.split('.').pop() || 'png'
       const path = `${user.id}/portal/team_logo_${Date.now()}.${ext}`
       const { error: uploadErr } = await supabase.storage
         .from(LOGO_BUCKET)
         .upload(path, logoFile, { upsert: true, contentType: logoFile.type })
-
       if (uploadErr) {
         setSaving(false)
         alert(uploadErr.message)
         return
       }
-
       nextLogoPath = path
     }
 
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        user_id: user.id,
-        name: name.trim() || null,
-        team_logo_path: nextLogoPath,
-      })
+    const { error } = await supabase.from('profiles').upsert({
+      user_id: user.id,
+      name: name.trim() || null,
+      team_logo_path: nextLogoPath,
+    })
 
     setSaving(false)
     if (error) {
@@ -109,8 +107,47 @@ export default function Profile(){
       setLogoUrl(data?.publicUrl || '')
       setLogoPath(nextLogoPath)
     }
-
     alert('Profile saved')
+  }
+
+  async function sendPasswordReset() {
+    const { data } = await supabase.auth.getUser()
+    const userEmail = data.user?.email
+    if (!userEmail) {
+      alert('No email found for this account.')
+      return
+    }
+    setWorking(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    })
+    setWorking(false)
+    if (error) {
+      alert(error.message)
+      return
+    }
+    alert('Reset password link sent.')
+  }
+
+  async function signOut() {
+    setWorking(true)
+    await supabase.auth.signOut()
+    setWorking(false)
+    nav('/sign-in', { replace: true })
+  }
+
+  async function deleteAccount() {
+    if (!window.confirm('Delete your account? This cannot be undone.')) return
+    setWorking(true)
+    const { error } = await supabase.functions.invoke('delete-account')
+    if (error) {
+      setWorking(false)
+      alert(error.message)
+      return
+    }
+    await supabase.auth.signOut()
+    setWorking(false)
+    nav('/sign-in', { replace: true })
   }
 
   if (loading) return <main className="min-h-screen p-6 app-bg">Loading profile…</main>
@@ -120,28 +157,69 @@ export default function Profile(){
       <div className="mx-auto max-w-3xl space-y-6">
         <header className="flex items-center justify-between">
           <h1 className="h1">Profile & Account</h1>
-          <button className="btn" onClick={()=>nav('/hub')}>Back</button>
+          <button className="btn" onClick={() => nav('/hub')}>
+            Back
+          </button>
         </header>
 
         <section className="card p-6 space-y-4">
           <div>
+            <label className="text-xs uppercase tracking-wide text-white/70">Email</label>
+            <div className="mt-1 text-sm text-white/85">{email || 'Unknown'}</div>
+          </div>
+          <div>
             <label className="text-xs uppercase tracking-wide text-white/70">Display Name</label>
-            <Input value={name} onChange={e=>setName(e.target.value)} placeholder="Your name" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
           </div>
 
           <div>
             <label className="text-xs uppercase tracking-wide text-white/70">Team Logo</label>
             <div className="mt-2 flex items-center gap-3">
               <div className="h-16 w-16 rounded-full bg-white/10 overflow-hidden ring-1 ring-white/20 flex items-center justify-center">
-                {logoUrl ? <img src={logoUrl} alt="Team logo" className="h-full w-full object-cover" /> : <span className="text-xs text-white/70">No logo</span>}
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Team logo" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-xs text-white/70">No logo</span>
+                )}
               </div>
-              <button className="btn" onClick={()=>fileInputRef.current?.click()} type="button">Upload Logo</button>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={pickLogo} />
+              <button className="btn" onClick={() => fileInputRef.current?.click()} type="button">
+                Upload Logo
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={pickLogo}
+              />
             </div>
           </div>
 
           <div className="flex gap-2">
-            <button className="btn btn-primary" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+            <button className="btn btn-primary" onClick={save} disabled={saving}>
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+            <Link to="/onboarding?edit=1" className="btn">
+              Edit Onboarding Fields
+            </Link>
+          </div>
+        </section>
+
+        <section className="card p-6 space-y-3">
+          <h2 className="text-lg font-semibold">Account Actions</h2>
+          <div className="flex flex-wrap gap-2">
+            <Link to="/account/update-email" className="btn">
+              Update Email
+            </Link>
+            <button className="btn" onClick={sendPasswordReset} disabled={working}>
+              Send Password Reset Link
+            </button>
+            <button className="btn" onClick={signOut} disabled={working}>
+              Sign out
+            </button>
+            <button className="btn border-red-500/70 text-red-300" onClick={deleteAccount} disabled={working}>
+              Delete account
+            </button>
           </div>
         </section>
       </div>

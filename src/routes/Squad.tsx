@@ -25,7 +25,7 @@ export default function Squad(){
       const { data: userData } = await supabase.auth.getUser()
       const user = userData?.user
       if (!user) {
-        nav('/login', { replace: true })
+        nav('/sign-in', { replace: true })
         return
       }
 

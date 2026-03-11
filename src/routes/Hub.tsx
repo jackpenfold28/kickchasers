@@ -42,7 +42,7 @@ export default function Hub(){
       const { data: userData } = await supabase.auth.getUser()
       const user = userData?.user
       if (!user) {
-        nav('/login', { replace: true })
+        nav('/sign-in', { replace: true })
         return
       }
 
@@ -83,7 +83,7 @@ export default function Hub(){
 
   async function logout(){
     await supabase.auth.signOut()
-    nav('/login', { replace: true })
+    nav('/sign-in', { replace: true })
   }
 
   if (loading) {

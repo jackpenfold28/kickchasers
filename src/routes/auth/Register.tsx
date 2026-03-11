@@ -1,54 +1,51 @@
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
 import { Link, useNavigate } from 'react-router-dom'
+import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/Input'
 import { authCallbackUrl } from '@/lib/siteUrl'
 
-export default function Register(){
+export default function Register() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
-  const [showVerify, setShowVerify] = useState(false)
-  const nav = useNavigate()
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
+    setErr(null)
     setInfo(null)
-
-    // Basic client-side validation
     if (!email.trim() || !password.trim()) {
-      setError('Please enter an email and password.')
+      setErr('Please enter an email and password.')
       return
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match.')
+      setErr('Passwords do not match.')
       return
     }
 
-    const { data, error } = await supabase.auth.signUp({
+    setBusy(true)
+    const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: authCallbackUrl }
+      options: { emailRedirectTo: authCallbackUrl },
     })
+    setBusy(false)
 
     if (error) {
-      setError(error.message)
+      setErr(error.message)
       return
     }
 
-    // Do not navigate; show a verification dialog instead.
-    setInfo('Check your email and confirm to complete setup.')
-    setShowVerify(true)
-    setPassword('')
+    setInfo('If verification is required, confirm your email and continue.')
+    navigate('/onboarding?new=1', { replace: true })
   }
 
   return (
     <main className="min-h-screen flex items-center justify-center p-6 app-bg">
       <div className="flex justify-center items-center gap-6">
-        {/* Brand logo (left) */}
         <div className="flex justify-center items-center">
           <img
             src="/kickchasers_logo.png"
@@ -56,64 +53,42 @@ export default function Register(){
             className="w-[26rem] h-auto drop-shadow-lg"
           />
         </div>
-        {/* Register card (right) */}
         <div className="w-full max-w-md">
           <div className="p-6 space-y-4 rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm">
             <h1 className="h1">Create account</h1>
             <form onSubmit={onSubmit} className="space-y-3">
-              <Input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
-              <Input placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <Input
+                placeholder="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
               <Input
                 placeholder="Confirm password"
                 type="password"
                 value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
+                onChange={(e) => setConfirmPassword(e.target.value)}
               />
-              {error && <div className="text-red-500 text-sm">{error}</div>}
-              {info && <div className="text-emerald-400 text-sm">{info}</div>}
-              <button className="btn btn-primary w-full">Sign up</button>
+              {err && <div className="text-sm text-red-400">{err}</div>}
+              {info && <div className="text-sm text-emerald-400">{info}</div>}
+              <button className="btn btn-primary w-full" disabled={busy}>
+                {busy ? 'Creating…' : 'Create account'}
+              </button>
             </form>
             <div className="text-sm">
-              <Link to="/" className="underline">Back to sign in</Link>
+              <Link to="/sign-in" className="underline">
+                I already have an account
+              </Link>
             </div>
           </div>
         </div>
       </div>
-      {showVerify && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="mx-4 w-full max-w-md rounded-lg border border-white/10 bg-white/10 backdrop-blur-md p-6 text-white shadow-xl">
-            <div className="flex items-start gap-3">
-              <div className="mt-1 h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_20px_2px_rgba(16,185,129,0.7)]" />
-              <div className="flex-1">
-                <h2 className="text-lg font-semibold">Verify your email</h2>
-                <p className="mt-1 text-sm text-white/80">
-                  We’ve sent a confirmation link to <span className="font-medium">{email}</span>.
-                  Please confirm your email, then log in to complete your setup.
-                </p>
-                <p className="mt-3 text-xs text-white/60">
-                  Didn’t receive it? Check your spam folder or press “Resend”. After confirming, return here and sign in.
-                </p>
-              </div>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowVerify(false)}
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => onSubmit(new Event('submit') as unknown as React.FormEvent)}
-              >
-                Resend
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   )
 }
