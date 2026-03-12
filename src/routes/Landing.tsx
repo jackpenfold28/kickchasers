@@ -429,7 +429,6 @@ export default function Landing() {
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-6 py-8 lg:flex-row lg:items-center lg:justify-between lg:px-10">
           <div className="flex items-center gap-3">
             <img src="/kickchasers_logo.png" alt="KickChasers" className="h-10 w-auto" />
-            <span className="text-sm text-slate-300">KickChasers</span>
           </div>
           <nav className="flex flex-wrap gap-x-4 gap-y-3 text-sm text-slate-300">
             <Link to="/sign-in" className="hover:text-white">
