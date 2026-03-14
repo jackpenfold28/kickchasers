@@ -1,8 +1,14 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { Input } from '@/components/ui/Input'
 import { authCallbackUrl } from '@/lib/siteUrl'
+import {
+  AuthShell,
+  authFieldClassName,
+  authLinkClassName,
+  authMessageClassName,
+  authPrimaryButtonClassName,
+} from '@/components/auth/AuthShell'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -44,51 +50,60 @@ export default function Register() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 app-bg">
-      <div className="flex justify-center items-center gap-6">
-        <div className="flex justify-center items-center">
-          <img
-            src="/kickchasers_logo.png"
-            alt="Kickchasers logo"
-            className="w-[26rem] h-auto drop-shadow-lg"
+    <AuthShell
+      title="Create Account"
+      eyebrow="KickChasers Access"
+      description="Set up your KickChasers account and step straight into live tracking, player development, and competition-ready insights."
+      footer={
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm text-slate-500">Already set up?</span>
+          <Link to="/sign-in" className={authLinkClassName}>
+            Log in instead
+          </Link>
+        </div>
+      }
+    >
+      <form onSubmit={onSubmit} className="space-y-4">
+        <label className="block space-y-2">
+          <span className="text-sm font-medium text-slate-200">Email</span>
+          <input
+            className={authFieldClassName}
+            type="email"
+            placeholder="player@kickchasers.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
-        </div>
-        <div className="w-full max-w-md">
-          <div className="p-6 space-y-4 rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm">
-            <h1 className="h1">Create account</h1>
-            <form onSubmit={onSubmit} className="space-y-3">
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <Input
-                placeholder="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <Input
-                placeholder="Confirm password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-              {err && <div className="text-sm text-red-400">{err}</div>}
-              {info && <div className="text-sm text-emerald-400">{info}</div>}
-              <button className="btn btn-primary w-full" disabled={busy}>
-                {busy ? 'Creating…' : 'Create account'}
-              </button>
-            </form>
-            <div className="text-sm">
-              <Link to="/sign-in" className="underline">
-                I already have an account
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
+        </label>
+
+        <label className="block space-y-2">
+          <span className="text-sm font-medium text-slate-200">Password</span>
+          <input
+            className={authFieldClassName}
+            placeholder="Create a password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </label>
+
+        <label className="block space-y-2">
+          <span className="text-sm font-medium text-slate-200">Confirm password</span>
+          <input
+            className={authFieldClassName}
+            placeholder="Confirm your password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        </label>
+
+        {err ? <div className={authMessageClassName.error}>{err}</div> : null}
+        {info ? <div className={authMessageClassName.info}>{info}</div> : null}
+
+        <button className={authPrimaryButtonClassName} disabled={busy}>
+          {busy ? 'Creating…' : 'Create Account'}
+        </button>
+      </form>
+    </AuthShell>
   )
 }

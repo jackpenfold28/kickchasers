@@ -6,6 +6,7 @@ import { setClubColours } from '@/lib/theme'
 
 const UNAUTH_ROUTES = new Set([
   '/',
+  '/how-it-works',
   '/terms',
   '/privacy',
   '/community-guidelines',

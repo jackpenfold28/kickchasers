@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom'
 import { Reveal } from './Motion'
 
 type BillingPeriod = 'monthly' | 'yearly'
+type PricingPlanId = 'free' | 'member' | 'player' | 'club'
 
 type PricingTier = {
+  id: PricingPlanId
   name: string
   strapline: string
   description: string
@@ -16,6 +18,7 @@ type PricingTier = {
 
 const pricing: PricingTier[] = [
   {
+    id: 'free',
     name: 'Free',
     strapline: 'Start clean',
     description: 'Core visibility for players getting started with match tracking and post-game review.',
@@ -24,6 +27,7 @@ const pricing: PricingTier[] = [
     features: ['Track basic stats', 'See last 3 games', 'Create cards', 'View stats'],
   },
   {
+    id: 'member',
     name: 'Member',
     strapline: 'For close followers',
     description: 'A light upgrade for families and supporters who want live visibility on match day.',
@@ -32,6 +36,7 @@ const pricing: PricingTier[] = [
     features: ['Everything in Free', 'Access to Match Day live scores and stats'],
   },
   {
+    id: 'player',
     name: 'Player',
     strapline: 'Most selected',
     description: 'The full performance layer for athletes committed to long-term development and comparison.',
@@ -46,6 +51,7 @@ const pricing: PricingTier[] = [
     highlight: true,
   },
   {
+    id: 'club',
     name: 'Club',
     strapline: 'For official programs',
     description: 'Operational control for squads, staff, linked teams, and broader club workflows.',
@@ -87,10 +93,14 @@ function PricingCard({
   tier,
   index,
   billingPeriod,
+  isSelected,
+  onSelect,
 }: {
   tier: PricingTier
   index: number
   billingPeriod: BillingPeriod
+  isSelected: boolean
+  onSelect: (tierId: PricingPlanId) => void
 }) {
   const activePrice = billingPeriod === 'monthly' ? tier.monthlyPrice : tier.yearlyPrice
   const frequency = billingPeriod === 'monthly' ? '/month' : '/year'
@@ -101,18 +111,18 @@ function PricingCard({
       ? Math.round((1 - yearlyValue / (monthlyValue * 12)) * 100)
       : null
 
-  const cardClassName = tier.highlight
+  const cardClassName = isSelected
     ? 'group relative flex min-h-[448px] w-[85%] shrink-0 snap-center flex-col overflow-hidden rounded-[32px] border border-[rgba(57,255,20,0.18)] bg-[linear-gradient(180deg,rgba(57,255,20,0.045),rgba(8,18,36,0.94)_26%,rgba(5,13,28,0.98))] px-6 pb-6 pt-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_22px_52px_rgba(0,0,0,0.26)] transition duration-300 ease-out sm:w-[68%] md:w-auto md:snap-none md:hover:-translate-y-1 md:hover:border-[rgba(57,255,20,0.24)] md:hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.09),0_26px_60px_rgba(0,0,0,0.3)]'
     : 'group relative flex min-h-[448px] w-[85%] shrink-0 snap-center flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.032),rgba(11,20,38,0.94)_24%,rgba(5,13,28,0.98))] px-6 pb-6 pt-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_20px_50px_rgba(0,0,0,0.24)] transition duration-300 ease-out sm:w-[68%] md:w-auto md:snap-none md:hover:-translate-y-1 md:hover:border-white/16 md:hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_24px_58px_rgba(0,0,0,0.3)]'
-  const ctaClassName = tier.highlight
+  const ctaClassName = isSelected
     ? 'mt-8 inline-flex min-h-[48px] items-center justify-center rounded-xl border border-[#7CFF64]/65 bg-[#39FF14] px-4 py-3 text-sm font-semibold text-[#07111F] shadow-[0_6px_18px_rgba(57,255,20,0.25)] transition duration-300 ease-out hover:bg-[#50FF2F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]'
     : 'mt-8 inline-flex min-h-[48px] items-center justify-center rounded-xl border border-white/16 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] px-4 py-3 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition duration-300 ease-out md:group-hover:border-white/28 md:group-hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/55'
-  const featureDotClassName = tier.highlight ? 'mt-[9px] h-1.5 w-1.5 rounded-full bg-[#39FF14]' : 'mt-[9px] h-1.5 w-1.5 rounded-full bg-white/55'
+  const featureDotClassName = isSelected ? 'mt-[9px] h-1.5 w-1.5 rounded-full bg-[#39FF14]' : 'mt-[9px] h-1.5 w-1.5 rounded-full bg-white/55'
 
   return (
     <Reveal key={tier.name} as="article" direction="up" delay={index * 90} duration={650} className={cardClassName}>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(70%_100%_at_50%_0%,rgba(255,255,255,0.08),rgba(255,255,255,0))]" />
-      {tier.highlight ? (
+      {isSelected ? (
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(88%_56%_at_50%_0%,rgba(57,255,20,0.06),transparent_56%)]" />
       ) : null}
       <div className="relative flex h-full flex-col">
@@ -163,9 +173,9 @@ function PricingCard({
             </div>
           ))}
         </div>
-        <Link to="/sign-up" className={ctaClassName}>
-          {tier.highlight ? 'Selected' : 'Select'}
-        </Link>
+        <button type="button" onClick={() => onSelect(tier.id)} className={ctaClassName}>
+          {isSelected ? 'Selected' : 'Select'}
+        </button>
       </div>
     </Reveal>
   )
@@ -173,6 +183,7 @@ function PricingCard({
 
 export function PricingSection() {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly')
+  const [selectedTier, setSelectedTier] = useState<PricingPlanId>('player')
 
   return (
     <section id="pricing" className="scroll-mt-28 relative mx-auto w-full max-w-7xl px-6 py-20 lg:px-10 lg:py-20">
@@ -228,17 +239,35 @@ export function PricingSection() {
 
         <div className="-mx-6 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-3 no-scrollbar md:mx-0 md:grid md:grid-cols-2 md:px-0 lg:grid-cols-4 lg:overflow-visible lg:pb-0">
           {pricing.map((tier, index) => (
-            <PricingCard key={tier.name} tier={tier} index={index} billingPeriod={billingPeriod} />
+            <PricingCard
+              key={tier.name}
+              tier={tier}
+              index={index}
+              billingPeriod={billingPeriod}
+              isSelected={selectedTier === tier.id}
+              onSelect={setSelectedTier}
+            />
           ))}
         </div>
+
+        {selectedTier ? (
+          <Reveal direction="up" delay={110} className="mt-8 flex justify-center">
+            <Link
+              to="/sign-up"
+              className="inline-flex min-h-[50px] items-center justify-center rounded-xl border border-[#7CFF64]/65 bg-[#39FF14] px-6 py-3 text-sm font-semibold text-[#07111F] shadow-[0_6px_18px_rgba(57,255,20,0.25)] transition hover:bg-[#50FF2F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]"
+            >
+              Create account to log in to purchase
+            </Link>
+          </Reveal>
+        ) : null}
 
         <Reveal
           direction="up"
           delay={120}
-          className="relative mt-10 rounded-[34px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.022),rgba(255,255,255,0.01))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_20px_48px_rgba(0,0,0,0.18)]"
+          className="relative mt-10 rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.032),rgba(11,20,38,0.94)_24%,rgba(5,13,28,0.98))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_20px_50px_rgba(0,0,0,0.24)]"
         >
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 rounded-t-[34px] bg-[radial-gradient(70%_100%_at_50%_0%,rgba(255,255,255,0.075),rgba(255,255,255,0))]" />
-          <div className="pointer-events-none absolute inset-0 rounded-[34px] bg-[radial-gradient(80%_55%_at_50%_0%,rgba(255,255,255,0.03),transparent_58%)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-28 rounded-t-[34px] bg-[radial-gradient(70%_100%_at_50%_0%,rgba(255,255,255,0.08),rgba(255,255,255,0))]" />
+          <div className="pointer-events-none absolute inset-0 rounded-[34px] bg-[radial-gradient(80%_55%_at_50%_0%,rgba(255,255,255,0.028),transparent_58%)]" />
           <div className="flex flex-col gap-2 border-b border-white/10 pb-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-lg font-semibold tracking-tight text-white">Compare the structure at a glance</p>
@@ -252,17 +281,17 @@ export function PricingSection() {
           <div className="mt-5 hidden overflow-hidden rounded-[28px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.018),rgba(255,255,255,0.008))] lg:grid lg:grid-cols-[1.18fr_repeat(4,minmax(0,1fr))] lg:gap-x-0">
             <div className="border-b border-white/[0.04] px-7 py-6" />
             {pricing.map((tier) => {
-              const isPlayer = tier.name === 'Player'
+              const isSelectedColumn = tier.id === selectedTier
               return (
                 <div
                   key={tier.name}
                   className={`group/column border-b border-white/[0.04] px-6 py-6 text-center transition duration-200 ${
-                    isPlayer
+                    isSelectedColumn
                       ? 'bg-[linear-gradient(180deg,rgba(57,255,20,0.06),rgba(57,255,20,0.02))] shadow-[inset_1px_0_0_rgba(57,255,20,0.2),inset_-1px_0_0_rgba(57,255,20,0.2),0_0_28px_rgba(57,255,20,0.03)] hover:bg-[linear-gradient(180deg,rgba(57,255,20,0.09),rgba(57,255,20,0.03))] hover:shadow-[inset_1px_0_0_rgba(57,255,20,0.28),inset_-1px_0_0_rgba(57,255,20,0.28),0_0_32px_rgba(57,255,20,0.06)]'
                       : 'hover:bg-white/[0.02]'
                   }`}
                 >
-                  <p className={`text-[17px] font-semibold tracking-[0.01em] ${isPlayer ? 'text-white' : 'text-slate-100'}`}>
+                  <p className={`text-[17px] font-semibold tracking-[0.01em] ${isSelectedColumn ? 'text-white' : 'text-slate-100'}`}>
                     {tier.name}
                   </p>
                 </div>
@@ -270,17 +299,17 @@ export function PricingSection() {
             })}
             {comparisonRows.map((row, rowIndex) => (
               <Fragment key={row.label}>
-                <div className={`border-r border-white/[0.04] px-7 py-7 text-sm font-medium leading-6 text-slate-400 ${rowIndex % 2 === 0 ? 'bg-white/[0.012]' : 'bg-transparent'}`}>
+                <div className={`border-r border-white/[0.04] px-7 py-7 text-sm font-semibold leading-6 text-white ${rowIndex % 2 === 0 ? 'bg-white/[0.012]' : 'bg-transparent'}`}>
                   {row.label}
                 </div>
                 {row.values.map((value, index) => {
-                  const isPlayer = pricing[index]?.name === 'Player'
+                  const isSelectedColumn = pricing[index]?.id === selectedTier
                   const rowTone = rowIndex % 2 === 0 ? 'bg-white/[0.008]' : 'bg-transparent'
                   return (
                     <div
                       key={`${row.label}-${value}`}
                       className={`group/column px-6 py-7 text-sm leading-6 text-slate-200 transition duration-200 ${rowTone} ${
-                        isPlayer
+                        isSelectedColumn
                           ? 'bg-[linear-gradient(180deg,rgba(57,255,20,0.06),rgba(57,255,20,0.02))] shadow-[inset_1px_0_0_rgba(57,255,20,0.2),inset_-1px_0_0_rgba(57,255,20,0.2)] hover:bg-[linear-gradient(180deg,rgba(57,255,20,0.09),rgba(57,255,20,0.03))] hover:shadow-[inset_1px_0_0_rgba(57,255,20,0.28),inset_-1px_0_0_rgba(57,255,20,0.28),0_0_24px_rgba(57,255,20,0.05)]'
                           : 'hover:bg-white/[0.02]'
                       }`}
@@ -288,7 +317,7 @@ export function PricingSection() {
                       <div className="flex items-start gap-3">
                         <span
                           className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${
-                            isPlayer ? 'bg-[#39FF14]' : index === 0 ? 'bg-white/38' : index === 1 ? 'bg-white/48' : 'bg-white/58'
+                            isSelectedColumn ? 'bg-[#39FF14]' : index === 0 ? 'bg-white/38' : index === 1 ? 'bg-white/48' : 'bg-white/58'
                           }`}
                         />
                         <span className="block min-w-0">{value}</span>
@@ -306,22 +335,22 @@ export function PricingSection() {
                 key={row.label}
                 className="rounded-[26px] border border-white/7 bg-[linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.012))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_16px_34px_rgba(0,0,0,0.14)]"
               >
-                <p className="pl-1 text-sm font-medium leading-6 text-slate-400">{row.label}</p>
+                <p className="pl-1 text-sm font-semibold leading-6 text-white">{row.label}</p>
                 <div className="mt-4 space-y-3">
                   {pricing.map((tier, index) => (
                     <div
                       key={`${row.label}-${tier.name}`}
                       className={`rounded-2xl border p-3.5 ${
-                        tier.name === 'Player'
+                        tier.id === selectedTier
                           ? 'border-[rgba(57,255,20,0.18)] bg-[linear-gradient(180deg,rgba(57,255,20,0.08),rgba(7,16,31,0.88))] shadow-[inset_0_1px_0_rgba(57,255,20,0.12),0_0_20px_rgba(57,255,20,0.04)]'
                           : 'border-white/8 bg-[#07101F]/78'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-4">
-                        <p className={`text-[13px] font-semibold leading-5 ${tier.name === 'Player' ? 'text-white' : 'text-slate-100'}`}>
+                        <p className={`text-[13px] font-semibold leading-5 ${tier.id === selectedTier ? 'text-white' : 'text-slate-100'}`}>
                           {tier.name}
                         </p>
-                        {tier.name === 'Player' ? (
+                        {tier.highlight ? (
                           <span className="rounded-full border border-[#7CFF64]/30 bg-[#39FF14]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#C7FFBC]">
                             Recommended
                           </span>
@@ -330,7 +359,7 @@ export function PricingSection() {
                       <div className="mt-2 flex items-start gap-3">
                         <span
                           className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${
-                            tier.name === 'Player' ? 'bg-[#39FF14]' : index === 0 ? 'bg-white/38' : index === 1 ? 'bg-white/48' : 'bg-white/58'
+                            tier.id === selectedTier ? 'bg-[#39FF14]' : index === 0 ? 'bg-white/38' : index === 1 ? 'bg-white/48' : 'bg-white/58'
                           }`}
                         />
                         <p className="text-sm leading-6 text-slate-200">{row.values[index]}</p>

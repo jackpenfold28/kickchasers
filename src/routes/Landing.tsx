@@ -3,15 +3,26 @@ import { Link } from 'react-router-dom'
 import { ProductShot } from '../components/landing/ProductShot'
 import { HeroStaggerItem, Reveal } from '../components/landing/Motion'
 import { PricingSection } from '../components/landing/PricingSection'
-import { legalDocumentList } from '@/content/legalDocuments'
+import { PublicSiteShell, publicNavItems } from '@/components/landing/PublicSiteShell'
 
 const authLink = (path: string) => `/sign-in?redirect=${encodeURIComponent(path)}`
 
-const navItems = [
-  { label: 'Features', href: '#features', id: 'features' },
-  { label: 'Pricing', href: '#pricing', id: 'pricing' },
-  { label: 'Portal', href: '#portal', id: 'portal' },
-]
+const navItems = publicNavItems.filter((item) => item.type === 'hash')
+
+const heroValidationItems = [
+  {
+    title: 'Live Match Tracking',
+    description: 'Capture every stat as the game happens.',
+  },
+  {
+    title: 'Performance Ratings',
+    description: 'Turn raw stats into clear player impact.',
+  },
+  {
+    title: 'Season Development',
+    description: 'Track performance across every game.',
+  },
+] as const
 
 export default function Landing() {
   const [activeSection, setActiveSection] = useState('features')
@@ -49,62 +60,9 @@ export default function Landing() {
   }, [])
 
   return (
-    <main className="relative overflow-hidden bg-[#02091A] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(1200px_720px_at_8%_-12%,rgba(20,92,255,0.25),transparent_58%),radial-gradient(950px_620px_at_90%_4%,rgba(57,255,20,0.08),transparent_50%),linear-gradient(180deg,#02091A_0%,#040B1C_44%,#030A1A_100%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(1000px_560px_at_50%_114%,rgba(0,0,0,0.5),transparent_68%)]" />
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-[16vw] bg-[linear-gradient(90deg,rgba(0,0,0,0.26),transparent)]" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-[16vw] bg-[linear-gradient(270deg,rgba(0,0,0,0.26),transparent)]" />
-
-      <header className="sticky top-0 z-50 px-4 pt-4 sm:px-6 lg:px-10">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-1 py-2 sm:px-2">
-          <div className="flex items-center gap-3">
-            <img src="/kickchasers_logo.png" alt="KickChasers" className="h-14 w-auto" />
-          </div>
-
-          <nav className="hidden items-center gap-7 md:flex" aria-label="Landing sections">
-            {navItems.map((item) => {
-              const isActive = activeSection === item.id
-              return (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={`group relative py-2 text-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/45 ${
-                    isActive ? 'text-white' : 'text-slate-200/95 hover:text-white'
-                  }`}
-                >
-                  {item.label}
-                  <span
-                    className={`absolute -bottom-[2px] left-1/2 h-[2px] -translate-x-1/2 rounded-full bg-[#39FF14] transition-all duration-300 ${
-                      isActive ? 'w-[72%] shadow-[0_0_12px_rgba(57,255,20,0.55)]' : 'w-0 group-hover:w-[72%]'
-                    }`}
-                  />
-                </a>
-              )
-            })}
-          </nav>
-
-          <div className="flex items-center gap-2 text-sm sm:gap-3">
-            <Link
-              to="/sign-in"
-              className="rounded-xl border border-white/25 bg-white/[0.03] px-4 py-2 text-slate-100 transition-colors hover:border-white/35 hover:bg-white/[0.1] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/50"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/sign-up"
-              className="rounded-xl border border-[#7CFF64]/65 bg-[#39FF14]/92 px-4 py-2 font-semibold text-white shadow-[0_6px_18px_rgba(57,255,20,0.25)] transition hover:bg-[#50FF2F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]"
-            >
-              Sign Up
-            </Link>
-          </div>
-        </div>
-        <div className="mx-auto h-px w-full max-w-7xl bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </header>
-
-      <section className="relative mx-auto grid w-full max-w-7xl items-start gap-8 px-6 pb-14 pt-14 lg:grid-cols-[1.02fr_.98fr] lg:gap-8 lg:px-10 lg:pb-16 lg:pt-16">
+    <PublicSiteShell activeNavId={activeSection}>
+      <section className="relative mx-auto grid w-full max-w-7xl items-start gap-8 px-6 pb-10 pt-12 lg:grid-cols-[1.02fr_.98fr] lg:gap-8 lg:px-10 lg:pb-12 lg:pt-14">
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(140deg,#051733_0%,#031027_44%,#02091A_100%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(640px_340px_at_78%_18%,rgba(0,255,150,0.1),transparent_72%)]" />
         <div className="max-w-2xl">
           <HeroStaggerItem
             as="p"
@@ -116,45 +74,89 @@ export default function Landing() {
           <HeroStaggerItem
             as="h1"
             delay={140}
-            className="mt-5 max-w-[14ch] text-4xl font-semibold leading-[1.01] tracking-tight sm:text-6xl lg:text-7xl"
+            className="mt-5 max-w-[12ch] text-4xl font-semibold leading-[0.98] tracking-tight sm:text-6xl lg:text-[4.5rem]"
           >
-            Track Your Performance.
-            <span className="block text-[#39FF14]">Chase the Next Level.</span>
+            Track Every Stat.
+            <span className="block text-[#39FF14]">Prove Your Performance.</span>
           </HeroStaggerItem>
-          <HeroStaggerItem as="p" delay={240} className="mt-6 max-w-[52ch] text-base leading-relaxed text-slate-300 sm:text-lg">
-            KickChasers is built for Australian Rules Football athletes, families, and clubs. Capture live match
-            moments, review your numbers, and turn match data into clear performance direction.
+          <HeroStaggerItem as="p" delay={240} className="mt-5 max-w-[54ch] text-base leading-relaxed text-slate-300 sm:text-lg">
+            KickChasers captures live match statistics for Australian Rules Football, turning every game into real
+            performance insights for players, families, and clubs.
           </HeroStaggerItem>
-          <HeroStaggerItem as="div" delay={320} className="mt-8 flex flex-wrap gap-3.5">
+          <HeroStaggerItem as="div" delay={320} className="mt-7 flex flex-wrap gap-3.5">
             <Link
               to={authLink('/new')}
               className="rounded-xl bg-[#39FF14] px-7 py-3 text-base font-semibold text-[#07111F] shadow-[0_14px_34px_rgba(57,255,20,0.18)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]"
             >
               Get Started
             </Link>
-            <a
-              href="#features"
+            <Link
+              to="/how-it-works"
               className="rounded-xl border border-white/20 px-7 py-3 text-base font-semibold text-white transition hover:border-white/35 hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/55"
             >
               View Product Story
-            </a>
+            </Link>
           </HeroStaggerItem>
         </div>
 
-        <div>
-          <ProductShot
-            src="/mockups/landing/01-see-every-match-moment.png"
-            fallback="/mockups/live-viewer.png"
-            alt="KickChasers live tracking screen"
-            wrapperClassName="relative mx-auto w-full max-w-[455px]"
-            glowClassName="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(57,255,20,0.24)_0%,rgba(12,56,150,0.14)_44%,rgba(2,9,26,0)_72%)] blur-3xl"
-            imageClassName="block h-auto w-full object-contain"
-          />
+        <div className="relative">
+          <div className="pointer-events-none absolute left-[58%] top-[34%] h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(57,255,20,0.12)_0%,rgba(57,255,20,0.05)_34%,rgba(2,9,26,0)_72%)] blur-3xl" />
+          <div className="pointer-events-none absolute left-[56%] top-[72%] h-[240px] w-[240px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(57,255,20,0.07)_0%,rgba(12,56,150,0.04)_42%,rgba(2,9,26,0)_72%)] blur-3xl" />
+          <div className="relative mx-auto hidden w-full max-w-[560px] md:block">
+            <div className="relative z-10">
+              <ProductShot
+                src="/mockups/landing/04-two-trackers-one-game.png"
+                fallback="/mockups/live-viewer.png"
+                alt="KickChasers iPad and mobile live tracking interface"
+                wrapperClassName="relative mx-auto w-full max-w-[520px]"
+                glowClassName="pointer-events-none absolute left-1/2 top-[46%] h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(57,255,20,0.08)_0%,rgba(57,255,20,0.03)_36%,rgba(2,9,26,0)_72%)] blur-3xl"
+                imageClassName="block h-auto w-full object-contain drop-shadow-[0_30px_68px_rgba(0,0,0,0.48)]"
+              />
+            </div>
+
+            <div className="absolute bottom-[-2%] left-[8%] z-20 w-[30%] max-w-[160px] overflow-hidden sm:max-w-[190px] lg:bottom-0 lg:left-[9%]">
+              <ProductShot
+                src="/mockups/landing/02-track-every-afl-stat-live.png"
+                fallback="/mockups/live-viewer.png"
+                alt="KickChasers live match tracking phone interface"
+                wrapperClassName="relative mx-auto w-full"
+                glowClassName="pointer-events-none absolute left-1/2 top-1/2 h-[260px] w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(57,255,20,0.1)_0%,transparent_72%)] blur-3xl"
+                imageClassName="block h-auto w-full object-contain drop-shadow-[0_24px_44px_rgba(0,0,0,0.42)]"
+              />
+            </div>
+          </div>
+
+          <div className="relative mx-auto w-full max-w-[440px] md:hidden">
+            <ProductShot
+              src="/mockups/landing/02-track-every-afl-stat-live.png"
+              fallback="/mockups/live-viewer.png"
+              alt="KickChasers live match tracking interface"
+              wrapperClassName="relative mx-auto w-full max-w-[360px]"
+              glowClassName="pointer-events-none absolute left-1/2 top-[46%] h-[280px] w-[280px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(57,255,20,0.08)_0%,rgba(57,255,20,0.03)_36%,rgba(2,9,26,0)_72%)] blur-3xl"
+              imageClassName="block h-auto w-full object-contain drop-shadow-[0_28px_58px_rgba(0,0,0,0.46)]"
+            />
+          </div>
         </div>
+
+        <HeroStaggerItem as="div" delay={380} className="lg:col-span-2">
+          <div className="grid gap-3 pt-2 md:grid-cols-3">
+            {heroValidationItems.map((item) => (
+              <div
+                key={item.title}
+                className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(7,19,39,0.85))] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="h-2 w-2 rounded-full bg-[#39FF14] shadow-[0_0_10px_rgba(57,255,20,0.45)]" />
+                  <p className="text-sm font-semibold text-white">{item.title}</p>
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-slate-400">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </HeroStaggerItem>
       </section>
 
       <div className="mx-auto h-px w-full max-w-7xl bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-
       <section id="features" className="scroll-mt-28 relative mx-auto w-full max-w-7xl px-6 py-20 lg:px-10 lg:py-20">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_380px_at_72%_50%,rgba(0,255,150,0.12),rgba(12,56,150,0.08)_42%,transparent_72%)]" />
         <div className="relative grid items-center gap-10 lg:grid-cols-[1.05fr_.95fr]">
@@ -339,31 +341,6 @@ export default function Landing() {
           </Reveal>
         </div>
       </section>
-
-      <footer className="relative border-t border-white/10 bg-[#030A1A]/90">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-6 py-8 lg:flex-row lg:items-center lg:justify-between lg:px-10">
-          <div className="flex items-center gap-3">
-            <img src="/kickchasers_logo.png" alt="KickChasers" className="h-10 w-auto" />
-          </div>
-          <nav className="flex flex-wrap gap-x-4 gap-y-3 text-sm text-slate-300">
-            <Link to="/sign-in" className="hover:text-white">
-              Sign In
-            </Link>
-            <Link to="/sign-up" className="hover:text-white">
-              Sign Up
-            </Link>
-            <Link to={authLink('/hub')} className="hover:text-white">
-              Portal
-            </Link>
-            {legalDocumentList.map((item) => (
-              <Link key={item.key} to={item.route} className="text-slate-400 transition hover:text-white">
-                {item.title}
-              </Link>
-            ))}
-          </nav>
-          <p className="text-sm text-slate-500">© {new Date().getFullYear()} KickChasers. All rights reserved.</p>
-        </div>
-      </footer>
-    </main>
+    </PublicSiteShell>
   )
 }

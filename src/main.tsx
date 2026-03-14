@@ -9,6 +9,7 @@ import Forgot from './routes/auth/Forgot'
 import ResetPassword from './routes/auth/ResetPassword'
 import Squad from './routes/Squad'
 import Landing from './routes/Landing'
+import HowItWorks from './routes/HowItWorks'
 import Onboarding from './routes/Onboarding'
 import AuthCallback from './routes/auth/Callback'
 import DisabledRoute from './routes/DisabledRoute'
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Landing /> },
       { path: 'landing', element: <Landing /> },
+      { path: 'how-it-works', element: <HowItWorks /> },
       { path: 'terms', element: <LegalDocumentPage document={legalDocuments.terms} /> },
       { path: 'privacy', element: <LegalDocumentPage document={legalDocuments.privacy} /> },
       {
