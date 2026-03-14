@@ -15,6 +15,9 @@
 }
 
 @layer components {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
   /* app shell */
   .app-bg {
     /* Deep night gradient with subtle vignettes */

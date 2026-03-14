@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ProductShot } from '../components/landing/ProductShot'
 import { HeroStaggerItem, Reveal } from '../components/landing/Motion'
+import { PricingSection } from '../components/landing/PricingSection'
 import { legalDocumentList } from '@/content/legalDocuments'
 
 const authLink = (path: string) => `/sign-in?redirect=${encodeURIComponent(path)}`
@@ -10,39 +11,6 @@ const navItems = [
   { label: 'Features', href: '#features', id: 'features' },
   { label: 'Pricing', href: '#pricing', id: 'pricing' },
   { label: 'Portal', href: '#portal', id: 'portal' },
-]
-
-const pricing = [
-  {
-    name: 'Free',
-    label: 'For first games',
-    price: '$0',
-    frequency: '/month',
-    description: 'Start tracking your game with core match stats and player snapshots.',
-    features: ['Live match logging', 'Basic player profile', 'Limited history'],
-    cta: 'Start Free',
-    highlight: false,
-  },
-  {
-    name: 'Player',
-    label: 'Most selected',
-    price: '$14',
-    frequency: '/month',
-    description: 'Advanced visibility for athletes committed to measurable progress.',
-    features: ['Full match history', 'Player ratings', 'Performance trends'],
-    cta: 'Choose Player',
-    highlight: true,
-  },
-  {
-    name: 'Club',
-    label: 'For programs',
-    price: '$59',
-    frequency: '/month',
-    description: 'Shared performance intelligence across squads, staff, and families.',
-    features: ['Multi-team access', 'Club-wide analytics', 'Priority support'],
-    cta: 'Choose Club',
-    highlight: false,
-  },
 ]
 
 export default function Landing() {
@@ -351,60 +319,7 @@ export default function Landing() {
 
       <div className="mx-auto h-px w-full max-w-7xl bg-gradient-to-r from-transparent via-white/15 to-transparent" />
 
-      <section id="pricing" className="scroll-mt-28 relative mx-auto w-full max-w-7xl px-6 py-20 lg:px-10 lg:py-20">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(3,10,26,0)_0%,rgba(6,17,42,0.28)_55%,rgba(3,10,26,0)_100%)]" />
-        <div className="relative">
-          <Reveal direction="up" className="max-w-[780px]">
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Pricing</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">Choose Your Performance Tier</h2>
-          </Reveal>
-
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {pricing.map((tier, index) => (
-              <Reveal
-                key={tier.name}
-                as="article"
-                direction="up"
-                delay={index * 90}
-                duration={650}
-                className={`rounded-[28px] border px-6 pb-6 pt-5 transition duration-200 ${
-                  tier.highlight
-                    ? 'relative border-[#39FF14]/55 bg-[linear-gradient(180deg,rgba(57,255,20,0.14),rgba(6,17,42,0.7))] shadow-[0_20px_50px_rgba(57,255,20,0.12)]'
-                    : 'border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))]'
-                }`}
-              >
-                {tier.highlight ? (
-                  <p className="mb-4 inline-flex rounded-full border border-[#88FF73]/45 bg-[#39FF14]/14 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B8FFAA]">
-                    Most Popular
-                  </p>
-                ) : null}
-                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">{tier.label}</p>
-                <p className="mt-2 text-2xl font-semibold tracking-tight">{tier.name}</p>
-                <p className="mt-4 text-5xl font-semibold leading-none tracking-tight">
-                  {tier.price}
-                  <span className="ml-1 text-sm font-normal text-slate-400">{tier.frequency}</span>
-                </p>
-                <p className="mt-4 min-h-[52px] text-sm leading-relaxed text-slate-300">{tier.description}</p>
-                <div className="mt-5 space-y-2.5 border-t border-white/10 pt-4 text-sm text-slate-300">
-                  {tier.features.map((feature) => (
-                    <p key={feature}>{feature}</p>
-                  ))}
-                </div>
-                <Link
-                  to="/sign-up"
-                  className={`mt-7 inline-flex rounded-xl px-4 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/55 ${
-                    tier.highlight
-                      ? 'bg-[#39FF14] text-[#07111F] hover:brightness-110'
-                      : 'border border-white/20 text-white hover:border-white/35 hover:bg-white/[0.03]'
-                  }`}
-                >
-                  {tier.cta}
-                </Link>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PricingSection />
 
       <div className="mx-auto h-px w-full max-w-7xl bg-gradient-to-r from-transparent via-white/15 to-transparent" />
 
