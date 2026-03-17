@@ -1,6 +1,6 @@
 import { useState, Fragment } from 'react'
 import { Link } from 'react-router-dom'
-import { Reveal } from './Motion'
+import { Reveal, VisualMotion } from './Motion'
 
 type BillingPeriod = 'monthly' | 'yearly'
 type PricingPlanId = 'free' | 'member' | 'player' | 'club'
@@ -85,6 +85,8 @@ const comparisonRows = [
   },
 ]
 
+const pricingSignals = ['Players', 'Families', 'Clubs'] as const
+
 function parsePrice(value: string) {
   return Number.parseFloat(value.replace('$', ''))
 }
@@ -120,7 +122,17 @@ function PricingCard({
   const featureDotClassName = isSelected ? 'mt-[9px] h-1.5 w-1.5 rounded-full bg-[#39FF14]' : 'mt-[9px] h-1.5 w-1.5 rounded-full bg-white/55'
 
   return (
-    <Reveal key={tier.name} as="article" direction="up" delay={index * 90} duration={650} className={cardClassName}>
+    <Reveal
+      key={tier.name}
+      as="article"
+      direction="up"
+      delay={index * 90}
+      duration={650}
+      distance={12}
+      scale={0.99}
+      baseOpacity={0.84}
+      className={cardClassName}
+    >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(70%_100%_at_50%_0%,rgba(255,255,255,0.08),rgba(255,255,255,0))]" />
       {isSelected ? (
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(88%_56%_at_50%_0%,rgba(57,255,20,0.06),transparent_56%)]" />
@@ -193,18 +205,37 @@ export function PricingSection() {
 
       <div className="relative">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <Reveal direction="up" className="max-w-[760px]">
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Pricing</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">Choose Your Performance Tier</h2>
-            <p className="mt-5 max-w-[60ch] text-base leading-relaxed text-slate-300 sm:text-lg">
+          <div className="kc-story-panel kc-reveal-copy kc-section-copy max-w-[760px] rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(5,14,33,0.56))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-8">
+            <Reveal as="p" direction="up" distance={14} baseOpacity={0.8} className="text-xs uppercase tracking-[0.24em] text-slate-400">Pricing</Reveal>
+            <Reveal as="h2" direction="up" delay={50} distance={16} baseOpacity={0.76} className="mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">
+              Choose Your Performance Tier
+            </Reveal>
+            <Reveal as="p" direction="up" delay={100} distance={16} baseOpacity={0.74} className="mt-5 max-w-[60ch] text-base leading-relaxed text-slate-300 sm:text-lg">
               All features are currently free for all users for a limited time, so you can explore the full
               KickChasers platform during launch. These plans show the long-term structure for players, families,
               and clubs once billing begins.
-            </p>
-            <p className="mt-3 text-sm leading-6 text-slate-400">Yearly plans offer discounted pricing for long-term use.</p>
-          </Reveal>
+            </Reveal>
+            <Reveal as="p" direction="up" delay={145} distance={14} baseOpacity={0.76} className="mt-3 text-sm leading-6 text-slate-400">
+              Yearly plans offer discounted pricing for long-term use.
+            </Reveal>
+            <div className="kc-card-cluster mt-6 flex flex-wrap gap-3">
+              {pricingSignals.map((signal, index) => (
+                <Reveal
+                  key={signal}
+                  as="div"
+                  delay={185 + index * 35}
+                  distance={12}
+                  scale={0.99}
+                  baseOpacity={0.84}
+                  className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-200"
+                >
+                  {signal}
+                </Reveal>
+              ))}
+            </div>
+          </div>
 
-          <Reveal direction="up" delay={90} className="lg:pb-1">
+          <Reveal direction="up" delay={165} distance={12} scale={0.99} baseOpacity={0.84} className="lg:pb-1">
             <div className="inline-flex items-center rounded-full border border-white/12 bg-[linear-gradient(180deg,rgba(6,17,42,0.96),rgba(4,12,28,0.92))] p-1.5 shadow-[0_18px_38px_rgba(0,0,0,0.28)]">
               <button
                 type="button"
@@ -237,7 +268,7 @@ export function PricingSection() {
           </Reveal>
         </div>
 
-        <div className="-mx-6 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-3 no-scrollbar md:mx-0 md:grid md:grid-cols-2 md:px-0 lg:grid-cols-4 lg:overflow-visible lg:pb-0">
+        <div className="kc-card-cluster -mx-6 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-3 no-scrollbar md:mx-0 md:grid md:grid-cols-2 md:px-0 lg:grid-cols-4 lg:overflow-visible lg:pb-0">
           {pricing.map((tier, index) => (
             <PricingCard
               key={tier.name}
@@ -250,21 +281,27 @@ export function PricingSection() {
           ))}
         </div>
 
-        {selectedTier ? (
-          <Reveal direction="up" delay={110} className="mt-8 flex justify-center">
-            <Link
-              to="/sign-up"
-              className="inline-flex min-h-[50px] items-center justify-center rounded-xl border border-[#7CFF64]/65 bg-[#39FF14] px-6 py-3 text-sm font-semibold text-[#07111F] shadow-[0_6px_18px_rgba(57,255,20,0.25)] transition hover:bg-[#50FF2F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]"
-            >
-              Create account to log in to purchase
-            </Link>
-          </Reveal>
-        ) : null}
-
+        <VisualMotion
+          delay={240}
+          duration={820}
+          distance={14}
+          drift={2}
+          parallax={4}
+          mobileParallax={2}
+          scale={0.988}
+          scrollScale={0.012}
+          mobileScrollScale={0.006}
+          baseOpacity={0.92}
+          settleStart={0.96}
+          settleEnd={0.38}
+          className="mt-10"
+        >
         <Reveal
           direction="up"
-          delay={120}
-          className="relative mt-10 rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.032),rgba(11,20,38,0.94)_24%,rgba(5,13,28,0.98))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_20px_50px_rgba(0,0,0,0.24)]"
+          delay={0}
+          distance={18}
+          scale={0.982}
+          className="relative rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.032),rgba(11,20,38,0.94)_24%,rgba(5,13,28,0.98))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_20px_50px_rgba(0,0,0,0.24)]"
         >
           <div className="pointer-events-none absolute inset-x-0 top-0 h-28 rounded-t-[34px] bg-[radial-gradient(70%_100%_at_50%_0%,rgba(255,255,255,0.08),rgba(255,255,255,0))]" />
           <div className="pointer-events-none absolute inset-0 rounded-[34px] bg-[radial-gradient(80%_55%_at_50%_0%,rgba(255,255,255,0.028),transparent_58%)]" />
@@ -371,6 +408,18 @@ export function PricingSection() {
             ))}
           </div>
         </Reveal>
+        </VisualMotion>
+
+        {selectedTier ? (
+          <Reveal direction="up" delay={290} distance={12} scale={0.99} baseOpacity={0.86} className="mt-8 flex justify-center">
+            <Link
+              to="/sign-up"
+              className="inline-flex min-h-[50px] items-center justify-center rounded-xl border border-[#7CFF64]/65 bg-[#39FF14] px-6 py-3 text-sm font-semibold text-[#07111F] shadow-[0_6px_18px_rgba(57,255,20,0.25)] transition hover:bg-[#50FF2F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]"
+            >
+              Create account to log in to purchase
+            </Link>
+          </Reveal>
+        ) : null}
       </div>
     </section>
   )
