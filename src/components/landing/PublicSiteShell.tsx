@@ -26,12 +26,14 @@ function resolveNavHref(item: PublicNavItem, useLandingAnchors: boolean) {
 type PublicSiteShellProps = {
   activeNavId?: string
   useLandingAnchors?: boolean
+  disableAuthCtas?: boolean
   children: ReactNode
 }
 
 export function PublicSiteShell({
   activeNavId,
   useLandingAnchors = false,
+  disableAuthCtas = false,
   children,
 }: PublicSiteShellProps) {
   return (
@@ -82,18 +84,37 @@ export function PublicSiteShell({
           </nav>
 
           <div className="flex items-center gap-2 text-sm sm:gap-3">
-            <Link
-              to="/sign-in"
-              className="rounded-xl border border-white/25 bg-white/[0.03] px-4 py-2 text-slate-100 transition-colors hover:border-white/35 hover:bg-white/[0.1] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/50"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/sign-up"
-              className="rounded-xl border border-[#7CFF64]/65 bg-[#39FF14]/92 px-4 py-2 font-semibold text-white shadow-[0_6px_18px_rgba(57,255,20,0.25)] transition hover:bg-[#50FF2F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]"
-            >
-              Sign Up
-            </Link>
+            {disableAuthCtas ? (
+              <>
+                <span
+                  aria-disabled="true"
+                  className="cursor-not-allowed rounded-xl border border-white/14 bg-white/[0.02] px-4 py-2 text-slate-500"
+                >
+                  Sign In
+                </span>
+                <span
+                  aria-disabled="true"
+                  className="cursor-not-allowed rounded-xl border border-[#7CFF64]/20 bg-[#39FF14]/20 px-4 py-2 font-semibold text-slate-300 shadow-[0_6px_18px_rgba(57,255,20,0.08)]"
+                >
+                  Sign Up
+                </span>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/sign-in"
+                  className="rounded-xl border border-white/25 bg-white/[0.03] px-4 py-2 text-slate-100 transition-colors hover:border-white/35 hover:bg-white/[0.1] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/50"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/sign-up"
+                  className="rounded-xl border border-[#7CFF64]/65 bg-[#39FF14]/92 px-4 py-2 font-semibold text-white shadow-[0_6px_18px_rgba(57,255,20,0.25)] transition hover:bg-[#50FF2F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
         <div className="mx-auto h-px w-full max-w-7xl bg-gradient-to-r from-transparent via-white/20 to-transparent" />
@@ -107,12 +128,25 @@ export function PublicSiteShell({
             <img src="/kickchasers_logo.png" alt="KickChasers" className="h-10 w-auto" />
           </div>
           <nav className="flex flex-wrap gap-x-4 gap-y-3 text-sm text-slate-300">
-            <Link to="/sign-in" className="hover:text-white">
-              Sign In
-            </Link>
-            <Link to="/sign-up" className="hover:text-white">
-              Sign Up
-            </Link>
+            {disableAuthCtas ? (
+              <>
+                <span aria-disabled="true" className="cursor-not-allowed text-slate-500">
+                  Sign In
+                </span>
+                <span aria-disabled="true" className="cursor-not-allowed text-slate-500">
+                  Sign Up
+                </span>
+              </>
+            ) : (
+              <>
+                <Link to="/sign-in" className="hover:text-white">
+                  Sign In
+                </Link>
+                <Link to="/sign-up" className="hover:text-white">
+                  Sign Up
+                </Link>
+              </>
+            )}
             <Link to={authLink('/hub')} className="hover:text-white">
               Portal
             </Link>

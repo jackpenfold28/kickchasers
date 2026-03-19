@@ -5,8 +5,6 @@ import { HeroStaggerItem, Reveal, VisualMotion } from '../components/landing/Mot
 import { PricingSection } from '../components/landing/PricingSection'
 import { PublicSiteShell, publicNavItems } from '@/components/landing/PublicSiteShell'
 
-const authLink = (path: string) => `/sign-in?redirect=${encodeURIComponent(path)}`
-
 const navItems = publicNavItems.filter((item) => item.type === 'hash')
 
 const heroValidationItems = [
@@ -80,7 +78,7 @@ export default function Landing() {
   }, [])
 
   return (
-    <PublicSiteShell activeNavId={activeSection}>
+    <PublicSiteShell activeNavId={activeSection} disableAuthCtas>
       <section className="relative mx-auto grid w-full max-w-7xl items-start gap-8 px-6 pb-10 pt-12 lg:grid-cols-[1.02fr_.98fr] lg:gap-8 lg:px-10 lg:pb-12 lg:pt-14">
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(140deg,#051733_0%,#031027_44%,#02091A_100%)]" />
         <div className="max-w-2xl">
@@ -104,12 +102,12 @@ export default function Landing() {
             performance insights for players, families, and clubs.
           </HeroStaggerItem>
           <HeroStaggerItem as="div" delay={320} className="mt-7 flex flex-wrap gap-3.5">
-            <Link
-              to={authLink('/new')}
-              className="rounded-xl bg-[#39FF14] px-7 py-3 text-base font-semibold text-[#07111F] shadow-[0_14px_34px_rgba(57,255,20,0.18)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]"
+            <span
+              aria-disabled="true"
+              className="cursor-not-allowed rounded-xl bg-[#39FF14]/25 px-7 py-3 text-base font-semibold text-slate-200 shadow-[0_14px_34px_rgba(57,255,20,0.08)]"
             >
               Get Started
-            </Link>
+            </span>
             <Link
               to="/how-it-works"
               className="rounded-xl border border-white/20 px-7 py-3 text-base font-semibold text-white transition hover:border-white/35 hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/55"
@@ -572,12 +570,12 @@ export default function Landing() {
             Start Tracking Your Game
           </Reveal>
           <Reveal direction="up" delay={70} distance={12} scale={0.99} baseOpacity={0.84}>
-            <Link
-              to="/sign-up"
-              className="mt-6 inline-flex rounded-xl bg-[#39FF14] px-8 py-3 text-base font-semibold text-[#07111F] shadow-[0_14px_30px_rgba(57,255,20,0.2)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]"
+            <span
+              aria-disabled="true"
+              className="mt-6 inline-flex cursor-not-allowed rounded-xl bg-[#39FF14]/22 px-8 py-3 text-base font-semibold text-slate-200 shadow-[0_14px_30px_rgba(57,255,20,0.08)]"
             >
               Create Your Account
-            </Link>
+            </span>
           </Reveal>
         </div>
       </section>
