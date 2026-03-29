@@ -1,4 +1,5 @@
 import { useState, Fragment } from 'react'
+import { Link } from 'react-router-dom'
 import { Reveal, VisualMotion } from './Motion'
 
 type BillingPeriod = 'monthly' | 'yearly'
@@ -411,12 +412,12 @@ export function PricingSection() {
 
         {selectedTier ? (
           <Reveal direction="up" delay={290} distance={12} scale={0.99} baseOpacity={0.86} className="mt-8 flex justify-center">
-            <span
-              aria-disabled="true"
-              className="inline-flex min-h-[50px] cursor-not-allowed items-center justify-center rounded-xl border border-[#7CFF64]/25 bg-[#39FF14]/18 px-6 py-3 text-sm font-semibold text-slate-300 shadow-[0_6px_18px_rgba(57,255,20,0.08)]"
+            <Link
+              to="/sign-up"
+              className="inline-flex min-h-[50px] items-center justify-center rounded-xl border border-[#7CFF64]/65 bg-[#39FF14] px-6 py-3 text-sm font-semibold text-[#07111F] shadow-[0_6px_18px_rgba(57,255,20,0.25)] transition hover:bg-[#50FF2F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030A1A]"
             >
               Create account to log in to purchase
-            </span>
+            </Link>
           </Reveal>
         ) : null}
       </div>
