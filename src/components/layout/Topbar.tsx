@@ -1,17 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
 import { Bell, ChevronDown, Menu, Search } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { supabase } from '@/lib/supabase'
 
 type TopbarProps = {
   title: string
+  titleAsScore?: boolean
   displayName: string
   avatarUrl: string | null
   onToggleSidebar: () => void
+  onOpenProfile: () => void
+  onOpenSettings: () => void
+  onLogout: () => void | Promise<void>
 }
 
-export default function Topbar({ title, displayName, avatarUrl, onToggleSidebar }: TopbarProps) {
-  const navigate = useNavigate()
+export default function Topbar({
+  title,
+  titleAsScore = false,
+  displayName,
+  avatarUrl,
+  onToggleSidebar,
+  onOpenProfile,
+  onOpenSettings,
+  onLogout,
+}: TopbarProps) {
   const [open, setOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement | null>(null)
 
@@ -26,14 +36,9 @@ export default function Topbar({ title, displayName, avatarUrl, onToggleSidebar 
     return () => window.removeEventListener('mousedown', onClick)
   }, [])
 
-  async function logout() {
-    await supabase.auth.signOut()
-    navigate('/sign-in', { replace: true })
-  }
-
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-[#0B1324]/95 backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center gap-3 px-4 sm:px-6">
+      <div className="mx-auto flex min-h-16 w-full max-w-[1400px] items-center gap-3 px-4 py-2 sm:px-6">
         <button
           type="button"
           onClick={onToggleSidebar}
@@ -83,7 +88,7 @@ export default function Topbar({ title, displayName, avatarUrl, onToggleSidebar 
                 className="block w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
                 onClick={() => {
                   setOpen(false)
-                  navigate('/profile')
+                  onOpenProfile()
                 }}
               >
                 Profile
@@ -93,7 +98,7 @@ export default function Topbar({ title, displayName, avatarUrl, onToggleSidebar 
                 className="block w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
                 onClick={() => {
                   setOpen(false)
-                  navigate('/settings')
+                  onOpenSettings()
                 }}
               >
                 Settings
@@ -101,7 +106,10 @@ export default function Topbar({ title, displayName, avatarUrl, onToggleSidebar 
               <button
                 type="button"
                 className="block w-full px-4 py-2 text-left text-sm text-red-300 hover:bg-white/10"
-                onClick={logout}
+                onClick={() => {
+                  setOpen(false)
+                  void onLogout()
+                }}
               >
                 Logout
               </button>

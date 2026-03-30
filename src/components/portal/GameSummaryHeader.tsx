@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { formatRoundLabel } from '@/lib/round-label'
 
 type GameSummaryHeaderProps = {
   title: string
@@ -37,7 +38,7 @@ export default function GameSummaryHeader({
           <p className="mt-1 text-sm text-slate-400">
             {dateLabel}
             {venue ? ` • ${venue}` : ''}
-            {round != null ? ` • Round ${round}` : ''}
+            {formatRoundLabel(round) ? ` • ${formatRoundLabel(round)}` : ''}
             {status ? ` • ${status}` : ''}
           </p>
         </div>

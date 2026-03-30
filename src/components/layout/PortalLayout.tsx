@@ -97,6 +97,13 @@ export default function PortalLayout() {
     }
   }, [checkingRole, isAdmin, location.pathname, navigate])
 
+  const openProfile = () => navigate('/profile')
+  const openSettings = () => navigate('/settings')
+  const logout = async () => {
+    await supabase.auth.signOut()
+    navigate('/sign-in', { replace: true })
+  }
+
   const title = useMemo(() => {
     if (TITLES[location.pathname]) return TITLES[location.pathname]
     if (location.pathname.startsWith('/squads/')) return 'Squad Workspace'
@@ -124,6 +131,9 @@ export default function PortalLayout() {
           displayName={displayName}
           avatarUrl={avatarUrl}
           onToggleSidebar={() => setMobileOpen((value) => !value)}
+          onOpenProfile={openProfile}
+          onOpenSettings={openSettings}
+          onLogout={logout}
         />
 
         <main className="px-4 py-6 sm:px-6">

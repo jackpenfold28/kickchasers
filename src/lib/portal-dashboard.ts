@@ -1,7 +1,9 @@
 import { getLeaderboard, type LeaderboardRow } from '@/lib/portal-stats'
 import { listNotifications, type PortalNotification } from '@/lib/portal-notifications'
+import { loadQuick6Summary, type Quick6Summary } from '@/lib/portal-quick6'
 import { listFollowedClubs, listMySquads, type SquadSummary } from '@/lib/squads'
 import { listUserGames, type GameLogRow } from '@/lib/portal-games'
+import { resolveLogoPublicUrl } from '@/lib/logo-storage'
 import { roleArrayFromProfile } from '@/lib/profile-utils'
 import { supabase } from '@/lib/supabase'
 
@@ -85,20 +87,46 @@ export type DashboardProfileSnapshot = {
 
 export type DashboardData = {
   matchFocus: MatchFocusGame | null
+  matchFocusTints: {
+    home: string | null
+    away: string | null
+  }
+  recentGameTints: Record<
+    string,
+    {
+      home: string | null
+      away: string | null
+    }
+  >
+  matchFocusLeague: {
+    name: string | null
+    logoPath: string | null
+    logoUrl: string | null
+  }
   actionInbox: DashboardActionItem[]
   recentGames: GameLogRow[]
   squads: DashboardSquadCard[]
   profile: DashboardProfileSnapshot
+  quick6: Quick6Summary
   liveAroundMe: DashboardLiveGame[]
   leaderboard: LeaderboardRow[]
   recentActivity: DashboardActivityItem[]
 }
 
+type MatchFocusSideCandidate = {
+  name: string | null
+  logoUrl: string | null
+  primaryColorHex: string | null
+  leagueId: string | null
+}
+
+const logoColorCache = new Map<string, string>()
+
 function resolvePublicUrl(path: string | null | undefined, bucket: string) {
   if (!path) return null
   if (/^https?:\/\//i.test(path)) return path
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path)
-  return data.publicUrl || null
+  const resolved = resolveLogoPublicUrl(bucket === 'team-logos' ? path : `${bucket}/${path}`)
+  return resolved ?? null
 }
 
 function isActionableNotification(type: string) {
@@ -148,6 +176,251 @@ function chooseMatchFocus(games: GameLogRow[]) {
 function average(values: number[]) {
   if (!values.length) return 0
   return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1))
+}
+
+function normalizeHexColor(input: string | null | undefined) {
+  if (!input) return null
+  let trimmed = input.trim()
+  if (!trimmed) return null
+  if (trimmed.startsWith('#')) {
+    trimmed = trimmed.slice(1)
+  }
+  if (trimmed.length === 3) {
+    trimmed = trimmed
+      .split('')
+      .map((char) => `${char}${char}`)
+      .join('')
+  }
+  if (trimmed.length !== 6) return null
+  if (!/^[0-9a-fA-F]{6}$/.test(trimmed)) return null
+  return `#${trimmed.toUpperCase()}`
+}
+
+function resolveDashboardTint(primaryColorHex: string | null | undefined, fallbackColor: string) {
+  return normalizeHexColor(primaryColorHex) ?? fallbackColor
+}
+
+function averageImageColorToHex(image: HTMLImageElement) {
+  if (typeof document === 'undefined') return null
+  const canvas = document.createElement('canvas')
+  canvas.width = 24
+  canvas.height = 24
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+  if (!context) return null
+
+  context.drawImage(image, 0, 0, canvas.width, canvas.height)
+  const { data } = context.getImageData(0, 0, canvas.width, canvas.height)
+
+  let totalRed = 0
+  let totalGreen = 0
+  let totalBlue = 0
+  let totalWeight = 0
+
+  for (let index = 0; index < data.length; index += 4) {
+    const alpha = data[index + 3] / 255
+    if (alpha < 0.08) continue
+
+    totalRed += data[index] * alpha
+    totalGreen += data[index + 1] * alpha
+    totalBlue += data[index + 2] * alpha
+    totalWeight += alpha
+  }
+
+  if (!totalWeight) return null
+
+  const red = Math.round(totalRed / totalWeight)
+  const green = Math.round(totalGreen / totalWeight)
+  const blue = Math.round(totalBlue / totalWeight)
+
+  return `#${[red, green, blue]
+    .map((value) => value.toString(16).padStart(2, '0').toUpperCase())
+    .join('')}`
+}
+
+async function resolveLogoPrimaryColor(logoUrl: string | null | undefined, fallbackColor: string) {
+  if (!logoUrl || typeof window === 'undefined') return fallbackColor
+
+  const cached = logoColorCache.get(logoUrl)
+  if (cached) return cached
+
+  const resolved = await new Promise<string>((resolve) => {
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.referrerPolicy = 'no-referrer'
+    image.onload = () => {
+      try {
+        resolve(averageImageColorToHex(image) ?? fallbackColor)
+      } catch {
+        resolve(fallbackColor)
+      }
+    }
+    image.onerror = () => resolve(fallbackColor)
+    image.src = logoUrl
+  })
+
+  logoColorCache.set(logoUrl, resolved)
+  return resolved
+}
+
+function resolveLogoCandidate(...candidates: Array<string | null | undefined>) {
+  for (const candidate of candidates) {
+    const resolved = resolvePublicUrl(candidate ?? null, 'team-logos')
+    if (resolved) return resolved
+  }
+  return null
+}
+
+async function loadSquadColorByName(names: string[], leagueIds: string[]) {
+  const cleanedNames = Array.from(new Set(names.map((name) => name.trim()).filter(Boolean)))
+  if (!cleanedNames.length) return new Map<string, string>()
+
+  let query = supabase.from('squads').select('name,primary_color_hex,league_id').in('name', cleanedNames)
+  if (leagueIds.length) {
+    query = query.in('league_id', Array.from(new Set(leagueIds)))
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+
+  const colorByName = new Map<string, string>()
+  ;(data ?? []).forEach((row) => {
+    const name = (row as { name?: string | null }).name?.trim()
+    const color = normalizeHexColor((row as { primary_color_hex?: string | null }).primary_color_hex ?? null)
+    if (name && color && !colorByName.has(name)) {
+      colorByName.set(name, color)
+    }
+  })
+  return colorByName
+}
+
+async function resolveSideTint(
+  side: MatchFocusSideCandidate | null,
+  injectedColor: string | null,
+  fallbackColor: string
+) {
+  const direct = normalizeHexColor(side?.primaryColorHex ?? null)
+  if (direct) return direct
+
+  const injected = normalizeHexColor(injectedColor)
+  if (injected) return injected
+
+  const sampled = normalizeHexColor(await resolveLogoPrimaryColor(side?.logoUrl ?? null, fallbackColor))
+  return sampled ?? fallbackColor
+}
+
+async function loadMatchFocusTints(matchFocus: MatchFocusGame | null) {
+  if (!matchFocus?.id) {
+    return {
+      home: '#29486B',
+      away: '#21433D',
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('games')
+    .select(
+      'id,opponent,opponent_logo_path,game_squads(team_side,squads(id,name,logo_url,club_id,league_id,primary_color_hex))'
+    )
+    .eq('id', matchFocus.id)
+    .maybeSingle()
+
+  if (error) throw error
+
+  const game = (data ?? null) as
+    | {
+        opponent?: string | null
+        opponent_logo_path?: string | null
+        game_squads?: Array<{
+          team_side?: string | null
+          squads?: {
+            id?: string | null
+            name?: string | null
+            logo_url?: string | null
+            club_id?: string | null
+            league_id?: string | null
+            primary_color_hex?: string | null
+          } | null
+        }> | null
+      }
+    | null
+
+  const rows = Array.isArray(game?.game_squads) ? game.game_squads : []
+  const homeRow = rows.find((row) => row.team_side === 'home') ?? rows[0] ?? null
+  const awayRow = rows.find((row) => row.team_side === 'away') ?? null
+
+  const home: MatchFocusSideCandidate = {
+    name: homeRow?.squads?.name ?? matchFocus.squadName ?? null,
+    logoUrl: resolveLogoCandidate(homeRow?.squads?.logo_url ?? null, matchFocus.squadLogoUrl),
+    primaryColorHex: homeRow?.squads?.primary_color_hex ?? null,
+    leagueId: homeRow?.squads?.league_id ?? null,
+  }
+
+  const away: MatchFocusSideCandidate | null = awayRow?.squads
+    ? {
+        name: awayRow.squads.name ?? matchFocus.opponent ?? null,
+        logoUrl: resolveLogoCandidate(awayRow.squads.logo_url ?? null, matchFocus.opponentLogoUrl, game?.opponent_logo_path),
+        primaryColorHex: awayRow.squads.primary_color_hex ?? null,
+        leagueId: awayRow.squads.league_id ?? home.leagueId ?? null,
+      }
+    : {
+        name: game?.opponent ?? matchFocus.opponent ?? null,
+        logoUrl: resolveLogoCandidate(game?.opponent_logo_path, matchFocus.opponentLogoUrl),
+        primaryColorHex: null,
+        leagueId: home.leagueId ?? null,
+      }
+
+  const colorByName = await loadSquadColorByName(
+    [home.name ?? '', away?.name ?? ''],
+    [home.leagueId ?? '', away?.leagueId ?? ''].filter(Boolean)
+  )
+
+  return {
+    home: await resolveSideTint(home, home.name ? colorByName.get(home.name) ?? null : null, '#29486B'),
+    away: await resolveSideTint(away, away?.name ? colorByName.get(away.name) ?? null : null, '#21433D'),
+  }
+}
+
+function gameTintKey(game: Pick<GameLogRow, 'id' | 'manualId'>) {
+  return `${game.id}:${game.manualId ?? 'tracked'}`
+}
+
+async function loadRecentGameTints(games: GameLogRow[]) {
+  const trackedGames = games.filter((game) => !game.isManual)
+  const tintEntries = await Promise.all(
+    trackedGames.map(async (game) => [
+      gameTintKey(game),
+      await loadMatchFocusTints(game),
+    ] as const)
+  )
+
+  return Object.fromEntries(tintEntries) as Record<string, { home: string | null; away: string | null }>
+}
+
+async function loadMatchFocusLeague(matchFocus: MatchFocusGame | null) {
+  if (!matchFocus?.id) return { name: null, logoPath: null, logoUrl: null }
+
+  const { data, error } = await supabase
+    .from('game_squads')
+    .select('team_side,squads(league_id,league:leagues(name,short_name,logo_path))')
+    .eq('game_id', matchFocus.id)
+
+  if (error) throw error
+
+  const rows = (data ?? []) as Array<{
+    team_side?: string | null
+    squads?: {
+      league?: { name?: string | null; short_name?: string | null; logo_path?: string | null } | null
+    } | null
+  }>
+
+  const primary = rows.find((row) => row.team_side === 'home') ?? rows[0] ?? null
+  const league = primary?.squads?.league ?? null
+
+  return {
+    name: league?.short_name ?? league?.name ?? null,
+    logoPath: league?.logo_path ?? null,
+    logoUrl: resolveLogoPublicUrl(league?.logo_path ?? null),
+  }
 }
 
 async function loadProfileSnapshot(userId: string, recentGames: GameLogRow[]): Promise<DashboardProfileSnapshot> {
@@ -329,8 +602,13 @@ export async function loadDashboardData(userId: string): Promise<DashboardData> 
     listFollowedClubs(userId),
   ])
 
-  const [profile, liveAroundMe, leaderboard] = await Promise.all([
+  const matchFocus = chooseMatchFocus(games)
+
+  const recentGames = games.slice(0, 5)
+
+  const [profile, quick6, liveAroundMe, leaderboard, matchFocusTints, recentGameTints, matchFocusLeague] = await Promise.all([
     loadProfileSnapshot(userId, games),
+    loadQuick6Summary(userId, games),
     loadLiveAroundMe(mySquads, followedSquads),
     getLeaderboard({
       seasonYear: new Date().getFullYear(),
@@ -340,6 +618,9 @@ export async function loadDashboardData(userId: string): Promise<DashboardData> 
       ageRange: 'Any',
       statKey: 'disposals',
     }),
+    loadMatchFocusTints(matchFocus),
+    loadRecentGameTints(recentGames),
+    loadMatchFocusLeague(matchFocus),
   ])
 
   const actionable = notifications
@@ -371,11 +652,15 @@ export async function loadDashboardData(userId: string): Promise<DashboardData> 
     }))
 
   return {
-    matchFocus: chooseMatchFocus(games),
+    matchFocus,
+    matchFocusTints,
+    recentGameTints,
+    matchFocusLeague,
     actionInbox: actionable,
-    recentGames: games.slice(0, 5),
+    recentGames,
     squads,
     profile,
+    quick6,
     liveAroundMe,
     leaderboard: leaderboard.slice(0, 5),
     recentActivity: buildRecentActivity(notifications, games),

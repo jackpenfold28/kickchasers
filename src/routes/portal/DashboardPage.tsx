@@ -3,9 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
   BellDot,
+  CheckCircle2,
   ChevronRight,
-  Clock3,
-  MapPin,
   Radio,
   ShieldCheck,
   Star,
@@ -13,7 +12,11 @@ import {
   Users2,
 } from 'lucide-react'
 import PortalCard from '@/components/cards/PortalCard'
+import MatchScoreCard from '@/components/dashboard/MatchScoreCard'
+import Quick6SummaryCard from '@/components/dashboard/Quick6SummaryCard'
 import { loadDashboardData, type DashboardActionItem, type DashboardData } from '@/lib/portal-dashboard'
+import type { Quick6Scope } from '@/lib/portal-quick6'
+import { formatRoundLabel } from '@/lib/round-label'
 import { supabase } from '@/lib/supabase'
 
 function formatHandle(handle: string | null) {
@@ -72,6 +75,20 @@ function totalScore(goals: number | null, behinds: number | null) {
   return goals * 6 + behinds
 }
 
+function recentGameResult(
+  homeGoals: number | null,
+  homeBehinds: number | null,
+  awayGoals: number | null,
+  awayBehinds: number | null
+) {
+  const home = totalScore(homeGoals, homeBehinds)
+  const away = totalScore(awayGoals, awayBehinds)
+  if (home == null || away == null) return null
+  if (home > away) return { label: 'Win', className: 'text-[#B8FFD5]' }
+  if (home < away) return { label: 'Loss', className: 'text-red-200' }
+  return { label: 'Draw', className: 'text-sky-200' }
+}
+
 function actionTypeLabel(action: DashboardActionItem) {
   const normalized = action.type.toLowerCase()
   if (normalized === 'squad_invite') return 'Squad Invite'
@@ -85,10 +102,62 @@ function actionTypeLabel(action: DashboardActionItem) {
 }
 
 function actionAccentClass(accent: DashboardActionItem['accent']) {
-  if (accent === 'green') return 'border-[#39FF88]/30 bg-[#39FF88]/10 text-[#B8FFD5]'
-  if (accent === 'amber') return 'border-amber-400/30 bg-amber-300/10 text-amber-100'
-  if (accent === 'red') return 'border-red-400/30 bg-red-300/10 text-red-100'
-  return 'border-sky-400/30 bg-sky-300/10 text-sky-100'
+  if (accent === 'green') return 'text-[#B8FFD5]'
+  if (accent === 'amber') return 'text-amber-200'
+  if (accent === 'red') return 'text-red-200'
+  return 'text-sky-200'
+}
+
+function actionHref(action: DashboardActionItem) {
+  return action.squadId ? `/squads/${action.squadId}` : '/notifications'
+}
+
+function actionTitle(action: DashboardActionItem) {
+  const actor = action.actorName || formatHandle(action.actorHandle) || 'KickChasers'
+  const normalized = action.type.toLowerCase()
+  if (normalized === 'squad_invite') return `${actor} invited you to join`
+  if (normalized === 'squad_join_request_created') return `${actor} requested to join`
+  if (normalized === 'guest_merge_request_created') return `${actor} sent a guest merge`
+  if (normalized.includes('track_request')) return `${actor} requested tracking access`
+  if (normalized.includes('directory_request')) return `${actor} submitted a directory request`
+  if (normalized.includes('admin_request')) return `${actor} requested admin approval`
+  if (normalized.includes('role_decision')) return `${actor} updated a role request`
+  if (normalized.includes('role_request')) return `${actor} requested a role review`
+  return actor
+}
+
+function actionContext(action: DashboardActionItem) {
+  const squad = action.squadName || (action.payload?.squad_name as string | undefined) || 'Team context pending'
+  const requestedRole = (action.payload?.requested_role as string | undefined)?.replaceAll('_', ' ')
+  const guestName = (action.payload?.guest_name as string | undefined) ?? null
+
+  if (guestName) return `${guestName} • ${squad}`
+  if (requestedRole) return `${requestedRole} • ${squad}`
+  return squad
+}
+
+function actionStatusMeta(action: DashboardActionItem) {
+  if (!action.readAt) {
+    return {
+      label: 'Needs attention',
+      icon: BellDot,
+      className: 'text-[#B8FFD5]',
+    }
+  }
+
+  const normalized = action.type.toLowerCase()
+  let label = 'Completed'
+  if (normalized === 'squad_invite') label = 'Reviewed'
+  else if (normalized === 'squad_join_request_created') label = 'Resolved'
+  else if (normalized === 'guest_merge_request_created') label = 'Resolved'
+  else if (normalized.includes('role_decision')) label = 'Updated'
+  else if (normalized.includes('role_request')) label = 'Reviewed'
+
+  return {
+    label,
+    icon: CheckCircle2,
+    className: 'text-[#8FF0B0]',
+  }
 }
 
 function LogoBadge({ src, label, className = 'h-12 w-12 rounded-2xl' }: { src: string | null; label: string; className?: string }) {
@@ -108,6 +177,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<DashboardData | null>(null)
+  const [quick6Scope, setQuick6Scope] = useState<Quick6Scope>('season')
 
   useEffect(() => {
     let cancelled = false
@@ -166,100 +236,86 @@ export default function DashboardPage() {
         ? `/games/${data.matchFocus.id}`
         : '/games'
 
+  const matchFocusRound = formatRoundLabel(data.matchFocus?.round ?? null)
+  const matchFocusCompetition = data.matchFocusLeague.name || data.profile.leagueName || 'Match Day'
+  const inboxPreview = [...data.actionInbox]
+    .sort((a, b) => {
+      if (Boolean(a.readAt) !== Boolean(b.readAt)) return a.readAt ? 1 : -1
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    })
+    .slice(0, 3)
+  const recentMatchCards = data.recentGames
+    .filter((game) => {
+      if (!data.matchFocus) return true
+      return `${game.id}:${game.manualId ?? 'tracked'}` !== `${data.matchFocus.id}:${data.matchFocus.manualId ?? 'tracked'}`
+    })
+    .slice(0, 2)
+
   return (
     <section className="grid gap-6">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.75fr)_360px]">
-        <PortalCard className="overflow-hidden border-white/12 bg-[radial-gradient(circle_at_top_left,rgba(57,255,136,0.16),transparent_34%),linear-gradient(145deg,#13213B_0%,#0F182C_48%,#0A1221_100%)] p-0">
-          <div className="flex h-full flex-col justify-between gap-8 p-6 lg:p-7">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8EA0C2]">Match Focus</p>
-                <h2 className="mt-3 text-3xl font-semibold text-white lg:text-[2.2rem]">
-                  {data.matchFocus ? `${data.matchFocus.squadName || 'My Squad'} vs ${data.matchFocus.opponent || 'Opponent TBC'}` : 'Your next game will land here'}
-                </h2>
+        <div className="grid gap-4">
+          <div className="pb-4">
+            <div className="flex items-center gap-4">
+              <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#101A2D] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                {data.profile.avatarUrl ? (
+                  <img src={data.profile.avatarUrl} alt={data.profile.name || 'User'} className="h-full w-full object-cover object-center" />
+                ) : (
+                  <span className="text-sm font-semibold text-slate-300">
+                    {(data.profile.name || 'U').slice(0, 1).toUpperCase()}
+                  </span>
+                )}
               </div>
-
-              <div
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] ${
-                  formatStatus(data.matchFocus?.status ?? null) === 'Live'
-                    ? 'border-rose-400/30 bg-rose-400/10 text-rose-200'
-                    : formatStatus(data.matchFocus?.status ?? null) === 'Final'
-                      ? 'border-white/10 bg-white/[0.08] text-slate-100'
-                      : 'border-[#39FF88]/30 bg-[#39FF88]/10 text-[#B8FFD5]'
-                }`}
-              >
-                {formatStatus(data.matchFocus?.status ?? null) === 'Live' && <span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,0.9)]" />}
-                {formatStatus(data.matchFocus?.status ?? null)}
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-slate-500">Welcome Back</p>
+                <p className="pr-2 text-[1.45rem] font-black italic leading-[1.02] tracking-[-0.04em] text-white sm:text-[1.7rem]">
+                  {(data.profile.name || 'KickChasers Player').toUpperCase()}
+                </p>
               </div>
             </div>
-
-            <div className="grid gap-5 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
-              <div className="flex items-center gap-4">
-                <LogoBadge src={data.matchFocus?.squadLogoUrl ?? null} label={data.matchFocus?.squadName || 'My Squad'} className="h-16 w-16 rounded-[1.35rem]" />
-                <div>
-                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400">My Squad</p>
-                  <p className="mt-1 text-xl font-semibold text-white">{data.matchFocus?.squadName || data.profile.squadName || 'KickChasers'}</p>
-                  <p className="text-sm text-slate-400">{data.profile.clubName || 'Club to be confirmed'}</p>
-                </div>
-              </div>
-
-              <div className="rounded-[1.75rem] border border-white/10 bg-[#08111F]/80 px-6 py-4 text-center shadow-[0_18px_40px_rgba(0,0,0,0.3)]">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Scoreline</p>
-                <div className="mt-3 flex items-end justify-center gap-4">
-                  <div>
-                    <div className="text-4xl font-black italic leading-none text-white lg:text-5xl">{matchFocusScore?.homeTotal ?? '-'}</div>
-                    <div className="mt-1 text-xs text-slate-400">{matchFocusScore?.home ?? 'TBC'}</div>
-                  </div>
-                  <span className="pb-1 text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">vs</span>
-                  <div>
-                    <div className="text-4xl font-black italic leading-none text-white lg:text-5xl">{matchFocusScore?.awayTotal ?? '-'}</div>
-                    <div className="mt-1 text-xs text-slate-400">{matchFocusScore?.away ?? 'TBC'}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-start gap-4 lg:justify-end">
-                <div className="text-right">
-                  <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Opponent</p>
-                  <p className="mt-1 text-xl font-semibold text-white">{data.matchFocus?.opponent || 'Opponent TBC'}</p>
-                  <p className="text-sm text-slate-400">{data.matchFocus?.venue || 'Venue TBC'}</p>
-                </div>
-                <LogoBadge src={data.matchFocus?.opponentLogoUrl ?? null} label={data.matchFocus?.opponent || 'Opponent'} className="h-16 w-16 rounded-[1.35rem]" />
-              </div>
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-500">
-                    <Clock3 className="h-3.5 w-3.5" />
-                    Date & Time
-                  </div>
-                  <p className="mt-2 text-sm font-medium text-slate-100">{formatDateTime(data.matchFocus?.date ?? null)}</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-500">
-                    <MapPin className="h-3.5 w-3.5" />
-                    Venue
-                  </div>
-                  <p className="mt-2 text-sm font-medium text-slate-100">{data.matchFocus?.venue || 'Venue TBC'}</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-500">
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    Squad
-                  </div>
-                  <p className="mt-2 text-sm font-medium text-slate-100">{data.matchFocus?.squadName || data.profile.squadName || 'Squad to be assigned'}</p>
-                </div>
-              </div>
-
-              <Link to={matchFocusHref} className="btn inline-flex items-center gap-2 self-start rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#07101D] hover:bg-white/90">
-                Open Match
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
+            <div className="mt-4 h-px w-full bg-white/10" />
           </div>
-        </PortalCard>
+
+          <Quick6SummaryCard summary={data.quick6} scope={quick6Scope} onScopeChange={setQuick6Scope} />
+
+          <div>
+            <MatchScoreCard
+              variant="hero"
+              status={formatStatus(data.matchFocus?.status ?? null)}
+              dateLabel={formatDateTime(data.matchFocus?.date ?? null)}
+              roundLabel={matchFocusRound}
+              venueLabel={data.matchFocus?.venue || 'Venue TBC'}
+              competitionLabel={matchFocusCompetition}
+              competitionLogoUrl={data.matchFocusLeague.logoUrl}
+              homeTint={data.matchFocusTints.home}
+              awayTint={data.matchFocusTints.away}
+              title={data.matchFocus ? `${data.matchFocus.squadName || 'My Squad'} vs ${data.matchFocus.opponent || 'Opponent TBC'}` : 'Your next game will land here'}
+              homeTeam={{
+                name: data.matchFocus?.squadName || data.profile.squadName || 'KickChasers',
+                logoUrl: data.matchFocus?.squadLogoUrl ?? null,
+                label: 'Home',
+              }}
+              awayTeam={{
+                name: data.matchFocus?.opponent || 'Opponent TBC',
+                logoUrl: data.matchFocus?.opponentLogoUrl ?? null,
+                label: 'Away',
+              }}
+              homeScore={matchFocusScore?.homeTotal ?? null}
+              awayScore={matchFocusScore?.awayTotal ?? null}
+              homeBreakdown={matchFocusScore?.home ?? null}
+              awayBreakdown={matchFocusScore?.away ?? null}
+              actionSlot={
+                <Link
+                  to={matchFocusHref}
+                  className="btn inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#07101D] hover:bg-white/90"
+                >
+                  Open Match
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              }
+            />
+          </div>
+        </div>
 
         <PortalCard
           title="Action Inbox"
@@ -267,38 +323,48 @@ export default function DashboardPage() {
           className="bg-[linear-gradient(180deg,rgba(16,26,42,0.96)_0%,rgba(9,16,28,0.98)_100%)]"
         >
           <div className="space-y-3">
-            {data.actionInbox.length ? (
-              data.actionInbox.map((action) => (
-                <div key={action.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${actionAccentClass(action.accent)}`}>
+            {inboxPreview.length ? (
+              inboxPreview.map((action) => {
+                const status = actionStatusMeta(action)
+                const StatusIcon = status.icon
+
+                return (
+                  <div key={action.id} className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.025)_100%)] p-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${actionAccentClass(action.accent)}`}>
                         {actionTypeLabel(action)}
                       </span>
-                      <p className="mt-3 text-sm font-semibold text-white">
-                        {action.actorName || action.actorHandle || 'KickChasers'}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-400">
-                        {action.squadName || (action.payload?.squad_name as string | undefined) || 'Team context pending'}
-                      </p>
+                      <span className="shrink-0 pt-0.5 text-[11px] uppercase tracking-[0.18em] text-slate-500">{formatRelative(action.createdAt)}</span>
                     </div>
-                    <span className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{formatRelative(action.createdAt)}</span>
-                  </div>
 
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="inline-flex items-center gap-2 text-xs text-[#B8FFD5]">
-                      <BellDot className="h-3.5 w-3.5" />
-                      Needs attention
-                    </span>
-                    <Link
-                      to={action.squadId ? `/squads/${action.squadId}` : '/notifications'}
-                      className="btn btn-secondary rounded-xl px-3 py-1.5 text-xs"
-                    >
-                      {action.actionLabel}
-                    </Link>
+                    <div className="mt-3 flex items-start gap-3">
+                      <LogoBadge
+                        src={action.actorAvatarUrl || action.squadLogoUrl}
+                        label={action.actorName || action.actorHandle || action.squadName || 'KC'}
+                        className="h-11 w-11 shrink-0 rounded-full"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-white">{actionTitle(action)}</p>
+                        <p className="mt-1 text-sm text-slate-400">{actionContext(action)}</p>
+                        {action.actorHandle ? (
+                          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">{formatHandle(action.actorHandle)}</p>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/8 pt-3">
+                      <span className={`inline-flex min-w-0 items-center gap-2 text-xs font-medium ${status.className}`}>
+                        <StatusIcon className="h-3.5 w-3.5 shrink-0" />
+                        {status.label}
+                      </span>
+                      <Link to={actionHref(action)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#9CE8BE]">
+                        {action.actionLabel}
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              })
             ) : (
               <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.03] p-5 text-sm text-slate-400">
                 No pending action items right now. Squad invites, track requests, and admin decisions will surface here first.
@@ -306,7 +372,10 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <Link to="/notifications" className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#9CE8BE]">
+          <Link
+            to="/notifications"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-[#9CE8BE] hover:bg-white/[0.05]"
+          >
             Open full inbox
             <ChevronRight className="h-4 w-4" />
           </Link>
@@ -314,48 +383,79 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.95fr)_minmax(280px,0.9fr)]">
-        <PortalCard title="Recent Games" subtitle="Tracked and manual game review, ready to open">
-          <div className="space-y-3">
+        <PortalCard
+          title="Recent Games"
+          subtitle="Compact match history snapshot"
+          className="p-4"
+        >
+          <div className="space-y-2.5">
             {data.recentGames.length ? (
-              data.recentGames.map((game) => (
-                <Link
-                  key={`${game.id}:${game.manualId || 'tracked'}`}
-                  to={game.isManual && game.manualId ? `/games/manual/${game.manualId}` : `/games/${game.id}`}
-                  className="block rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition hover:border-[#39FF88]/30 hover:bg-white/[0.06]"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <LogoBadge src={game.squadLogoUrl} label={game.squadName || 'My Squad'} className="h-12 w-12 rounded-xl" />
-                      <div>
-                        <p className="text-sm font-semibold text-white">{game.squadName || 'My Squad'} vs {game.opponent || 'Opponent'}</p>
-                        <p className="mt-1 text-xs text-slate-400">{formatShortDate(game.date)} • {game.venue || 'Venue TBC'}</p>
+              data.recentGames.slice(0, 4).map((game) => {
+                const result = recentGameResult(
+                  game.scoreHomeGoals,
+                  game.scoreHomeBehinds,
+                  game.scoreAwayGoals,
+                  game.scoreAwayBehinds
+                )
+                const homeScore = totalScore(game.scoreHomeGoals, game.scoreHomeBehinds)
+                const awayScore = totalScore(game.scoreAwayGoals, game.scoreAwayBehinds)
+
+                return (
+                  <Link
+                    key={`${game.id}:${game.manualId || 'tracked'}`}
+                    to={game.isManual && game.manualId ? `/games/manual/${game.manualId}` : `/games/${game.id}`}
+                    className="block rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045)_0%,rgba(255,255,255,0.025)_100%)] px-3.5 py-3 transition hover:border-[#39FF88]/25 hover:bg-white/[0.06]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                            {formatShortDate(game.date)}
+                          </span>
+                          <span className="text-slate-600">•</span>
+                          <span className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                            {formatRoundLabel(game.round ?? null) || (game.isManual ? 'Manual Summary' : 'Tracked Game')}
+                          </span>
+                        </div>
+
+                        <div className="mt-2 space-y-2">
+                          <div className="flex items-center gap-2.5">
+                            <LogoBadge src={game.squadLogoUrl} label={game.squadName || 'My Squad'} className="h-8 w-8 shrink-0 rounded-full" />
+                            <p className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{game.squadName || 'My Squad'}</p>
+                            <p className="text-lg font-black italic leading-none tracking-[-0.04em] text-white">{homeScore ?? '-'}</p>
+                          </div>
+
+                          <div className="flex items-center gap-2.5">
+                            <LogoBadge src={game.opponentLogoUrl} label={game.opponent || 'Opponent'} className="h-8 w-8 shrink-0 rounded-full" />
+                            <p className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{game.opponent || 'Opponent'}</p>
+                            <p className="text-lg font-black italic leading-none tracking-[-0.04em] text-white">{awayScore ?? '-'}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 text-right">
+                        <span className="inline-flex rounded-full border border-white/10 bg-white/[0.05] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                          {formatStatus(game.status)}
+                        </span>
+                        {result ? <p className={`mt-2 text-xs font-semibold uppercase tracking-[0.18em] ${result.className}`}>{result.label}</p> : null}
+                        <p className="mt-2 max-w-[118px] text-xs text-slate-500">{game.venue || 'Venue TBC'}</p>
                       </div>
                     </div>
-
-                    <div className="text-right">
-                      <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-300">
-                        {formatStatus(game.status)}
-                      </span>
-                      <p className="mt-2 text-sm font-semibold text-white">
-                        {scoreText(game.scoreHomeGoals, game.scoreHomeBehinds) && scoreText(game.scoreAwayGoals, game.scoreAwayBehinds)
-                          ? `${scoreText(game.scoreHomeGoals, game.scoreHomeBehinds)} - ${scoreText(game.scoreAwayGoals, game.scoreAwayBehinds)}`
-                          : game.isManual
-                            ? 'Manual Summary'
-                            : 'Summary Ready'}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))
+                  </Link>
+                )
+              })
             ) : (
-              <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.03] p-5 text-sm text-slate-400">
+              <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.03] p-4 text-sm text-slate-400">
                 Recent tracked and manual games will appear here when match summaries are available.
               </div>
             )}
           </div>
 
-          <Link to="/games" className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#9CE8BE]">
-            View full game log
+          <Link
+            to="/games"
+            className="mt-3 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-[#9CE8BE] hover:bg-white/[0.05]"
+          >
+            View all games
             <ChevronRight className="h-4 w-4" />
           </Link>
         </PortalCard>

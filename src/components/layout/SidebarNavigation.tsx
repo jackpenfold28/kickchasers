@@ -72,9 +72,9 @@ export default function SidebarNavigation({ isAdmin, mobileOpen, onCloseMobile }
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="mb-8 px-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">KickChasers</p>
-          <h1 className="mt-1 text-lg font-semibold text-white">Web Portal</h1>
+        <div className="mb-8 flex flex-col items-center px-2 text-center">
+          <img src="/kickchasers_logo.png" alt="KickChasers" className="h-14 w-auto object-contain" />
+          <h1 className="mt-2 text-[10px] font-light uppercase tracking-[0.3em] text-slate-400">Web Portal</h1>
         </div>
 
         <nav className="space-y-1">

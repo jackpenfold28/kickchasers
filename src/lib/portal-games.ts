@@ -33,6 +33,22 @@ export type PlayerSummaryStat = {
   disposals: number
 }
 
+export type GameSummaryPlayer = {
+  id: string
+  profileUserId: string | null
+  teamSide: 'home' | 'away'
+  number: number | null
+  name: string
+}
+
+export type GameSummaryEvent = {
+  statKey: string
+  quarter: number | null
+  teamSide: 'home' | 'away'
+  playerNumber: number | null
+  profileUserId: string | null
+}
+
 export type TeamSummaryStat = {
   teamSide: 'home' | 'away'
   kicks: number
@@ -52,15 +68,21 @@ export type GameSummary = {
   status: string | null
   round: number | null
   trackBothTeams: boolean
+  homeTeamName: string | null
+  awayTeamName: string | null
   squadName: string | null
   squadLogoUrl: string | null
   opponentLogoUrl: string | null
+  homePrimaryColorHex: string | null
+  awayPrimaryColorHex: string | null
   scoreHomeGoals: number
   scoreHomeBehinds: number
   scoreAwayGoals: number
   scoreAwayBehinds: number
   teamStats: TeamSummaryStat[]
   playerStats: PlayerSummaryStat[]
+  players: GameSummaryPlayer[]
+  events: GameSummaryEvent[]
   quarterBreakdown: Array<{
     quarter: number
     homeGoals: number
@@ -410,7 +432,9 @@ export async function listUserGames(userId: string): Promise<GameLogRow[]> {
 export async function getGameSummary(gameId: string): Promise<GameSummary | null> {
   const { data: game, error } = await supabase
     .from('games')
-    .select('id,opponent,date,venue,status,round,track_both_teams,opponent_logo_path,game_squads(team_side,squads(name,logo_url))')
+    .select(
+      'id,opponent,date,venue,status,round,track_both_teams,opponent_logo_path,game_squads(team_side,squads(name,logo_url,primary_color_hex))'
+    )
     .eq('id', gameId)
     .maybeSingle()
 
@@ -438,6 +462,20 @@ export async function getGameSummary(gameId: string): Promise<GameSummary | null
   const awaySquad = squads.find((sq: any) => sq.team_side === 'away') ?? null
 
   const { playerStats, teamStats, quarterBreakdown } = summarizeEvents((eventsRes.data ?? []) as any[], (playersRes.data ?? []) as any[])
+  const players: GameSummaryPlayer[] = ((playersRes.data ?? []) as any[]).map((player) => ({
+    id: String(player.id),
+    profileUserId: player.profile_user_id ?? null,
+    teamSide: parseTeamSide(player.team_side),
+    number: player.number ?? null,
+    name: player.name || `#${player.number ?? '-'}`,
+  }))
+  const events: GameSummaryEvent[] = ((eventsRes.data ?? []) as any[]).map((event) => ({
+    statKey: String(event.stat_key || '').toUpperCase(),
+    quarter: event.quarter ?? null,
+    teamSide: parseTeamSide(event.team_side),
+    playerNumber: event.player_number ?? null,
+    profileUserId: event.profile_user_id ?? null,
+  }))
 
   const scoreHomeGoals = teamStats.find((item) => item.teamSide === 'home')?.goals ?? 0
   const scoreHomeBehinds = teamStats.find((item) => item.teamSide === 'home')?.behinds ?? 0
@@ -452,15 +490,21 @@ export async function getGameSummary(gameId: string): Promise<GameSummary | null
     status: game.status ?? null,
     round: game.round ?? null,
     trackBothTeams: Boolean((game as any).track_both_teams),
+    homeTeamName: homeSquad?.squads?.name ?? null,
+    awayTeamName: awaySquad?.squads?.name ?? game.opponent ?? null,
     squadName: homeSquad?.squads?.name ?? null,
     squadLogoUrl: toPublicLogo(homeSquad?.squads?.logo_url ?? null),
     opponentLogoUrl: toPublicLogo(awaySquad?.squads?.logo_url ?? (game as any).opponent_logo_path ?? null),
+    homePrimaryColorHex: homeSquad?.squads?.primary_color_hex ?? null,
+    awayPrimaryColorHex: awaySquad?.squads?.primary_color_hex ?? null,
     scoreHomeGoals,
     scoreHomeBehinds,
     scoreAwayGoals,
     scoreAwayBehinds,
     teamStats,
     playerStats,
+    players,
+    events,
     quarterBreakdown,
   }
 }
