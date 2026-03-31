@@ -34,6 +34,7 @@ type MatchHeroProps = {
   home: TeamIdentity
   away: TeamIdentity
   statusLabel: string
+  centerLabel?: string
   roundLabel: string
   venueLabel: string
   dateLabel: string
@@ -142,6 +143,7 @@ export function MatchHero({
   home,
   away,
   statusLabel,
+  centerLabel = 'VS',
   roundLabel,
   venueLabel,
   dateLabel,
@@ -206,37 +208,39 @@ export function MatchHero({
       <div className="relative grid gap-7 px-5 py-7 lg:grid-cols-[1fr_minmax(260px,320px)_1fr] lg:items-center lg:gap-7 lg:px-9 lg:py-9">
         <HeroSide side="home" team={home} />
 
-        <div className="text-center">
+        <div className="flex flex-col items-center text-center">
           <p className="text-[0.58rem] font-black uppercase tracking-[0.46em] text-white/42">Match Summary</p>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-col items-center">
             <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#39FF88]">{statusLabel}</p>
-            <div className="my-2 text-[2rem] font-black uppercase italic tracking-[0.48em] text-white/88 lg:text-[2.5rem]">vs</div>
-            <div className="space-y-1 text-white/78">
+            <div className="my-2 text-[2rem] font-black uppercase italic tracking-[-0.04em] text-white/88 lg:text-[2.5rem]">{centerLabel}</div>
+            <div className="flex flex-col items-center space-y-1 text-white/78">
               <p className="text-[0.82rem] font-black uppercase tracking-[0.26em] text-white/90">{roundLabel}</p>
               <p className="text-sm font-medium">{venueLabel}</p>
               <p className="text-sm font-medium text-white/62">{dateLabel}</p>
             </div>
           </div>
           {(homeQuarterScores.length || awayQuarterScores.length) && (
-            <div className="mx-auto mt-4 max-w-[290px] px-2 text-left">
-              <div className="grid grid-cols-[24px_repeat(4,minmax(0,1fr))] gap-2 text-[0.56rem] uppercase tracking-[0.22em] text-slate-500">
-                <span />
-                <span>Q1</span>
-                <span>Q2</span>
-                <span>Q3</span>
-                <span>Q4</span>
-              </div>
-              <div className="mt-2 grid grid-cols-[24px_repeat(4,minmax(0,1fr))] gap-2 text-[0.72rem] font-bold text-white/78">
-                <span className="text-white/42">H</span>
-                {Array.from({ length: 4 }, (_, index) => (
-                  <span key={`home-${index}`}>{homeQuarterScores[index] ?? '–'}</span>
-                ))}
-              </div>
-              <div className="mt-1 grid grid-cols-[24px_repeat(4,minmax(0,1fr))] gap-2 text-[0.72rem] font-bold text-white/78">
-                <span className="text-white/42">A</span>
-                {Array.from({ length: 4 }, (_, index) => (
-                  <span key={`away-${index}`}>{awayQuarterScores[index] ?? '–'}</span>
-                ))}
+            <div className="mt-4 flex w-full justify-center">
+              <div className="w-full max-w-[290px]">
+                <div className="grid grid-cols-[24px_repeat(4,minmax(0,1fr))] justify-items-center gap-x-2 gap-y-1 text-center text-[0.56rem] uppercase tracking-[0.22em] text-slate-500">
+                  <span />
+                  <span>Q1</span>
+                  <span>Q2</span>
+                  <span>Q3</span>
+                  <span>Q4</span>
+                </div>
+                <div className="mt-2 grid grid-cols-[24px_repeat(4,minmax(0,1fr))] justify-items-center gap-x-2 gap-y-1 text-center text-[0.72rem] font-bold text-white/78">
+                  <span className="text-white/42">H</span>
+                  {Array.from({ length: 4 }, (_, index) => (
+                    <span key={`home-${index}`}>{homeQuarterScores[index] ?? '–'}</span>
+                  ))}
+                </div>
+                <div className="mt-1 grid grid-cols-[24px_repeat(4,minmax(0,1fr))] justify-items-center gap-x-2 gap-y-1 text-center text-[0.72rem] font-bold text-white/78">
+                  <span className="text-white/42">A</span>
+                  {Array.from({ length: 4 }, (_, index) => (
+                    <span key={`away-${index}`}>{awayQuarterScores[index] ?? '–'}</span>
+                  ))}
+                </div>
               </div>
             </div>
           )}

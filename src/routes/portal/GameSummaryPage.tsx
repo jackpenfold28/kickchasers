@@ -45,6 +45,96 @@ const formatDateTime = (value: string | null) => {
   })
 }
 
+const normalizeHexColor = (input: string | null | undefined) => {
+  if (!input) return null
+  let trimmed = input.trim()
+  if (!trimmed) return null
+  if (trimmed.startsWith('#')) trimmed = trimmed.slice(1)
+  if (trimmed.length === 3) {
+    trimmed = trimmed
+      .split('')
+      .map((char) => `${char}${char}`)
+      .join('')
+  }
+  if (trimmed.length !== 6) return null
+  if (!/^[0-9a-fA-F]{6}$/.test(trimmed)) return null
+  return `#${trimmed.toUpperCase()}`
+}
+
+const logoColorCache = new Map<string, string>()
+
+const averageImageColorToHex = (image: HTMLImageElement) => {
+  if (typeof document === 'undefined') return null
+  const canvas = document.createElement('canvas')
+  canvas.width = 24
+  canvas.height = 24
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+  if (!context) return null
+
+  context.drawImage(image, 0, 0, canvas.width, canvas.height)
+  const { data } = context.getImageData(0, 0, canvas.width, canvas.height)
+
+  let totalRed = 0
+  let totalGreen = 0
+  let totalBlue = 0
+  let totalWeight = 0
+
+  for (let index = 0; index < data.length; index += 4) {
+    const alpha = data[index + 3] / 255
+    if (alpha < 0.08) continue
+    totalRed += data[index] * alpha
+    totalGreen += data[index + 1] * alpha
+    totalBlue += data[index + 2] * alpha
+    totalWeight += alpha
+  }
+
+  if (!totalWeight) return null
+
+  const red = Math.round(totalRed / totalWeight)
+  const green = Math.round(totalGreen / totalWeight)
+  const blue = Math.round(totalBlue / totalWeight)
+
+  return `#${[red, green, blue]
+    .map((value) => value.toString(16).padStart(2, '0').toUpperCase())
+    .join('')}`
+}
+
+const resolveLogoPrimaryColor = async (logoUrl: string | null | undefined, fallbackColor: string) => {
+  if (!logoUrl || typeof window === 'undefined') return fallbackColor
+
+  const cached = logoColorCache.get(logoUrl)
+  if (cached) return cached
+
+  const resolved = await new Promise<string>((resolve) => {
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.referrerPolicy = 'no-referrer'
+    image.onload = () => {
+      try {
+        resolve(averageImageColorToHex(image) ?? fallbackColor)
+      } catch {
+        resolve(fallbackColor)
+      }
+    }
+    image.onerror = () => resolve(fallbackColor)
+    image.src = logoUrl
+  })
+
+  logoColorCache.set(logoUrl, resolved)
+  return resolved
+}
+
+const resolveSideTint = async (
+  primaryColorHex: string | null | undefined,
+  logoUrl: string | null | undefined,
+  fallbackColor: string
+) => {
+  const direct = normalizeHexColor(primaryColorHex)
+  if (direct) return direct
+  const sampled = normalizeHexColor(await resolveLogoPrimaryColor(logoUrl, fallbackColor))
+  return sampled ?? fallbackColor
+}
+
 const formatStatus = (value: string | null) => {
   const normalized = value?.trim().toLowerCase()
   if (normalized === 'final' || normalized === 'finished' || normalized === 'complete' || normalized === 'completed') return 'FINAL'
@@ -206,6 +296,8 @@ export default function GameSummaryPage() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [stickyVisible, setStickyVisible] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [homeTint, setHomeTint] = useState('#00d09c')
+  const [awayTint, setAwayTint] = useState('#a855f7')
 
   useEffect(() => {
     let cancelled = false
@@ -233,6 +325,26 @@ export default function GameSummaryPage() {
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  useEffect(() => {
+    let active = true
+
+    const hydrateTints = async () => {
+      if (!summary) return
+      const [resolvedHome, resolvedAway] = await Promise.all([
+        resolveSideTint(summary.homePrimaryColorHex, summary.squadLogoUrl, '#00d09c'),
+        resolveSideTint(summary.awayPrimaryColorHex, summary.opponentLogoUrl, '#a855f7'),
+      ])
+      if (!active) return
+      setHomeTint(resolvedHome)
+      setAwayTint(resolvedAway)
+    }
+
+    void hydrateTints()
+    return () => {
+      active = false
+    }
+  }, [summary])
 
   if (loading) {
     return <main className="min-h-screen p-6 app-bg">Loading summary…</main>
@@ -274,8 +386,6 @@ export default function GameSummaryPage() {
 
   const homeName = formatTeamShortName(summary.homeTeamName || summary.squadName || 'Home') || 'Home'
   const awayName = formatTeamShortName(summary.awayTeamName || summary.opponent || 'Away') || 'Away'
-  const homeTint = summary.homePrimaryColorHex || '#00d09c'
-  const awayTint = summary.awayPrimaryColorHex || '#a855f7'
   const insights = computeInsightTiles({
     playerRows,
     homeStats,
@@ -377,6 +487,7 @@ export default function GameSummaryPage() {
             behinds: totalScore.away.behinds,
           }}
           statusLabel={statusLabel}
+          centerLabel={summary.gradeLabel || 'VS'}
           roundLabel={roundLabel}
           venueLabel={venueLabel}
           dateLabel={dateLabel}

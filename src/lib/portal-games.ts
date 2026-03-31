@@ -67,6 +67,7 @@ export type GameSummary = {
   venue: string | null
   status: string | null
   round: number | null
+  gradeLabel: string | null
   trackBothTeams: boolean
   homeTeamName: string | null
   awayTeamName: string | null
@@ -433,7 +434,7 @@ export async function getGameSummary(gameId: string): Promise<GameSummary | null
   const { data: game, error } = await supabase
     .from('games')
     .select(
-      'id,opponent,date,venue,status,round,track_both_teams,opponent_logo_path,game_squads(team_side,squads(name,logo_url,primary_color_hex))'
+      'id,opponent,date,venue,status,round,grade_id,track_both_teams,opponent_logo_path,game_squads(team_side,squads(name,logo_url,primary_color_hex))'
     )
     .eq('id', gameId)
     .maybeSingle()
@@ -441,7 +442,9 @@ export async function getGameSummary(gameId: string): Promise<GameSummary | null
   if (error) throw error
   if (!game) return null
 
-  const [playersRes, eventsRes] = await Promise.all([
+  const gradeId = (game as any).grade_id ?? null
+
+  const [playersRes, eventsRes, gradeRes] = await Promise.all([
     supabase
       .from('game_players')
       .select('id,number,name,team_side,profile_user_id')
@@ -452,10 +455,18 @@ export async function getGameSummary(gameId: string): Promise<GameSummary | null
       .from('v_counted_events')
       .select('stat_key,quarter,team_side,player_number,profile_user_id')
       .eq('game_id', gameId),
+    gradeId
+      ? supabase
+          .from('league_grades')
+          .select('name,code,grade_catalog(label)')
+          .eq('id', gradeId)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null } as any),
   ])
 
   if (playersRes.error) throw playersRes.error
   if (eventsRes.error) throw eventsRes.error
+  if (gradeRes?.error) throw gradeRes.error
 
   const squads = Array.isArray((game as any).game_squads) ? (game as any).game_squads : []
   const homeSquad = squads.find((sq: any) => sq.team_side === 'home') ?? squads[0] ?? null
@@ -481,6 +492,8 @@ export async function getGameSummary(gameId: string): Promise<GameSummary | null
   const scoreHomeBehinds = teamStats.find((item) => item.teamSide === 'home')?.behinds ?? 0
   const scoreAwayGoals = teamStats.find((item) => item.teamSide === 'away')?.goals ?? 0
   const scoreAwayBehinds = teamStats.find((item) => item.teamSide === 'away')?.behinds ?? 0
+  const gradeRow = gradeRes?.data as { name?: string | null; code?: string | null; grade_catalog?: { label?: string | null } | null } | null
+  const gradeLabel = gradeRow?.grade_catalog?.label ?? gradeRow?.name ?? gradeRow?.code ?? null
 
   return {
     id: game.id,
@@ -489,6 +502,7 @@ export async function getGameSummary(gameId: string): Promise<GameSummary | null
     venue: game.venue ?? null,
     status: game.status ?? null,
     round: game.round ?? null,
+    gradeLabel,
     trackBothTeams: Boolean((game as any).track_both_teams),
     homeTeamName: homeSquad?.squads?.name ?? null,
     awayTeamName: awaySquad?.squads?.name ?? game.opponent ?? null,
