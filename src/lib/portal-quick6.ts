@@ -21,6 +21,7 @@ export type Quick6StatSummary = {
 
 export type Quick6Summary = {
   seasonYear: number | null
+  availableSeasonYears: number[]
   seasonGameCount: number
   canUseLast3: boolean
   stats: Quick6StatSummary[]
@@ -46,6 +47,11 @@ type Quick6GameRow = {
   seasonYear: number | null
   timestamp: number
   totals: Quick6GameTotals
+}
+
+export type Quick6Dataset = {
+  loggedGames: Quick6GameRow[]
+  availableSeasonYears: number[]
 }
 
 type RawEventRow = {
@@ -228,7 +234,7 @@ function buildScopeStat(values: number[], available: boolean): Quick6ScopeStat {
   }
 }
 
-export async function loadQuick6Summary(userId: string, games: GameLogRow[]): Promise<Quick6Summary> {
+export async function loadQuick6Dataset(userId: string, games: GameLogRow[]): Promise<Quick6Dataset> {
   const gameMetaById = new Map<string, GameLogRow>()
   const trackedGameIds: string[] = []
 
@@ -297,8 +303,26 @@ export async function loadQuick6Summary(userId: string, games: GameLogRow[]): Pr
     new Set(loggedGames.map((game) => game.seasonYear).filter((year): year is number => year != null))
   ).sort((a, b) => b - a)
 
+  return {
+    loggedGames,
+    availableSeasonYears: distinctYears,
+  }
+}
+
+export async function loadQuick6Summary(
+  userId: string,
+  games: GameLogRow[],
+  selectedSeasonYear?: number | null
+): Promise<Quick6Summary> {
+  const { loggedGames, availableSeasonYears } = await loadQuick6Dataset(userId, games)
+
   const currentYear = new Date().getFullYear()
-  const seasonYear = distinctYears.includes(currentYear) ? currentYear : (distinctYears[0] ?? null)
+  const seasonYear =
+    selectedSeasonYear != null && availableSeasonYears.includes(selectedSeasonYear)
+      ? selectedSeasonYear
+      : availableSeasonYears.includes(currentYear)
+        ? currentYear
+        : (availableSeasonYears[0] ?? null)
 
   const seasonGames = seasonYear == null ? [] : loggedGames.filter((game) => game.seasonYear === seasonYear)
   const last3Games = seasonGames.slice(0, 3)
@@ -326,6 +350,7 @@ export async function loadQuick6Summary(userId: string, games: GameLogRow[]): Pr
 
   return {
     seasonYear,
+    availableSeasonYears,
     seasonGameCount: seasonGames.length,
     canUseLast3,
     stats,

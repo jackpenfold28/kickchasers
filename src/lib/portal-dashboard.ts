@@ -1,6 +1,6 @@
 import { getLeaderboard, type LeaderboardRow } from '@/lib/portal-stats'
 import { listNotifications, type PortalNotification } from '@/lib/portal-notifications'
-import { loadQuick6Summary, type Quick6Summary } from '@/lib/portal-quick6'
+import { loadQuick6Dataset, loadQuick6Summary, type Quick6Summary } from '@/lib/portal-quick6'
 import { listFollowedClubs, listMySquads, type SquadSummary } from '@/lib/squads'
 import { listUserGames, type GameLogRow } from '@/lib/portal-games'
 import { resolveLogoPublicUrl } from '@/lib/logo-storage'
@@ -77,6 +77,10 @@ export type DashboardProfileSnapshot = {
   position: string | null
   squadName: string | null
   seasonGames: number
+  seasonTotals: {
+    disposals: number
+    goals: number
+  }
   recentGames: GameLogRow[]
   formAverages: {
     disposals: number
@@ -86,6 +90,8 @@ export type DashboardProfileSnapshot = {
 }
 
 export type DashboardData = {
+  selectedSeasonYear: number | null
+  availableSeasonYears: number[]
   matchFocus: MatchFocusGame | null
   matchFocusTints: {
     home: string | null
@@ -423,7 +429,15 @@ async function loadMatchFocusLeague(matchFocus: MatchFocusGame | null) {
   }
 }
 
-async function loadProfileSnapshot(userId: string, recentGames: GameLogRow[]): Promise<DashboardProfileSnapshot> {
+async function loadProfileSnapshot(
+  userId: string,
+  recentGames: GameLogRow[],
+  selectedSeasonYear: number | null,
+  seasonTotals: {
+    disposals: number
+    goals: number
+  }
+): Promise<DashboardProfileSnapshot> {
   const [profileRes, membershipRes, manualRes] = await Promise.all([
     supabase
       .from('profiles')
@@ -441,8 +455,7 @@ async function loadProfileSnapshot(userId: string, recentGames: GameLogRow[]): P
       .from('manual_player_game_totals')
       .select('id,opponent_name,match_date,disposals,k,hb,t,g')
       .eq('user_id', userId)
-      .order('match_date', { ascending: false })
-      .limit(3),
+      .order('match_date', { ascending: false }),
   ])
 
   if (profileRes.error && profileRes.error.code !== 'PGRST116') throw profileRes.error
@@ -456,7 +469,9 @@ async function loadProfileSnapshot(userId: string, recentGames: GameLogRow[]): P
     role?: string | null
     squads?: { name?: string | null } | null
   }>
-  const manualRows = (manualRes.data ?? []) as ManualFormRow[]
+  const manualRows = ((manualRes.data ?? []) as ManualFormRow[])
+    .filter((row) => (selectedSeasonYear == null ? true : parseSeasonYear(row.match_date) === selectedSeasonYear))
+    .slice(0, 3)
 
   const [clubRes, leagueRes] = await Promise.all([
     profile?.home_club_id
@@ -490,9 +505,38 @@ async function loadProfileSnapshot(userId: string, recentGames: GameLogRow[]): P
     position: primaryMembership?.position ?? null,
     squadName: primaryMembership?.squads?.name ?? null,
     seasonGames: recentGames.length,
+    seasonTotals,
     recentGames: recentGames.slice(0, 3),
     formAverages,
   }
+}
+
+function parseSeasonYear(value: string | null | undefined) {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.getFullYear()
+}
+
+function sumSeasonTotals(
+  loggedGames: Array<{
+    seasonYear: number | null
+    totals: {
+      disposals: number
+      goals: number
+    }
+  }>,
+  selectedSeasonYear: number | null
+) {
+  return loggedGames.reduce(
+    (acc, game) => {
+      if (selectedSeasonYear != null && game.seasonYear !== selectedSeasonYear) return acc
+      acc.disposals += Number(game.totals.disposals ?? 0)
+      acc.goals += Number(game.totals.goals ?? 0)
+      return acc
+    },
+    { disposals: 0, goals: 0 }
+  )
 }
 
 async function loadLiveAroundMe(mySquads: SquadSummary[], followedSquads: SquadSummary[]): Promise<DashboardLiveGame[]> {
@@ -594,7 +638,7 @@ function buildRecentActivity(notifications: PortalNotification[], games: GameLog
     .slice(0, 6)
 }
 
-export async function loadDashboardData(userId: string): Promise<DashboardData> {
+export async function loadDashboardData(userId: string, selectedSeasonYear?: number | null): Promise<DashboardData> {
   const [games, notifications, mySquads, followedSquads] = await Promise.all([
     listUserGames(userId),
     listNotifications(userId),
@@ -606,21 +650,39 @@ export async function loadDashboardData(userId: string): Promise<DashboardData> 
 
   const recentGames = games.slice(0, 5)
 
-  const [profile, quick6, liveAroundMe, leaderboard, matchFocusTints, recentGameTints, matchFocusLeague] = await Promise.all([
-    loadProfileSnapshot(userId, games),
-    loadQuick6Summary(userId, games),
+  const [quick6Dataset, liveAroundMe, matchFocusTints, recentGameTints, matchFocusLeague] = await Promise.all([
+    loadQuick6Dataset(userId, games),
     loadLiveAroundMe(mySquads, followedSquads),
+    loadMatchFocusTints(matchFocus),
+    loadRecentGameTints(recentGames),
+    loadMatchFocusLeague(matchFocus),
+  ])
+
+  const currentYear = new Date().getFullYear()
+  const effectiveSeasonYear =
+    selectedSeasonYear != null && quick6Dataset.availableSeasonYears.includes(selectedSeasonYear)
+      ? selectedSeasonYear
+      : quick6Dataset.availableSeasonYears.includes(currentYear)
+        ? currentYear
+        : (quick6Dataset.availableSeasonYears[0] ?? null)
+  const seasonTotals = sumSeasonTotals(quick6Dataset.loggedGames, effectiveSeasonYear)
+
+  const [profile, quick6, leaderboard] = await Promise.all([
+    loadProfileSnapshot(
+      userId,
+      games.filter((game) => parseSeasonYear(game.date) === effectiveSeasonYear),
+      effectiveSeasonYear,
+      seasonTotals
+    ),
+    loadQuick6Summary(userId, games, effectiveSeasonYear),
     getLeaderboard({
-      seasonYear: new Date().getFullYear(),
+      seasonYear: effectiveSeasonYear ?? new Date().getFullYear(),
       stateCode: null,
       leagueId: null,
       clubId: null,
       ageRange: 'Any',
       statKey: 'disposals',
     }),
-    loadMatchFocusTints(matchFocus),
-    loadRecentGameTints(recentGames),
-    loadMatchFocusLeague(matchFocus),
   ])
 
   const actionable = notifications
@@ -652,6 +714,8 @@ export async function loadDashboardData(userId: string): Promise<DashboardData> 
     }))
 
   return {
+    selectedSeasonYear: effectiveSeasonYear,
+    availableSeasonYears: quick6.availableSeasonYears,
     matchFocus,
     matchFocusTints,
     recentGameTints,

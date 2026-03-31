@@ -98,6 +98,16 @@ const addOpacity = (hex: string | null | undefined, alpha: number) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
+const getReadableTextColor = (hexColor: string) => {
+  const value = (hexColor || '#000000').replace('#', '')
+  const fullHex = value.length === 3 ? value.split('').map((char) => `${char}${char}`).join('') : value.padEnd(6, '0')
+  const r = Number.parseInt(fullHex.slice(0, 2), 16)
+  const g = Number.parseInt(fullHex.slice(2, 4), 16)
+  const b = Number.parseInt(fullHex.slice(4, 6), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.62 ? '#061120' : '#ffffff'
+}
+
 const initials = (name: string) => {
   const parts = name.split(/\s+/).filter(Boolean)
   if (!parts.length) return '?'
@@ -148,22 +158,24 @@ export function MatchHero({
     const isHome = side === 'home'
 
     return (
-      <div className="space-y-3">
+      <div className="w-full space-y-3">
         <div className={clsx('min-w-0', isHome ? 'text-left' : 'text-right')}>
           <p className="text-[0.58rem] font-bold uppercase tracking-[0.4em] text-white/48">{isHome ? 'Home' : 'Away'}</p>
           <h2 className="mt-2 truncate text-[1.35rem] font-black uppercase italic tracking-[0.08em] text-white lg:text-[2.15rem]">{team.name}</h2>
         </div>
 
-        <div className={clsx('grid items-center gap-4 lg:gap-5', isHome ? 'grid-cols-[auto_auto]' : 'grid-cols-[auto_auto] justify-end')}>
+        <div className={clsx('grid w-full items-center', isHome ? 'grid-cols-[auto_auto_minmax(0,1fr)] gap-0.5 lg:gap-1' : 'grid-cols-[minmax(0,1fr)_auto_auto] gap-4 lg:gap-5')}>
           {isHome ? (
             <>
               <TeamLogo name={team.name} logoUrl={team.logoUrl} accent={team.accent} size="h-16 w-16 lg:h-24 lg:w-24" />
-              <div className="flex items-center justify-end">
+              <div className="flex items-center justify-start">
                 <span className="score-glow text-[3.7rem] font-black italic leading-none text-white lg:text-[5.4rem]">{team.score}</span>
               </div>
+              <div />
             </>
           ) : (
             <>
+              <div />
               <div className="flex items-center justify-start">
                 <span className="score-glow text-[3.7rem] font-black italic leading-none text-white lg:text-[5.4rem]">{team.score}</span>
               </div>
@@ -191,7 +203,7 @@ export function MatchHero({
         <div className="absolute bottom-0 left-1/2 h-40 w-[46%] -translate-x-1/2 bg-[radial-gradient(circle,rgba(255,255,255,0.06),transparent_70%)] blur-2xl" />
       </div>
 
-      <div className="relative grid gap-7 px-5 py-7 lg:grid-cols-[1fr_minmax(300px,360px)_1fr] lg:items-center lg:px-9 lg:py-9">
+      <div className="relative grid gap-7 px-5 py-7 lg:grid-cols-[1fr_minmax(260px,320px)_1fr] lg:items-center lg:gap-7 lg:px-9 lg:py-9">
         <HeroSide side="home" team={home} />
 
         <div className="text-center">
@@ -398,7 +410,6 @@ export function SummaryPlayersTable({
     <section className="overflow-hidden rounded-[1.8rem] bg-[#0b1526] shadow-[0_22px_50px_rgba(2,8,20,0.28)] ring-1 ring-white/5">
       <div className="px-5 py-4">
         <p className="text-[0.68rem] font-bold uppercase tracking-[0.34em] text-slate-500">Players</p>
-        <h3 className="mt-2 text-lg font-semibold text-white">Desktop recap table grounded in the mobile summary rows</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-[860px] border-collapse text-sm">
@@ -426,29 +437,25 @@ export function SummaryPlayersTable({
             {rows.length ? (
               rows.map((row) => {
                 const tint = row.teamSide === 'home' ? homeTint : awayTint
+                const badgeTextColor = getReadableTextColor(tint)
                 return (
                   <tr
                     key={row.playerId}
                     className="cursor-pointer border-t border-white/[0.04] text-slate-200 transition hover:bg-white/[0.025]"
                     onClick={() => openPlayerSummary(row)}
                   >
-                    <td className="sticky left-0 z-10 bg-[#0d1728] px-4 py-3">
+                    <td className="sticky left-0 z-10 bg-[#0d1728] px-4 py-2.5">
                       <div className="flex items-center gap-3">
                         <div
                           className={clsx(
-                            'flex h-9 w-9 items-center justify-center rounded-full text-xs font-black',
+                            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.82rem] font-black leading-none',
                             row.linkedUser && 'ring-2 ring-[#2DFF7A]'
                           )}
-                          style={{ backgroundColor: tint, color: '#061120' }}
+                          style={{ backgroundColor: tint, color: badgeTextColor }}
                         >
                           {row.jumperNumber ?? '–'}
                         </div>
-                        <div className="min-w-0">
-                          <p className="truncate font-semibold text-white">{formatPlayerName(row.name)}</p>
-                          <p className="mt-0.5 text-xs uppercase tracking-[0.18em] text-slate-500">
-                            {row.teamSide} {row.linkedUser ? '• linked' : ''}
-                          </p>
-                        </div>
+                        <p className="min-w-0 truncate font-semibold leading-none text-white">{formatPlayerName(row.name)}</p>
                       </div>
                     </td>
                     {columns.map((column) => {
@@ -462,7 +469,7 @@ export function SummaryPlayersTable({
                         <td
                           key={column.key}
                           className={clsx(
-                            'px-3 py-3 text-center font-semibold tabular-nums',
+                            'px-3 py-2.5 text-center font-semibold tabular-nums',
                             highlightSet.has(column.key) && 'bg-[#f59e0b]/[0.04]'
                           )}
                         >
@@ -500,7 +507,6 @@ export function TeamComparisonBars({
     <section className="rounded-[1.8rem] bg-[#0b1526] px-5 py-5 shadow-[0_22px_50px_rgba(2,8,20,0.28)] ring-1 ring-white/5">
       <div className="mb-5">
         <p className="text-[0.68rem] font-bold uppercase tracking-[0.34em] text-slate-500">Team</p>
-        <h3 className="mt-2 text-lg font-semibold text-white">Match comparison bars based on the mobile team summary mode</h3>
       </div>
       <div className="space-y-6">
         {groups.map((group) => {

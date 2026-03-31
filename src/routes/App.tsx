@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { getProfileCompletion, isProfileComplete } from '@/lib/auth'
@@ -30,6 +30,7 @@ export default function App() {
   const location = useLocation()
   const [checking, setChecking] = useState(true)
   const [needsEmailVerify, setNeedsEmailVerify] = useState(false)
+  const hasResolvedInitialGate = useRef(false)
 
   useEffect(() => {
     const saved = localStorage.getItem('theme')
@@ -51,7 +52,6 @@ export default function App() {
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      setChecking(true)
       const pathname = location.pathname
       const onUnauthRoute = isUnauthRoute(pathname)
 
@@ -64,7 +64,10 @@ export default function App() {
           const redirect = `${pathname}${location.search || ''}`
           navigate(`/sign-in?redirect=${encodeURIComponent(redirect)}`, { replace: true })
         }
-        if (!cancelled) setChecking(false)
+        if (!cancelled) {
+          hasResolvedInitialGate.current = true
+          setChecking(false)
+        }
         return
       }
 
@@ -74,23 +77,37 @@ export default function App() {
 
       if (onUnauthRoute && pathname !== '/reset-password') {
         navigate(complete ? '/dashboard' : '/onboarding?new=1', { replace: true })
-        if (!cancelled) setChecking(false)
+        if (!cancelled) {
+          hasResolvedInitialGate.current = true
+          setChecking(false)
+        }
         return
       }
 
       if (!complete && pathname !== '/onboarding' && pathname !== '/reset-password') {
         navigate('/onboarding?new=1', { replace: true })
-        if (!cancelled) setChecking(false)
+        if (!cancelled) {
+          hasResolvedInitialGate.current = true
+          setChecking(false)
+        }
         return
       }
 
-      if (!cancelled) setChecking(false)
+      if (!cancelled) {
+        hasResolvedInitialGate.current = true
+        setChecking(false)
+      }
     })()
 
     return () => {
       cancelled = true
     }
   }, [location.pathname, location.search, navigate])
+
+  useEffect(() => {
+    if (!hasResolvedInitialGate.current) return
+    setChecking(false)
+  }, [location.pathname, location.search])
 
   if (checking) {
     return <main className="min-h-screen p-6 app-bg">Checking session…</main>

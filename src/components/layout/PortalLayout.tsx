@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { type CSSProperties, useEffect, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Menu } from 'lucide-react'
+import clsx from 'clsx'
 import { supabase } from '@/lib/supabase'
 import SidebarNavigation from '@/components/layout/SidebarNavigation'
-import Topbar from '@/components/layout/Topbar'
 
 type ProfileSummary = {
   name: string | null
@@ -11,21 +12,6 @@ type ProfileSummary = {
   avatar_path: string | null
   primary_role: string | null
   game_day_roles: string[] | null
-}
-
-const TITLES: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/squads': 'Squads',
-  '/squads/new': 'Create Squad',
-  '/games': 'Games',
-  '/stats': 'Stats',
-  '/notifications': 'Notifications',
-  '/profile': 'Profile',
-  '/settings': 'Settings',
-  '/settings/update-email': 'Update Email',
-  '/settings/roles': 'Role Requests',
-  '/settings/blocked-users': 'Blocked Users',
-  '/admin': 'Admin',
 }
 
 function resolveAvatarUrl(profile: ProfileSummary | null): string | null {
@@ -37,6 +23,8 @@ function resolveAvatarUrl(profile: ProfileSummary | null): string | null {
   return data.publicUrl || null
 }
 
+const SIDEBAR_PREFERENCE_KEY = 'kickchasers.portal.sidebar-collapsed'
+
 export default function PortalLayout() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -46,6 +34,15 @@ export default function PortalLayout() {
   const [displayName, setDisplayName] = useState('User')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem(SIDEBAR_PREFERENCE_KEY) === 'true'
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(SIDEBAR_PREFERENCE_KEY, String(sidebarCollapsed))
+  }, [sidebarCollapsed])
 
   useEffect(() => {
     let cancelled = false
@@ -97,21 +94,11 @@ export default function PortalLayout() {
     }
   }, [checkingRole, isAdmin, location.pathname, navigate])
 
-  const openProfile = () => navigate('/profile')
   const openSettings = () => navigate('/settings')
   const logout = async () => {
     await supabase.auth.signOut()
     navigate('/sign-in', { replace: true })
   }
-
-  const title = useMemo(() => {
-    if (TITLES[location.pathname]) return TITLES[location.pathname]
-    if (location.pathname.startsWith('/squads/')) return 'Squad Workspace'
-    if (location.pathname.startsWith('/games/manual/')) return 'Manual Game Summary'
-    if (location.pathname.startsWith('/games/')) return 'Game Summary'
-    if (location.pathname.startsWith('/settings/')) return 'Settings'
-    return 'Portal'
-  }, [location.pathname])
 
   if (checkingRole) {
     return <main className="min-h-screen p-6 app-bg">Loading portal…</main>
@@ -122,22 +109,44 @@ export default function PortalLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#070F1E] text-slate-100">
-      <SidebarNavigation isAdmin={isAdmin} mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
+    <div
+      className="min-h-screen bg-[#070F1E] text-slate-100"
+      style={
+        {
+          '--portal-sidebar-width': `${sidebarCollapsed ? 96 : 240}px`,
+        } as CSSProperties
+      }
+    >
+      <SidebarNavigation
+        isAdmin={isAdmin}
+        collapsed={sidebarCollapsed}
+        mobileOpen={mobileOpen}
+        displayName={displayName}
+        avatarUrl={avatarUrl}
+        onCloseMobile={() => setMobileOpen(false)}
+        onToggleCollapsed={() => setSidebarCollapsed((value) => !value)}
+        onOpenProfile={() => navigate('/profile')}
+        onOpenSettings={openSettings}
+        onLogout={logout}
+      />
 
-      <div className="lg:pl-[240px]">
-        <Topbar
-          title={title}
-          displayName={displayName}
-          avatarUrl={avatarUrl}
-          onToggleSidebar={() => setMobileOpen((value) => !value)}
-          onOpenProfile={openProfile}
-          onOpenSettings={openSettings}
-          onLogout={logout}
-        />
-
-        <main className="px-4 py-6 sm:px-6">
-          <div className="mx-auto grid max-w-[1320px] gap-6">
+      <div
+        className={clsx(
+          'min-w-0 lg:ml-[var(--portal-sidebar-width)] lg:w-[calc(100%-var(--portal-sidebar-width))] transition-[margin,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
+        )}
+      >
+        <main className="min-w-0 px-4 py-5 sm:px-6 sm:py-6 lg:py-8">
+          <div className="mx-auto grid min-w-0 max-w-[1320px] gap-6">
+            <div className="flex items-center lg:hidden">
+              <button
+                type="button"
+                onClick={() => setMobileOpen((value) => !value)}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-200 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.95)] transition hover:bg-white/[0.08] hover:text-white"
+                aria-label="Toggle navigation"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            </div>
             <Outlet />
           </div>
         </main>

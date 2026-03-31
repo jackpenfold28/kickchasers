@@ -4,6 +4,7 @@ import {
   ArrowRight,
   BellDot,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Radio,
   ShieldCheck,
@@ -50,6 +51,11 @@ function formatShortDate(value: string | null) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return 'Date TBC'
   return new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short' }).format(date)
+}
+
+function formatHeaderStat(value: number | null | undefined, digits = 1) {
+  if (value == null || Number.isNaN(value)) return '—'
+  return Number(value).toFixed(digits)
 }
 
 function formatRelative(value: string | null) {
@@ -178,11 +184,13 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<DashboardData | null>(null)
   const [quick6Scope, setQuick6Scope] = useState<Quick6Scope>('season')
+  const [selectedSeasonYear, setSelectedSeasonYear] = useState<number | null>(null)
 
   useEffect(() => {
     let cancelled = false
 
     ;(async () => {
+      setLoading(true)
       try {
         const { data: authData } = await supabase.auth.getUser()
         const user = authData.user
@@ -191,8 +199,11 @@ export default function DashboardPage() {
           return
         }
 
-        const next = await loadDashboardData(user.id)
-        if (!cancelled) setData(next)
+        const next = await loadDashboardData(user.id, selectedSeasonYear)
+        if (!cancelled) {
+          setData(next)
+          setError(null)
+        }
       } catch (loadError) {
         if (!cancelled) {
           setError(loadError instanceof Error ? loadError.message : 'Unable to load dashboard.')
@@ -205,7 +216,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [navigate])
+  }, [navigate, selectedSeasonYear])
 
   const matchFocusScore = useMemo(() => {
     if (!data?.matchFocus) return null
@@ -250,31 +261,122 @@ export default function DashboardPage() {
       return `${game.id}:${game.manualId ?? 'tracked'}` !== `${data.matchFocus.id}:${data.matchFocus.manualId ?? 'tracked'}`
     })
     .slice(0, 2)
+  const activeSeasonIndex = data.availableSeasonYears.findIndex((year) => year === data.selectedSeasonYear)
+  const canGoToNewerSeason = activeSeasonIndex > 0
+  const canGoToOlderSeason = activeSeasonIndex >= 0 && activeSeasonIndex < data.availableSeasonYears.length - 1
+  const headerStats = [
+    {
+      key: 'disposals',
+      label: 'Disposals',
+      value: formatHeaderStat(data.profile.seasonTotals.disposals, 0),
+      iconSrc: '/assets/icons/afl/hb.svg',
+      iconAlt: 'Handball icon',
+    },
+    {
+      key: 'goals',
+      label: 'Goals',
+      value: formatHeaderStat(data.profile.seasonTotals.goals, 0),
+      iconSrc: '/assets/icons/afl/posts2.svg',
+      iconAlt: 'Goals icon',
+    },
+    {
+      key: 'games',
+      label: 'Games',
+      value: formatHeaderStat(data.profile.seasonGames, 0),
+      iconSrc: '/assets/icons/afl/MCG.svg',
+      iconAlt: 'Games icon',
+    },
+  ]
 
   return (
     <section className="grid gap-6">
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.75fr)_360px]">
-        <div className="grid gap-4">
-          <div className="pb-4">
-            <div className="flex items-center gap-4">
-              <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#101A2D] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                {data.profile.avatarUrl ? (
-                  <img src={data.profile.avatarUrl} alt={data.profile.name || 'User'} className="h-full w-full object-cover object-center" />
-                ) : (
-                  <span className="text-sm font-semibold text-slate-300">
-                    {(data.profile.name || 'U').slice(0, 1).toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-slate-500">Welcome Back</p>
-                <p className="pr-2 text-[1.45rem] font-black italic leading-[1.02] tracking-[-0.04em] text-white sm:text-[1.7rem]">
-                  {(data.profile.name || 'KickChasers Player').toUpperCase()}
-                </p>
+      <div className="pb-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+          <div className="flex items-center gap-4 lg:flex-1">
+            <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#101A2D] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+              {data.profile.avatarUrl ? (
+                <img src={data.profile.avatarUrl} alt={data.profile.name || 'User'} className="h-full w-full object-cover object-center" />
+              ) : (
+                <span className="text-sm font-semibold text-slate-300">
+                  {(data.profile.name || 'U').slice(0, 1).toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-slate-500">Welcome Back</p>
+              <p className="pr-2 text-[1.45rem] font-black italic leading-[1.02] tracking-[-0.04em] text-white sm:text-[1.7rem]">
+                {(data.profile.name || 'KickChasers Player').toUpperCase()}
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full lg:max-w-[720px] lg:flex-[1.1]">
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(150px,0.9fr)_repeat(3,minmax(0,1fr))]">
+              {headerStats.map((stat) => (
+                <div
+                  key={stat.key}
+                  className="grid min-w-0 grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1 rounded-[20px] border border-white/[0.07] bg-[linear-gradient(180deg,rgba(255,255,255,0.032)_0%,rgba(255,255,255,0.016)_100%)] px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                >
+                  <span
+                    aria-label={stat.iconAlt}
+                    role="img"
+                    className="row-span-2 h-7 w-7 shrink-0 self-center bg-[#39FF88]"
+                    style={{
+                      WebkitMaskImage: `url(${stat.iconSrc})`,
+                      maskImage: `url(${stat.iconSrc})`,
+                      WebkitMaskRepeat: 'no-repeat',
+                      maskRepeat: 'no-repeat',
+                      WebkitMaskPosition: 'center',
+                      maskPosition: 'center',
+                      WebkitMaskSize: 'contain',
+                      maskSize: 'contain',
+                    }}
+                  />
+                  <p className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">{stat.label}</p>
+                  <p className="text-center text-[1.55rem] font-black italic leading-none tracking-[-0.04em] text-white">
+                    {stat.value}
+                  </p>
+                </div>
+              ))}
+
+              <div className="grid grid-cols-[28px_1fr_28px] items-center rounded-[20px] border border-white/[0.07] bg-[linear-gradient(180deg,rgba(255,255,255,0.028)_0%,rgba(255,255,255,0.014)_100%)] px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!canGoToNewerSeason) return
+                    setSelectedSeasonYear(data.availableSeasonYears[activeSeasonIndex - 1] ?? null)
+                  }}
+                  disabled={!canGoToNewerSeason}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-500 transition hover:bg-white/[0.04] hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-25"
+                  aria-label="Select newer season"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+                <div className="min-w-0 px-2 text-center">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-slate-600">Season</p>
+                  <p className="mt-0.5 text-[1.3rem] font-black italic leading-none tracking-[0.08em] text-white">{data.selectedSeasonYear ?? '—'}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!canGoToOlderSeason) return
+                    setSelectedSeasonYear(data.availableSeasonYears[activeSeasonIndex + 1] ?? null)
+                  }}
+                  disabled={!canGoToOlderSeason}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-500 transition hover:bg-white/[0.04] hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-25"
+                  aria-label="Select older season"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
-            <div className="mt-4 h-px w-full bg-white/10" />
           </div>
+        </div>
+        <div className="mt-4 h-px w-full bg-white/10" />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.75fr)_360px]">
+        <div className="grid gap-4">
 
           <Quick6SummaryCard summary={data.quick6} scope={quick6Scope} onScopeChange={setQuick6Scope} />
 
