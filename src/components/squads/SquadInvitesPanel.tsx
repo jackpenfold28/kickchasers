@@ -32,7 +32,7 @@ export default function SquadInvitesPanel({
   }, [connections, query])
 
   return (
-    <PortalCard title="Invites" subtitle="Invite members by existing follow connections">
+    <PortalCard title="Invites" subtitle="Invite members by existing follow connections" className="teams-section-card">
       {!canManage ? (
         <p className="text-sm text-slate-400">Only owners/admins can send squad invites.</p>
       ) : (
@@ -46,16 +46,13 @@ export default function SquadInvitesPanel({
 
           <div className="mt-3 space-y-2">
             {filteredConnections.map((connection) => (
-              <div
-                key={connection.userId}
-                className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2"
-              >
+              <div key={connection.userId} className="teams-operational-card flex items-center justify-between gap-3 px-4 py-3">
                 <div>
                   <p className="text-sm font-medium text-white">{connection.name}</p>
                   {connection.handle && <p className="text-xs text-slate-400">{connection.handle}</p>}
                 </div>
                 <button
-                  className="btn btn-secondary px-3 py-1.5 text-xs"
+                  className="teams-action-chip"
                   disabled={sending || !connection.handle}
                   onClick={() => connection.handle && onInvite(connection.handle)}
                 >
@@ -73,7 +70,7 @@ export default function SquadInvitesPanel({
         <div className="space-y-2">
           {pendingInvites.length ? (
             pendingInvites.map((invite) => (
-              <div key={invite.id} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200">
+              <div key={invite.id} className="teams-operational-card px-4 py-3 text-sm text-slate-200">
                 <p className="font-medium text-white">
                   {invite.profileName || invite.profileHandle || invite.guestName || invite.guestEmail || 'Pending invite'}
                 </p>

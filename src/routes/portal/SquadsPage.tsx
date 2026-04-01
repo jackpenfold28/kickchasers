@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Check, Plus, ShieldCheck, Users2, X } from 'lucide-react'
+import { ArrowRight, Check, Plus, Users2, X } from 'lucide-react'
 import PortalCard from '@/components/cards/PortalCard'
 import { supabase } from '@/lib/supabase'
 import {
@@ -29,39 +29,31 @@ function TeamCard({ squad, userId }: { squad: SquadSummary; userId: string | nul
   const role = roleLabel(squad, userId)
 
   return (
-    <Link
-      to={`/teams/${squad.id}`}
-      className="group block rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] p-5 transition hover:border-[#39FF88]/40 hover:bg-[linear-gradient(180deg,rgba(57,255,136,0.10),rgba(255,255,255,0.05))]"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-[#0D1525]">
+    <Link to={`/teams/${squad.id}`} className="team-row-card block">
+      <div className="flex items-center gap-4">
+        <div className="team-row-logo">
             {squad.logoUrl ? (
-              <img src={squad.logoUrl} alt={squad.name || 'Team'} className="h-full w-full object-cover" />
+            <img src={squad.logoUrl} alt={squad.name || 'Team'} className="h-full w-full object-cover" />
             ) : (
-              <span className="text-base font-semibold text-slate-400">{(squad.name || 'T').slice(0, 1).toUpperCase()}</span>
+            <span className="text-lg font-semibold text-slate-300">{(squad.name || 'T').slice(0, 1).toUpperCase()}</span>
             )}
-          </div>
+        </div>
 
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="truncate text-base font-semibold text-white">{squad.name || 'Unnamed team'}</h3>
-              {squad.isOfficial && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[#39FF88]/45 bg-[#39FF88]/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#A6FFCE]">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Official
-                </span>
-              )}
-            </div>
-            <p className="mt-1 text-sm text-slate-400">{leagueLabel}</p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-slate-300">{role}</span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-slate-300">{squad.memberCount} members</span>
-            </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="truncate text-[17px] font-bold text-white">{squad.name || 'Unnamed team'}</h3>
+            {squad.isOfficial && <Check className="h-4 w-4 shrink-0 text-[#39FF88]" aria-label="Official team" />}
+          </div>
+          <p className="mt-1 text-sm text-slate-400">{leagueLabel}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="team-meta-pill">{role}</span>
+            <span className="team-meta-pill">{squad.memberCount} members</span>
           </div>
         </div>
 
-        <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-slate-500 transition group-hover:text-[#39FF88]" />
+        <div className="team-forward">
+          <ArrowRight className="h-4 w-4" />
+        </div>
       </div>
     </Link>
   )
@@ -77,9 +69,9 @@ function InviteCard({
   onRespond: (invite: TeamInvite, accept: boolean) => Promise<void>
 }) {
   return (
-    <div className="rounded-[24px] border border-[#39FF88]/20 bg-[#0D1828] p-4">
+    <div className="teams-invite-card">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[#101B2B]">
+        <div className="team-row-logo h-12 w-12">
           {invite.squadLogoUrl ? (
             <img src={invite.squadLogoUrl} alt={invite.squadName || 'Team invite'} className="h-full w-full object-cover" />
           ) : (
@@ -94,15 +86,15 @@ function InviteCard({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <button className="btn btn-primary inline-flex items-center gap-2" disabled={working} onClick={() => onRespond(invite, true)}>
+        <button className="teams-action-chip teams-action-chip--accent" disabled={working} onClick={() => onRespond(invite, true)}>
           <Check className="h-4 w-4" />
           Accept
         </button>
-        <button className="btn inline-flex items-center gap-2 border-red-500/60 text-red-300" disabled={working} onClick={() => onRespond(invite, false)}>
+        <button className="teams-action-chip !text-red-300" disabled={working} onClick={() => onRespond(invite, false)}>
           <X className="h-4 w-4" />
           Decline
         </button>
-        <Link to={`/teams/${invite.squadId}`} className="btn btn-secondary">
+        <Link to={`/teams/${invite.squadId}`} className="teams-action-chip">
           View team
         </Link>
       </div>
@@ -217,26 +209,32 @@ export default function SquadsPage() {
   }
 
   return (
-    <section className="grid gap-6">
-      <PortalCard>
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <section className="teams-stage grid gap-6">
+      <section className="teams-header-shell">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9CE8BE]">Teams</p>
-            <h2 className="mt-2 text-3xl font-semibold text-white">Run team access, invites, following, and squad management from one portal workspace.</h2>
-            <p className="mt-3 text-sm text-slate-400">
+            <p className="teams-kicker">Teams</p>
+            <h2 className="mt-3 max-w-4xl text-3xl font-semibold leading-tight text-white sm:text-4xl">
+              One Teams surface for access, invites, following, and squad operations.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm text-slate-400 sm:text-[15px]">
               The web Teams area follows the mobile product structure: broader team access in Teams, owner/admin-focused My Squads, and club-based Following routed through official teams.
             </p>
           </div>
 
-          <Link to="/teams/new" className="btn btn-primary inline-flex w-full items-center justify-center gap-2 sm:w-auto">
+          <Link to="/teams/new" className="teams-action-chip teams-action-chip--accent inline-flex w-full justify-center gap-2 sm:w-auto">
             <Plus className="h-4 w-4" />
             New Squad
           </Link>
         </div>
-      </PortalCard>
+      </section>
 
       {tab === 'teams' && invites.length > 0 && (
-        <PortalCard title="Pending Invites" subtitle="Accept or decline team invites without leaving the Teams surface">
+        <PortalCard
+          title="Pending Invites"
+          subtitle="Accept or decline team invites without leaving the Teams surface"
+          className="teams-section-card"
+        >
           <div className="grid gap-4 xl:grid-cols-2">
             {invites.map((invite) => (
               <InviteCard
@@ -250,7 +248,7 @@ export default function SquadsPage() {
         </PortalCard>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="teams-segmented">
         {([
           { key: 'teams', label: 'Teams' },
           { key: 'my-squads', label: 'My Squads' },
@@ -259,7 +257,7 @@ export default function SquadsPage() {
         ] as Array<{ key: TabKey; label: string }>).map((item) => (
           <button
             key={item.key}
-            className={`btn ${tab === item.key ? 'bg-[#39FF88] text-[#061120] hover:bg-[#39FF88]' : 'btn-secondary'}`}
+            className={`teams-segment ${tab === item.key ? 'is-active' : ''}`}
             onClick={() => setTab(item.key)}
           >
             {item.label}
@@ -268,27 +266,27 @@ export default function SquadsPage() {
       </div>
 
       {error && (
-        <PortalCard>
+        <PortalCard className="teams-section-card">
           <p className="text-sm text-red-300">{error}</p>
         </PortalCard>
       )}
 
       {tab === 'leagues' ? (
-        <PortalCard title="Leagues" subtitle="Platform admin league tools stay available while Teams remains the product entrypoint">
+        <PortalCard title="Leagues" subtitle="Platform admin league tools stay available while Teams remains the product entrypoint" className="teams-section-card">
           <p className="max-w-2xl text-sm text-slate-400">
             League and official directory management remain admin-only. Use the admin console for approvals, league maintenance, and official team governance.
           </p>
-          <Link to="/admin" className="btn btn-secondary mt-4 inline-flex items-center gap-2">
+          <Link to="/admin" className="teams-action-chip mt-4 inline-flex items-center gap-2">
             Open Admin
             <ArrowRight className="h-4 w-4" />
           </Link>
         </PortalCard>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid gap-4">
           {activeList.length ? (
             activeList.map((squad) => <TeamCard key={squad.id} squad={squad} userId={userId} />)
           ) : (
-            <PortalCard className="xl:col-span-2">
+            <PortalCard className="teams-section-card">
               <div className="flex items-center gap-3 text-slate-400">
                 <Users2 className="h-5 w-5" />
                 <p>

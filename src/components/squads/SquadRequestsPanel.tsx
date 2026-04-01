@@ -20,11 +20,11 @@ export default function SquadRequestsPanel({
 }: SquadRequestsPanelProps) {
   return (
     <div className="grid gap-6 xl:grid-cols-2">
-      <PortalCard title="Join Requests" subtitle="Approve or decline pending squad join requests">
+      <PortalCard title="Join Requests" subtitle="Approve or decline pending squad join requests" className="teams-section-card">
         <div className="space-y-2">
           {joinRequests.length ? (
             joinRequests.map((request) => (
-              <div key={request.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <div key={request.id} className="teams-operational-card">
                 <p className="text-sm font-medium text-white">{request.requesterName || request.requesterHandle || 'User'}</p>
                 <p className="mt-1 text-xs text-slate-400">
                   Requested role: {request.requestedRole || 'member'} • {new Date(request.createdAt).toLocaleString()}
@@ -32,14 +32,14 @@ export default function SquadRequestsPanel({
                 {canManage && (
                   <div className="mt-3 flex gap-2">
                     <button
-                      className="btn btn-secondary px-3 py-1.5 text-xs"
+                      className="teams-action-chip"
                       disabled={actingRequestId === request.id}
                       onClick={() => onJoinDecision(request.id, request.requestedRole, 'approve')}
                     >
                       Approve
                     </button>
                     <button
-                      className="btn border-red-500/60 px-3 py-1.5 text-xs text-red-300"
+                      className="teams-action-chip !text-red-300"
                       disabled={actingRequestId === request.id}
                       onClick={() => onJoinDecision(request.id, request.requestedRole, 'decline')}
                     >
@@ -55,11 +55,11 @@ export default function SquadRequestsPanel({
         </div>
       </PortalCard>
 
-      <PortalCard title="Guest Merge Requests" subtitle="Review guest-to-account merge requests">
+      <PortalCard title="Guest Merge Requests" subtitle="Review guest-to-account merge requests" className="teams-section-card">
         <div className="space-y-2">
           {guestMergeRequests.length ? (
             guestMergeRequests.map((request) => (
-              <div key={request.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <div key={request.id} className="teams-guest-card">
                 <p className="text-sm font-medium text-white">{request.guestName}</p>
                 <p className="mt-1 text-xs text-slate-400">
                   Requested by {request.requesterName || request.requesterHandle || 'User'} •{' '}
@@ -68,14 +68,14 @@ export default function SquadRequestsPanel({
                 {canManage && (
                   <div className="mt-3 flex gap-2">
                     <button
-                      className="btn btn-secondary px-3 py-1.5 text-xs"
+                      className="teams-action-chip"
                       disabled={actingRequestId === request.id}
                       onClick={() => onGuestMergeDecision(request.id, 'approve')}
                     >
                       Approve
                     </button>
                     <button
-                      className="btn border-red-500/60 px-3 py-1.5 text-xs text-red-300"
+                      className="teams-action-chip !text-red-300"
                       disabled={actingRequestId === request.id}
                       onClick={() => onGuestMergeDecision(request.id, 'decline')}
                     >

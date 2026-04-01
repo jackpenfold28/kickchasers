@@ -162,16 +162,16 @@ export function MatchHero({
     return (
       <div className="w-full space-y-3">
         <div className={clsx('min-w-0', isHome ? 'text-left' : 'text-right')}>
-          <p className="text-[0.58rem] font-bold uppercase tracking-[0.4em] text-white/48">{isHome ? 'Home' : 'Away'}</p>
-          <h2 className="mt-2 truncate text-[1.35rem] font-black uppercase italic tracking-[0.08em] text-white lg:text-[2.15rem]">{team.name}</h2>
+          <p className="text-[0.46rem] font-bold uppercase tracking-[0.32em] text-white/48 sm:text-[0.58rem] sm:tracking-[0.4em]">{isHome ? 'Home' : 'Away'}</p>
+          <h2 className="mt-1.5 truncate text-[0.92rem] font-black uppercase italic tracking-[0.03em] text-white sm:mt-2 sm:text-[1.35rem] sm:tracking-[0.08em] lg:text-[2.15rem]">{team.name}</h2>
         </div>
 
         <div className={clsx('grid w-full items-center', isHome ? 'grid-cols-[auto_auto_minmax(0,1fr)] gap-0.5 lg:gap-1' : 'grid-cols-[minmax(0,1fr)_auto_auto] gap-4 lg:gap-5')}>
           {isHome ? (
             <>
-              <TeamLogo name={team.name} logoUrl={team.logoUrl} accent={team.accent} size="h-16 w-16 lg:h-24 lg:w-24" />
+              <TeamLogo name={team.name} logoUrl={team.logoUrl} accent={team.accent} size="h-12 w-12 sm:h-16 sm:w-16 lg:h-24 lg:w-24" />
               <div className="flex items-center justify-start">
-                <span className="score-glow text-[3.7rem] font-black italic leading-none text-white lg:text-[5.4rem]">{team.score}</span>
+                <span className="score-glow text-[2.7rem] font-black italic leading-none text-white sm:text-[3.7rem] lg:text-[5.4rem]">{team.score}</span>
               </div>
               <div />
             </>
@@ -179,17 +179,17 @@ export function MatchHero({
             <>
               <div />
               <div className="flex items-center justify-start">
-                <span className="score-glow text-[3.7rem] font-black italic leading-none text-white lg:text-[5.4rem]">{team.score}</span>
+                <span className="score-glow text-[2.7rem] font-black italic leading-none text-white sm:text-[3.7rem] lg:text-[5.4rem]">{team.score}</span>
               </div>
-              <TeamLogo name={team.name} logoUrl={team.logoUrl} accent={team.accent} size="h-16 w-16 lg:h-24 lg:w-24" />
+              <TeamLogo name={team.name} logoUrl={team.logoUrl} accent={team.accent} size="h-12 w-12 sm:h-16 sm:w-16 lg:h-24 lg:w-24" />
             </>
           )}
         </div>
 
         <div className={clsx(isHome ? 'text-left' : 'text-right')}>
           <div className={clsx('mb-1', !isHome && 'ml-auto')}>
-            <p className="text-[0.6rem] font-bold uppercase tracking-[0.28em] text-white/40">G.B</p>
-            <span className="text-sm font-bold tracking-[0.18em] text-white/68 lg:text-base">{team.goals}.{team.behinds}</span>
+            <p className="text-[0.5rem] font-bold uppercase tracking-[0.22em] text-white/40 sm:text-[0.6rem] sm:tracking-[0.28em]">G.B</p>
+            <span className="text-[0.82rem] font-bold tracking-[0.12em] text-white/68 sm:text-sm sm:tracking-[0.18em] lg:text-base">{team.goals}.{team.behinds}</span>
           </div>
         </div>
       </div>
@@ -205,37 +205,37 @@ export function MatchHero({
         <div className="absolute bottom-0 left-1/2 h-40 w-[46%] -translate-x-1/2 bg-[radial-gradient(circle,rgba(255,255,255,0.06),transparent_70%)] blur-2xl" />
       </div>
 
-      <div className="relative grid gap-7 px-5 py-7 lg:grid-cols-[1fr_minmax(260px,320px)_1fr] lg:items-center lg:gap-7 lg:px-9 lg:py-9">
+      <div className="relative grid grid-cols-[minmax(0,1fr)_minmax(116px,148px)_minmax(0,1fr)] gap-3 px-3 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(140px,180px)_minmax(0,1fr)] sm:gap-5 sm:px-5 sm:py-6 lg:grid-cols-[1fr_minmax(260px,320px)_1fr] lg:items-center lg:gap-7 lg:px-9 lg:py-9">
         <HeroSide side="home" team={home} />
 
         <div className="flex flex-col items-center text-center">
-          <p className="text-[0.58rem] font-black uppercase tracking-[0.46em] text-white/42">Match Summary</p>
-          <div className="mt-3 flex flex-col items-center">
-            <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#39FF88]">{statusLabel}</p>
-            <div className="my-2 text-[2rem] font-black uppercase italic tracking-[-0.04em] text-white/88 lg:text-[2.5rem]">{centerLabel}</div>
-            <div className="flex flex-col items-center space-y-1 text-white/78">
-              <p className="text-[0.82rem] font-black uppercase tracking-[0.26em] text-white/90">{roundLabel}</p>
-              <p className="text-sm font-medium">{venueLabel}</p>
-              <p className="text-sm font-medium text-white/62">{dateLabel}</p>
+          <p className="text-[0.46rem] font-black uppercase tracking-[0.26em] text-white/42 sm:text-[0.58rem] sm:tracking-[0.46em]">Match Summary</p>
+          <div className="mt-2 flex flex-col items-center sm:mt-3">
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.22em] text-[#39FF88] sm:text-[0.72rem] sm:tracking-[0.34em]">{statusLabel}</p>
+            <div className="my-1.5 text-[1.15rem] font-black uppercase italic tracking-[-0.04em] text-white/88 sm:my-2 sm:text-[2rem] lg:text-[2.5rem]">{centerLabel}</div>
+            <div className="flex flex-col items-center space-y-0.5 text-white/78 sm:space-y-1">
+              <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-white/90 sm:text-[0.82rem] sm:tracking-[0.26em]">{roundLabel}</p>
+              <p className="text-[0.72rem] font-medium sm:text-sm">{venueLabel}</p>
+              <p className="text-[0.68rem] font-medium text-white/62 sm:text-sm">{dateLabel}</p>
             </div>
           </div>
           {(homeQuarterScores.length || awayQuarterScores.length) && (
-            <div className="mt-4 flex w-full justify-center">
-              <div className="w-full max-w-[290px]">
-                <div className="grid grid-cols-[24px_repeat(4,minmax(0,1fr))] justify-items-center gap-x-2 gap-y-1 text-center text-[0.56rem] uppercase tracking-[0.22em] text-slate-500">
+            <div className="mt-3 flex w-full justify-center sm:mt-4">
+              <div className="w-full max-w-[180px] sm:max-w-[290px]">
+                <div className="grid grid-cols-[16px_repeat(4,minmax(0,1fr))] justify-items-center gap-x-1 gap-y-1 text-center text-[0.45rem] uppercase tracking-[0.14em] text-slate-500 sm:grid-cols-[24px_repeat(4,minmax(0,1fr))] sm:gap-x-2 sm:text-[0.56rem] sm:tracking-[0.22em]">
                   <span />
                   <span>Q1</span>
                   <span>Q2</span>
                   <span>Q3</span>
                   <span>Q4</span>
                 </div>
-                <div className="mt-2 grid grid-cols-[24px_repeat(4,minmax(0,1fr))] justify-items-center gap-x-2 gap-y-1 text-center text-[0.72rem] font-bold text-white/78">
+                <div className="mt-1.5 grid grid-cols-[16px_repeat(4,minmax(0,1fr))] justify-items-center gap-x-1 gap-y-1 text-center text-[0.62rem] font-bold text-white/78 sm:mt-2 sm:grid-cols-[24px_repeat(4,minmax(0,1fr))] sm:gap-x-2 sm:text-[0.72rem]">
                   <span className="text-white/42">H</span>
                   {Array.from({ length: 4 }, (_, index) => (
                     <span key={`home-${index}`}>{homeQuarterScores[index] ?? '–'}</span>
                   ))}
                 </div>
-                <div className="mt-1 grid grid-cols-[24px_repeat(4,minmax(0,1fr))] justify-items-center gap-x-2 gap-y-1 text-center text-[0.72rem] font-bold text-white/78">
+                <div className="mt-1 grid grid-cols-[16px_repeat(4,minmax(0,1fr))] justify-items-center gap-x-1 gap-y-1 text-center text-[0.62rem] font-bold text-white/78 sm:grid-cols-[24px_repeat(4,minmax(0,1fr))] sm:gap-x-2 sm:text-[0.72rem]">
                   <span className="text-white/42">A</span>
                   {Array.from({ length: 4 }, (_, index) => (
                     <span key={`away-${index}`}>{awayQuarterScores[index] ?? '–'}</span>

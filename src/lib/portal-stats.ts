@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 
 export const STAT_OPTIONS = [
+  'fantasy_points',
   'disposals',
   'kicks',
   'handballs',
@@ -21,6 +22,29 @@ export const STAT_OPTIONS = [
 ] as const
 
 export type LeaderboardStatKey = (typeof STAT_OPTIONS)[number]
+
+export const STAT_LABELS: Record<LeaderboardStatKey, string> = {
+  fantasy_points: 'Fantasy',
+  disposals: 'Disposals',
+  kicks: 'Kicks',
+  handballs: 'Handballs',
+  marks: 'Marks',
+  tackles: 'Tackles',
+  goals: 'Goals',
+  behinds: 'Behinds',
+  goal_assists: 'Goal assists',
+  turnovers: 'Turnovers',
+  intercepts: 'Intercepts',
+  one_percenters: '1%ers',
+  clearances: 'Clearances',
+  inside_50s: 'Inside 50s',
+  rebound_50s: 'Rebound 50s',
+  hitouts: 'Hitouts',
+  frees_for: 'Frees for',
+  frees_against: 'Frees against',
+}
+
+export type LeaderboardRangeMode = 'week' | 'season'
 
 export type LeaderboardFilters = {
   seasonYear: number
@@ -45,7 +69,23 @@ export type LeaderboardRow = {
   secondaryDisposals: number
 }
 
+export type LeaderboardPlayer = {
+  userId: string
+  playerName: string
+  handle: string | null
+  avatarUrl: string | null
+  clubName: string | null
+  leagueName: string | null
+  homeStateCode: string | null
+  homeLeagueId: string | null
+  homeClubId: string | null
+  ageYears: number | null
+  games: number
+  stats: Record<LeaderboardStatKey, number>
+}
+
 const EVENT_KEY_MAP: Record<string, LeaderboardStatKey | undefined> = {
+  AF: 'fantasy_points',
   K: 'kicks',
   K_EF: 'kicks',
   K_IF: 'kicks',
@@ -71,6 +111,35 @@ const EVENT_KEY_MAP: Record<string, LeaderboardStatKey | undefined> = {
   HO: 'hitouts',
   FF: 'frees_for',
   FA: 'frees_against',
+}
+
+const FANTASY_WEIGHTS: Partial<Record<LeaderboardStatKey, number>> = {
+  kicks: 3,
+  handballs: 2,
+  marks: 3,
+  tackles: 4,
+  goals: 6,
+  behinds: 1,
+  frees_for: 1,
+  frees_against: -3,
+  clearances: 3,
+}
+
+const LEADERBOARD_STAT_CAPS: Partial<Record<LeaderboardStatKey, number>> = {
+  disposals: 70,
+  goals: 25,
+  fantasy_points: 250,
+}
+
+export function isLeaderboardStatValueAllowed(statKey: LeaderboardStatKey, value: number) {
+  const cap = LEADERBOARD_STAT_CAPS[statKey]
+  return cap == null || value <= cap
+}
+
+function computeFantasyPoints(stats: Record<LeaderboardStatKey, number>) {
+  return Object.entries(FANTASY_WEIGHTS).reduce((total, [statKey, weight]) => {
+    return total + (stats[statKey as LeaderboardStatKey] ?? 0) * (weight ?? 0)
+  }, 0)
 }
 
 function ageInRange(age: number | null | undefined, range: LeaderboardFilters['ageRange']) {
@@ -122,6 +191,37 @@ export async function listStateOptions() {
     code: (row as { code: string }).code,
     name: (row as { name?: string | null }).name ?? null,
   }))
+}
+
+export async function listClubTints(clubIds: string[]) {
+  const ids = Array.from(new Set(clubIds.filter(Boolean)))
+  if (!ids.length) return new Map<string, string | null>()
+
+  const [{ data: squadRows, error: squadError }, { data: clubRows, error: clubError }] = await Promise.all([
+    supabase.from('squads').select('club_id,primary_color_hex,is_official').in('club_id', ids),
+    supabase.from('clubs').select('id,primary_color').in('id', ids),
+  ])
+
+  if (squadError) throw squadError
+  if (clubError) throw clubError
+
+  const tintMap = new Map<string, string | null>()
+
+  ;((clubRows ?? []) as any[]).forEach((row) => {
+    tintMap.set(row.id, normalizeHexColor(row.primary_color ?? null))
+  })
+
+  ;((squadRows ?? []) as any[]).forEach((row) => {
+    const clubId = row.club_id as string | null
+    if (!clubId) return
+    const tint = normalizeHexColor(row.primary_color_hex ?? null)
+    if (!tint) return
+    if (!tintMap.get(clubId) || row.is_official) {
+      tintMap.set(clubId, tint)
+    }
+  })
+
+  return tintMap
 }
 
 export async function listLeagueOptions(stateCode: string | null) {
@@ -179,9 +279,44 @@ async function resolveMembershipFilter(
   return allowed
 }
 
-export async function getLeaderboard(filters: LeaderboardFilters): Promise<LeaderboardRow[]> {
-  const start = `${filters.seasonYear}-01-01T00:00:00.000Z`
-  const end = `${filters.seasonYear}-12-31T23:59:59.999Z`
+function normalizeHexColor(input: string | null | undefined) {
+  if (!input) return null
+  let trimmed = input.trim()
+  if (!trimmed) return null
+  if (trimmed.startsWith('#')) trimmed = trimmed.slice(1)
+  if (trimmed.length === 3) {
+    trimmed = trimmed
+      .split('')
+      .map((char) => `${char}${char}`)
+      .join('')
+  }
+  if (trimmed.length !== 6 || !/^[0-9A-Fa-f]{6}$/.test(trimmed)) return null
+  return `#${trimmed.toUpperCase()}`
+}
+
+function getRangeBounds(rangeMode: LeaderboardRangeMode) {
+  if (rangeMode === 'week') {
+    const end = new Date()
+    const start = new Date(end)
+    start.setDate(end.getDate() - 7)
+    return {
+      start: start.toISOString(),
+      end: end.toISOString(),
+    }
+  }
+
+  const year = new Date().getFullYear()
+  return {
+    start: `${year}-01-01T00:00:00.000Z`,
+    end: `${year}-12-31T23:59:59.999Z`,
+  }
+}
+
+export async function getLeaderboardPlayers(
+  filters: Omit<LeaderboardFilters, 'seasonYear' | 'statKey'>,
+  rangeMode: LeaderboardRangeMode
+): Promise<LeaderboardPlayer[]> {
+  const { start, end } = getRangeBounds(rangeMode)
 
   const { data: games, error: gameError } = await supabase
     .from('games')
@@ -256,7 +391,7 @@ export async function getLeaderboard(filters: LeaderboardFilters): Promise<Leade
     string,
     {
       games: Set<string>
-      stats: Record<string, number>
+      stats: Record<LeaderboardStatKey, number>
     }
   >()
 
@@ -274,14 +409,15 @@ export async function getLeaderboard(filters: LeaderboardFilters): Promise<Leade
     if (membershipFilter && !membershipFilter.has(userId)) continue
 
     if (!aggregate.has(userId)) {
-      aggregate.set(userId, { games: new Set(), stats: {} })
+      aggregate.set(userId, { games: new Set(), stats: {} as Record<LeaderboardStatKey, number> })
     }
 
     const player = aggregate.get(userId)!
     player.games.add(gameId)
 
     const mapped = EVENT_KEY_MAP[String(row.stat_key || '').toUpperCase()]
-    if (!mapped) continue
+    if (!mapped || mapped === 'fantasy_points') continue
+
     player.stats[mapped] = (player.stats[mapped] ?? 0) + 1
 
     if (mapped === 'kicks' || mapped === 'handballs') {
@@ -289,32 +425,64 @@ export async function getLeaderboard(filters: LeaderboardFilters): Promise<Leade
     }
   }
 
-  const list = Array.from(aggregate.entries())
+  const players = Array.from(aggregate.entries())
     .map(([userId, value]) => {
       const profile = profileMap.get(userId)
       if (!profile) return null
 
+      const stats = { ...value.stats } as Record<LeaderboardStatKey, number>
+      stats.fantasy_points = computeFantasyPoints(stats)
+
       return {
-        rank: 0,
         userId,
         playerName: profile.name || 'Player',
         handle: profile.handle ? (profile.handle.startsWith('@') ? profile.handle : `@${profile.handle}`) : null,
         avatarUrl: profile.avatar,
-        squadName: null,
         clubName: profile.clubId ? clubMap.get(profile.clubId) ?? null : null,
         leagueName: profile.leagueId ? leagueMap.get(profile.leagueId) ?? null : null,
+        homeStateCode: profile.state,
+        homeLeagueId: profile.leagueId,
+        homeClubId: profile.clubId,
+        ageYears: profile.age,
         games: value.games.size,
-        statValue: Number(value.stats[filters.statKey] ?? 0),
-        secondaryDisposals: Number(value.stats.disposals ?? 0),
-      } as LeaderboardRow
+        stats,
+      } satisfies LeaderboardPlayer
     })
-    .filter((row): row is LeaderboardRow => Boolean(row))
-    .filter((row) => row.statValue > 0)
+    .filter((row): row is LeaderboardPlayer => Boolean(row))
+
+  return players
+}
+
+export async function getLeaderboard(filters: LeaderboardFilters): Promise<LeaderboardRow[]> {
+  const players = await getLeaderboardPlayers(
+    {
+      stateCode: filters.stateCode,
+      leagueId: filters.leagueId,
+      clubId: filters.clubId,
+      ageRange: filters.ageRange,
+    },
+    'season'
+  )
+
+  return players
+    .map((player) => ({
+      rank: 0,
+      userId: player.userId,
+      playerName: player.playerName,
+      handle: player.handle,
+      avatarUrl: player.avatarUrl,
+      squadName: null,
+      clubName: player.clubName,
+      leagueName: player.leagueName,
+      games: player.games,
+      statValue: Number(player.stats[filters.statKey] ?? 0),
+      secondaryDisposals: Number(player.stats.disposals ?? 0),
+    }))
+    .filter((row) => row.statValue > 0 && isLeaderboardStatValueAllowed(filters.statKey, row.statValue))
     .sort((a, b) => {
       if (b.statValue !== a.statValue) return b.statValue - a.statValue
       if (b.secondaryDisposals !== a.secondaryDisposals) return b.secondaryDisposals - a.secondaryDisposals
       return a.playerName.localeCompare(b.playerName)
     })
-
-  return list.map((row, index) => ({ ...row, rank: index + 1 }))
+    .map((row, index) => ({ ...row, rank: index + 1 }))
 }

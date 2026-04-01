@@ -29,6 +29,15 @@ import NotificationsPage from './routes/portal/NotificationsPage'
 import ProfilePage from './routes/portal/ProfilePage'
 import SettingsPage from './routes/portal/SettingsPage'
 import AdminPage from './routes/portal/AdminPage'
+import AdminLeaguesPage from './routes/portal/admin/AdminLeaguesPage'
+import AdminOfficialSquadsPage from './routes/portal/admin/AdminOfficialSquadsPage'
+import AdminModerationPage from './routes/portal/admin/AdminModerationPage'
+import AdminUsersPage from './routes/portal/admin/AdminUsersPage'
+import AdminManualFeedPostPage from './routes/portal/admin/AdminManualFeedPostPage'
+import AdminRequestDetailPage from './routes/portal/admin/AdminRequestDetailPage'
+import AdminRequestsPage from './routes/portal/admin/AdminRequestsPage'
+import AdminGamesPage from './routes/portal/admin/AdminGamesPage'
+import LeagueAdminDetailPage from './routes/portal/admin/LeagueAdminDetailPage'
 import UpdateEmailPage from './routes/portal/settings/UpdateEmailPage'
 import RolesPage from './routes/portal/settings/RolesPage'
 import BlockedUsersPage from './routes/portal/settings/BlockedUsersPage'
@@ -90,6 +99,15 @@ const router = createBrowserRouter([
           { path: 'settings/roles', element: <RolesPage /> },
           { path: 'settings/blocked-users', element: <BlockedUsersPage /> },
           { path: 'admin', element: <AdminPage /> },
+          { path: 'admin/leagues', element: <AdminLeaguesPage /> },
+          { path: 'admin/official-squads', element: <AdminOfficialSquadsPage /> },
+          { path: 'admin/moderation', element: <AdminModerationPage /> },
+          { path: 'admin/users', element: <AdminUsersPage /> },
+          { path: 'admin/requests', element: <AdminRequestsPage /> },
+          { path: 'admin/games', element: <AdminGamesPage /> },
+          { path: 'admin/manual-feed-post', element: <AdminManualFeedPostPage /> },
+          { path: 'admin/requests/:requestType/:requestId', element: <AdminRequestDetailPage /> },
+          { path: 'leagues/:id', element: <LeagueAdminDetailPage /> },
         ],
       },
 

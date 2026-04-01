@@ -12,6 +12,8 @@ export type GameLogRow = {
   squadName: string | null
   squadLogoUrl: string | null
   opponentLogoUrl: string | null
+  homePrimaryColorHex: string | null
+  awayPrimaryColorHex: string | null
   scoreHomeGoals: number | null
   scoreHomeBehinds: number | null
   scoreAwayGoals: number | null
@@ -311,20 +313,102 @@ async function scoreFromEvents(gameId: string) {
   return { hg, hb, ag, ab }
 }
 
+async function loadUserHomeSquadBranding(userId: string) {
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('home_club_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (profileError) throw profileError
+
+  const homeClubId = (profile as { home_club_id?: string | null } | null)?.home_club_id ?? null
+  if (!homeClubId) {
+    return {
+      squadName: null,
+      squadLogoUrl: null,
+      primaryColorHex: null,
+    }
+  }
+
+  let squadQuery = await supabase
+    .from('squads')
+    .select('name,logo_url,primary_color_hex,is_official')
+    .eq('club_id', homeClubId)
+    .eq('is_official', true)
+    .limit(1)
+    .maybeSingle()
+
+  if (squadQuery.error && squadQuery.error.code !== 'PGRST116') throw squadQuery.error
+
+  if (!squadQuery.data) {
+    squadQuery = await supabase
+      .from('squads')
+      .select('name,logo_url,primary_color_hex,is_official')
+      .eq('club_id', homeClubId)
+      .limit(1)
+      .maybeSingle()
+
+    if (squadQuery.error && squadQuery.error.code !== 'PGRST116') throw squadQuery.error
+  }
+
+  const squad = squadQuery.data as
+    | {
+        name?: string | null
+        logo_url?: string | null
+        primary_color_hex?: string | null
+      }
+    | null
+
+  return {
+    squadName: squad?.name ?? null,
+    squadLogoUrl: toPublicLogo(squad?.logo_url ?? null),
+    primaryColorHex: squad?.primary_color_hex ?? null,
+  }
+}
+
+async function loadSquadColorsByName(names: Array<string | null | undefined>) {
+  const cleanedNames = Array.from(new Set(names.map((name) => name?.trim()).filter(Boolean) as string[]))
+  if (!cleanedNames.length) return new Map<string, string>()
+
+  const { data, error } = await supabase
+    .from('squads')
+    .select('name,primary_color_hex,is_official')
+    .in('name', cleanedNames)
+
+  if (error) throw error
+
+  const colorByName = new Map<string, string>()
+
+  ;(data ?? []).forEach((row) => {
+    const typedRow = row as { name?: string | null; primary_color_hex?: string | null; is_official?: boolean | null }
+    const name = typedRow.name?.trim()
+    const color = typedRow.primary_color_hex ?? null
+    const isOfficial = Boolean(typedRow.is_official)
+    if (!name || !color) return
+    if (!colorByName.has(name) || isOfficial) {
+      colorByName.set(name, color)
+    }
+  })
+
+  return colorByName
+}
+
 export async function listUserGames(userId: string): Promise<GameLogRow[]> {
-  const [eventRes, ownGamesRes, manualRes] = await Promise.all([
+  const [eventRes, ownGamesRes, manualRes, homeSquadBranding] = await Promise.all([
     supabase
       .from('events')
       .select('game_id,created_by,profile_user_id,games(track_request_status,tracked_for_profile_user_id)')
       .or(`profile_user_id.eq.${userId},created_by.eq.${userId}`),
     supabase
       .from('games')
-      .select('id,opponent,date,venue,round,status,track_both_teams,opponent_logo_path,created_by,game_squads(team_side,squads(name,logo_url))')
+      .select('id,opponent,date,venue,round,status,track_both_teams,opponent_logo_path,created_by,game_squads(team_side,squads(name,logo_url,primary_color_hex))')
       .eq('created_by', userId),
     supabase
       .from('manual_player_game_totals')
       .select('id,user_id,game_id,opponent_name,opponent_logo_url,opponent_logo_path,venue,round,match_date,games(id,opponent,date,venue,round,status,opponent_logo_path)')
       .eq('user_id', userId),
+    loadUserHomeSquadBranding(userId),
   ])
 
   if (eventRes.error) throw eventRes.error
@@ -363,7 +447,7 @@ export async function listUserGames(userId: string): Promise<GameLogRow[]> {
   const trackedRows = trackedIds.length
     ? await supabase
         .from('games')
-        .select('id,opponent,date,venue,round,status,track_both_teams,opponent_logo_path,game_squads(team_side,squads(name,logo_url))')
+        .select('id,opponent,date,venue,round,status,track_both_teams,opponent_logo_path,game_squads(team_side,squads(name,logo_url,primary_color_hex))')
         .in('id', trackedIds)
     : { data: [], error: null }
 
@@ -388,6 +472,8 @@ export async function listUserGames(userId: string): Promise<GameLogRow[]> {
         squadName: homeSquad?.squads?.name ?? null,
         squadLogoUrl: toPublicLogo(homeSquad?.squads?.logo_url ?? null),
         opponentLogoUrl: toPublicLogo(awaySquad?.squads?.logo_url ?? game.opponent_logo_path ?? null),
+        homePrimaryColorHex: homeSquad?.squads?.primary_color_hex ?? null,
+        awayPrimaryColorHex: awaySquad?.squads?.primary_color_hex ?? null,
         scoreHomeGoals: score.hg,
         scoreHomeBehinds: score.hb,
         scoreAwayGoals: score.ag,
@@ -400,6 +486,7 @@ export async function listUserGames(userId: string): Promise<GameLogRow[]> {
     .map((row) => {
       const linkedGame = row.games ?? null
       const date = row.match_date ?? linkedGame?.date ?? null
+      const opponentLogoUrl = toPublicLogo(row.opponent_logo_url ?? row.opponent_logo_path ?? linkedGame?.opponent_logo_path ?? null)
       return {
         id: linkedGame?.id ?? row.game_id ?? `manual-${row.id}`,
         manualId: row.id,
@@ -409,9 +496,11 @@ export async function listUserGames(userId: string): Promise<GameLogRow[]> {
         status: linkedGame?.status ?? 'final',
         round: row.round ?? linkedGame?.round ?? null,
         opponent: row.opponent_name ?? linkedGame?.opponent ?? null,
-        squadName: null,
-        squadLogoUrl: toPublicLogo(row.opponent_logo_url ?? row.opponent_logo_path ?? null),
-        opponentLogoUrl: toPublicLogo(row.opponent_logo_url ?? row.opponent_logo_path ?? linkedGame?.opponent_logo_path ?? null),
+        squadName: homeSquadBranding.squadName,
+        squadLogoUrl: homeSquadBranding.squadLogoUrl,
+        opponentLogoUrl,
+        homePrimaryColorHex: homeSquadBranding.primaryColorHex,
+        awayPrimaryColorHex: null,
         scoreHomeGoals: null,
         scoreHomeBehinds: null,
         scoreAwayGoals: null,
@@ -423,11 +512,99 @@ export async function listUserGames(userId: string): Promise<GameLogRow[]> {
   const manualGameIds = new Set(manual.map((row) => row.id))
   const merged = [...tracked.filter((row) => !manualGameIds.has(row.id)), ...manual]
 
-  return merged.sort((a, b) => {
+  const colorByName = await loadSquadColorsByName([
+    homeSquadBranding.squadName,
+    ...merged.flatMap((row) => [row.squadName, row.opponent]),
+  ])
+
+  const enriched = merged.map((row) => ({
+    ...row,
+    homePrimaryColorHex: row.homePrimaryColorHex ?? (row.squadName ? colorByName.get(row.squadName.trim()) ?? null : null),
+    awayPrimaryColorHex: row.awayPrimaryColorHex ?? (row.opponent ? colorByName.get(row.opponent.trim()) ?? null : null),
+  }))
+
+  return enriched.sort((a, b) => {
     const ta = a.date ? new Date(a.date).getTime() : 0
     const tb = b.date ? new Date(b.date).getTime() : 0
     return tb - ta
   })
+}
+
+export async function listPlatformGames(limit = 24): Promise<GameLogRow[]> {
+  const [gamesRes, manualRes] = await Promise.all([
+    supabase
+      .from('games')
+      .select('id,opponent,date,venue,round,status,track_both_teams,opponent_logo_path,game_squads(team_side,squads(name,logo_url,primary_color_hex))')
+      .order('date', { ascending: false })
+      .limit(limit),
+    supabase
+      .from('manual_player_game_totals')
+      .select('id,user_id,game_id,opponent_name,opponent_logo_url,opponent_logo_path,venue,round,match_date,games(id,opponent,date,venue,round,status,opponent_logo_path),profiles(name,team_name,team_logo_url,team_logo_path)')
+      .is('user_id', null)
+      .order('match_date', { ascending: false })
+      .limit(Math.max(8, Math.ceil(limit / 2))),
+  ])
+
+  if (gamesRes.error) throw gamesRes.error
+  if (manualRes.error && manualRes.error.code !== 'PGRST116') throw manualRes.error
+
+  const tracked = await Promise.all(
+    ((gamesRes.data ?? []) as any[]).map(async (game) => {
+      const squads = Array.isArray(game.game_squads) ? game.game_squads : []
+      const homeSquad = squads.find((sq: any) => sq.team_side === 'home') ?? squads[0] ?? null
+      const awaySquad = squads.find((sq: any) => sq.team_side === 'away') ?? null
+      const score = await scoreFromEvents(game.id)
+
+      return {
+        id: game.id,
+        manualId: null,
+        isManual: false,
+        date: game.date ?? null,
+        venue: game.venue ?? null,
+        status: game.status ?? null,
+        round: game.round ?? null,
+        opponent: game.opponent ?? null,
+        squadName: homeSquad?.squads?.name ?? null,
+        squadLogoUrl: toPublicLogo(homeSquad?.squads?.logo_url ?? null),
+        opponentLogoUrl: toPublicLogo(awaySquad?.squads?.logo_url ?? game.opponent_logo_path ?? null),
+        homePrimaryColorHex: homeSquad?.squads?.primary_color_hex ?? null,
+        awayPrimaryColorHex: awaySquad?.squads?.primary_color_hex ?? null,
+        scoreHomeGoals: score.hg,
+        scoreHomeBehinds: score.hb,
+        scoreAwayGoals: score.ag,
+        scoreAwayBehinds: score.ab,
+      } as GameLogRow
+    })
+  )
+
+  const manual = ((manualRes.data ?? []) as any[]).map((row) => ({
+    id: row.games?.id ?? row.game_id ?? `manual-${row.id}`,
+    manualId: row.id,
+    isManual: true,
+    date: row.match_date ?? row.games?.date ?? null,
+    venue: row.venue ?? row.games?.venue ?? null,
+    status: row.games?.status ?? 'final',
+    round: row.round ?? row.games?.round ?? null,
+    opponent: row.opponent_name ?? row.games?.opponent ?? null,
+    squadName: row.profiles?.team_name ?? row.profiles?.name ?? 'Manual summary',
+    squadLogoUrl: toPublicLogo(row.profiles?.team_logo_url ?? row.profiles?.team_logo_path ?? null),
+    opponentLogoUrl: toPublicLogo(row.opponent_logo_url ?? row.opponent_logo_path ?? row.games?.opponent_logo_path ?? null),
+    homePrimaryColorHex: null,
+    awayPrimaryColorHex: null,
+    scoreHomeGoals: null,
+    scoreHomeBehinds: null,
+    scoreAwayGoals: null,
+    scoreAwayBehinds: null,
+  })) as GameLogRow[]
+
+  const merged = [...tracked, ...manual]
+  return merged
+    .sort((a, b) => {
+      const left = a.date ? new Date(a.date).getTime() : 0
+      const right = b.date ? new Date(b.date).getTime() : 0
+      return right - left
+    })
+    .slice(0, limit)
 }
 
 export async function getGameSummary(gameId: string): Promise<GameSummary | null> {

@@ -83,7 +83,7 @@ export default function SquadBrandingPanel({
   }
 
   return (
-    <PortalCard title="Branding" subtitle="Update squad logo and team colours">
+    <PortalCard title="Branding" subtitle="Update squad logo and team colours" className="teams-section-card">
       {!canManage ? (
         <p className="text-sm text-slate-400">Only owners/admins can update squad branding.</p>
       ) : (
@@ -91,14 +91,14 @@ export default function SquadBrandingPanel({
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
               <p className="text-sm text-slate-300">Logo</p>
-              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-[#0D1525]">
+              <div className="teams-detail-logo h-24 w-24 rounded-[24px] text-xs">
                 {logo ? (
                   <img src={logoUrl && logo === logoUrl ? logoUrl : logo} alt="Squad logo" className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-xs text-slate-500">No logo</span>
                 )}
               </div>
-              <label className="btn btn-secondary inline-flex cursor-pointer">
+              <label className="teams-action-chip inline-flex cursor-pointer">
                 Upload Logo
                 <input type="file" accept="image/*" className="hidden" onChange={onLogoChange} />
               </label>
@@ -128,7 +128,7 @@ export default function SquadBrandingPanel({
 
           {error && <p className="mt-3 text-sm text-red-300">{error}</p>}
 
-          <button className="btn btn-primary mt-4" disabled={saving} onClick={submit}>
+          <button className="teams-action-chip teams-action-chip--accent mt-4 justify-center" disabled={saving} onClick={submit}>
             {saving ? 'Saving…' : 'Save Branding'}
           </button>
         </>

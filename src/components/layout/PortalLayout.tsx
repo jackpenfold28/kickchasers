@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react'
 import clsx from 'clsx'
 import { supabase } from '@/lib/supabase'
 import SidebarNavigation from '@/components/layout/SidebarNavigation'
+import { fetchPlatformAdminStatus } from '@/lib/platform-admin'
 
 type ProfileSummary = {
   name: string | null
@@ -56,22 +57,19 @@ export default function PortalLayout() {
         return
       }
 
-      const [profileRes, adminRes] = await Promise.all([
+      const [profileRes, adminStatus] = await Promise.all([
         supabase
           .from('profiles')
           .select('name,handle,avatar_url,avatar_path,primary_role,game_day_roles')
           .eq('user_id', user.id)
           .maybeSingle(),
-        supabase.from('platform_admins').select('profile_user_id').eq('profile_user_id', user.id).maybeSingle(),
+        fetchPlatformAdminStatus(user.id),
       ])
 
       if (cancelled) return
 
       const profile = (profileRes.data as ProfileSummary | null) ?? null
-      const profileRoles = Array.isArray(profile?.game_day_roles) ? profile.game_day_roles : []
-      const profileIsAdmin = profile?.primary_role === 'admin' || profileRoles.includes('admin')
-      const tableIsAdmin = Boolean(adminRes.data?.profile_user_id)
-      const canAccessAdmin = profileIsAdmin || tableIsAdmin
+      const canAccessAdmin = adminStatus.isAdmin
 
       setIsAdmin(canAccessAdmin)
       setDisplayName(profile?.name || profile?.handle || user.email || 'User')
@@ -89,10 +87,10 @@ export default function PortalLayout() {
   }, [location.pathname])
 
   useEffect(() => {
-    if (!checkingRole && location.pathname === '/admin' && !isAdmin) {
+    if (!checkingRole && isAdminRoute && !isAdmin) {
       navigate('/dashboard', { replace: true })
     }
-  }, [checkingRole, isAdmin, location.pathname, navigate])
+  }, [checkingRole, isAdmin, isAdminRoute, navigate])
 
   const openSettings = () => navigate('/settings')
   const logout = async () => {
@@ -104,7 +102,7 @@ export default function PortalLayout() {
     return <main className="min-h-screen p-6 app-bg">Loading portal…</main>
   }
 
-  if (location.pathname === '/admin' && !isAdmin) {
+  if (isAdminRoute && !isAdmin) {
     return <Navigate to="/dashboard" replace />
   }
 
@@ -158,3 +156,4 @@ export default function PortalLayout() {
     </div>
   )
 }
+  const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/') || location.pathname.startsWith('/leagues/')

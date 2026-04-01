@@ -38,7 +38,7 @@ export default function RosterTable({
   }, [filter, members])
 
   return (
-    <PortalCard title="Roster" subtitle="Desktop roster management with quick inline edits">
+    <PortalCard title="Roster" subtitle="Desktop roster management with quick inline edits" className="teams-section-card">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <input
           value={filter}
@@ -53,7 +53,7 @@ export default function RosterTable({
         {filtered.map((member) => {
           const isBusy = savingMemberId === member.id
           return (
-            <div key={member.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div key={member.id} className="teams-operational-card">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-medium text-white">{labelForMember(member)}</div>
@@ -119,7 +119,7 @@ export default function RosterTable({
       <div className="hidden overflow-x-auto md:block">
         <table className="min-w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wide text-slate-400">
+            <tr className="border-b border-white/10 text-left text-xs uppercase tracking-[0.18em] text-slate-500">
               <th className="px-2 py-3">#</th>
               <th className="px-2 py-3">Player</th>
               <th className="px-2 py-3">Position</th>
@@ -132,7 +132,7 @@ export default function RosterTable({
             {filtered.map((member) => {
               const isBusy = savingMemberId === member.id
               return (
-                <tr key={member.id} className="border-b border-white/5 text-slate-200">
+                <tr key={member.id} className="border-b border-white/5 text-slate-200 transition hover:bg-white/[0.03]">
                   <td className="px-2 py-3">
                     {canManage ? (
                       <input

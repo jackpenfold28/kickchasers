@@ -43,6 +43,393 @@
   .btn-secondary { @apply bg-white/5 border-white/15 hover:bg-white/10 hover:border-white/25 text-white/90 hover:text-white; }
   .btn-ghost { @apply bg-transparent border-transparent hover:bg-white/10 text-white/70 hover:text-white shadow-none; }
 
+  /* Teams product surfaces */
+  .teams-stage {
+    position: relative;
+  }
+
+  .teams-stage::before {
+    content: "";
+    position: absolute;
+    inset: -2rem 0 auto;
+    height: 18rem;
+    pointer-events: none;
+    background:
+      radial-gradient(60% 70% at 0% 0%, rgba(57,255,136,0.10), transparent 60%),
+      radial-gradient(40% 60% at 100% 10%, rgba(255,255,255,0.05), transparent 65%);
+    filter: blur(12px);
+    opacity: 0.9;
+  }
+
+  .teams-header-shell {
+    @apply relative overflow-hidden rounded-[34px] px-5 py-6 sm:px-7 sm:py-7;
+    background:
+      radial-gradient(circle at top left, rgba(57,255,136,0.16), transparent 34%),
+      linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)),
+      #091321;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.06),
+      0 18px 44px rgba(1,6,18,.42);
+  }
+
+  .teams-kicker {
+    @apply text-[11px] font-semibold uppercase tracking-[0.28em] text-[#9CE8BE];
+  }
+
+  .teams-segmented {
+    @apply flex flex-wrap items-end gap-6 border-b border-white/10 px-1;
+  }
+
+  .teams-segment {
+    @apply relative bg-transparent pb-3 text-sm font-semibold text-slate-500 transition;
+  }
+
+  .teams-segment:hover {
+    @apply text-white;
+  }
+
+  .teams-segment.is-active {
+    @apply text-white;
+  }
+
+  .teams-segment::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -1px;
+    width: 34px;
+    height: 3px;
+    border-radius: 999px;
+    transform: translateX(-50%) scaleX(0);
+    transform-origin: center;
+    background: #39FF88;
+    opacity: 0;
+    transition: transform .18s ease, opacity .18s ease;
+  }
+
+  .teams-segment.is-active::after {
+    transform: translateX(-50%) scaleX(1);
+    opacity: 1;
+  }
+
+  .team-row-card {
+    @apply relative overflow-hidden rounded-[28px] px-4 py-4 sm:px-5;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015)),
+      #0E1726;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.04),
+      0 16px 34px rgba(2,8,20,.38);
+    transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
+  }
+
+  .team-row-card:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.05),
+      0 22px 44px rgba(1,7,18,.52);
+  }
+
+  .team-row-logo {
+    @apply flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#142033];
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.07),
+      0 12px 24px rgba(0,0,0,.34);
+  }
+
+  .team-row-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .team-official-badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#A6FFCE];
+    background: rgba(57,255,136,0.12);
+    box-shadow: inset 0 0 0 1px rgba(57,255,136,.24);
+  }
+
+  .team-meta-pill {
+    @apply rounded-full px-2.5 py-1 text-[11px] text-slate-300;
+    background: rgba(255,255,255,0.05);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+
+  .team-forward {
+    @apply flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition;
+    background: rgba(255,255,255,.04);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+
+  .team-row-card:hover .team-forward {
+    color: #39FF88;
+    background: rgba(57,255,136,.08);
+    box-shadow: inset 0 0 0 1px rgba(57,255,136,.22);
+  }
+
+  .teams-invite-card {
+    @apply overflow-hidden rounded-[28px] p-4;
+    background:
+      radial-gradient(circle at top left, rgba(57,255,136,0.11), transparent 40%),
+      linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015)),
+      #0E1726;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.05),
+      0 18px 38px rgba(2,8,20,.42);
+  }
+
+  .teams-detail-hero {
+    @apply relative overflow-hidden rounded-[34px];
+    background: #0B1422;
+    box-shadow: 0 28px 54px rgba(1,6,18,.5);
+  }
+
+  .teams-detail-cover {
+    @apply relative h-[220px] sm:h-[270px];
+    background:
+      radial-gradient(circle at top left, rgba(57,255,136,0.24), transparent 34%),
+      linear-gradient(135deg, #142136 0%, #0A1220 56%, #060B14 100%);
+  }
+
+  .teams-detail-cover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(5,8,15,0) 0%, rgba(5,8,15,0.24) 46%, rgba(5,8,15,0.82) 100%);
+  }
+
+  .teams-detail-logo {
+    @apply relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-[28px] bg-[#0C1523] text-3xl font-semibold text-white;
+    box-shadow:
+      0 20px 45px rgba(0,0,0,.52),
+      inset 0 1px 0 rgba(255,255,255,.08);
+  }
+
+  .teams-detail-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .teams-title-display {
+    font-style: italic;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+
+  .teams-hero-meta-row {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .teams-action-scroll {
+    @apply no-scrollbar flex gap-2 overflow-x-auto pb-1;
+  }
+
+  .teams-hero-actions {
+    @apply no-scrollbar -mt-2 flex gap-3 overflow-x-auto px-1 pb-1;
+  }
+
+  .teams-hero-action {
+    @apply flex min-w-[78px] shrink-0 flex-col items-center gap-2 text-center text-xs font-medium text-slate-300 transition;
+  }
+
+  .teams-hero-action-icon {
+    @apply relative flex h-14 w-14 items-center justify-center rounded-full text-slate-100 transition;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03)),
+      #10192a;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.06),
+      0 12px 26px rgba(2,8,20,.28);
+  }
+
+  .teams-hero-action:hover .teams-hero-action-icon {
+    transform: translateY(-1px);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)),
+      #111d31;
+  }
+
+  .teams-hero-action--accent .teams-hero-action-icon {
+    color: #081120;
+    background: #39FF88;
+    box-shadow: 0 14px 30px rgba(57,255,136,.24);
+  }
+
+  .teams-hero-action-badge {
+    @apply absolute -right-1 -top-1 inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-semibold text-[#081120];
+    background: #39FF88;
+    box-shadow: 0 6px 14px rgba(57,255,136,.24);
+  }
+
+  .teams-action-chip {
+    @apply inline-flex min-h-[42px] items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-slate-200 transition whitespace-nowrap;
+    background: rgba(255,255,255,0.06);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+
+  .teams-action-chip:hover {
+    background: rgba(255,255,255,0.10);
+  }
+
+  .teams-action-chip--accent {
+    color: #081120;
+    background: #39FF88;
+    box-shadow: 0 10px 22px rgba(57,255,136,.22);
+  }
+
+  .teams-section-card {
+    @apply rounded-[30px] p-5 sm:p-6;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.012)),
+      #0D1625;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.04),
+      0 16px 36px rgba(2,8,20,.34);
+  }
+
+  .admin-users-control {
+    @apply flex min-h-[76px] flex-col justify-center gap-2 rounded-[24px] border border-white/10 px-4 py-3 text-left;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.012)),
+      rgba(12,20,33,0.88);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+  }
+
+  .admin-users-search {
+    @apply flex-row items-center gap-3;
+  }
+
+  .admin-users-control-label {
+    @apply block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500;
+  }
+
+  .admin-users-control-input,
+  .admin-users-control-select {
+    @apply mt-0 w-full border-0 bg-transparent p-0 text-sm text-slate-100 outline-none;
+  }
+
+  .admin-users-control-input::placeholder {
+    @apply text-slate-500;
+  }
+
+  .admin-users-count-pill {
+    @apply inline-flex min-h-[54px] items-center gap-2 self-start rounded-full border border-white/10 px-4 py-2;
+    background:
+      radial-gradient(circle at top left, rgba(57,255,136,0.12), transparent 42%),
+      rgba(255,255,255,0.04);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.04),
+      0 10px 24px rgba(1,7,18,.22);
+  }
+
+  .admin-user-row {
+    @apply flex flex-col gap-5 rounded-[28px] px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between;
+    background:
+      radial-gradient(circle at top left, rgba(57,255,136,0.08), transparent 34%),
+      linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.012)),
+      #0E1726;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.05),
+      0 18px 38px rgba(2,8,20,.34);
+  }
+
+  .admin-user-avatar {
+    @apply inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#152238] text-sm font-semibold text-white;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.06),
+      0 12px 26px rgba(0,0,0,.32);
+  }
+
+  .admin-users-primary-role-pill {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-200;
+    background: rgba(255,255,255,0.06);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+
+  .admin-users-meta-pill {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs text-slate-300;
+    background: rgba(255,255,255,0.05);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+
+  .admin-users-meta-pill--accent {
+    color: #B8FFD5;
+    background: rgba(57,255,136,0.10);
+    box-shadow: inset 0 0 0 1px rgba(57,255,136,.18);
+  }
+
+  .admin-users-meta-label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500;
+  }
+
+  .admin-user-side {
+    @apply flex w-full flex-col gap-3 border-t border-white/10 pt-4 lg:w-auto lg:min-w-[230px] lg:items-end lg:border-t-0 lg:border-l lg:border-white/10 lg:pl-5 lg:pt-0;
+  }
+
+  .admin-user-side-summary {
+    @apply flex w-full items-center justify-between gap-3 lg:flex-col lg:items-end;
+  }
+
+  .admin-user-badge-stack {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .admin-users-status-badge {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em];
+  }
+
+  .admin-users-status-badge--admin {
+    color: #B8FFD5;
+    background: rgba(57,255,136,0.12);
+    box-shadow: inset 0 0 0 1px rgba(57,255,136,.22);
+  }
+
+  .admin-users-status-badge--standard {
+    @apply text-slate-300;
+    background: rgba(255,255,255,0.05);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+
+  .admin-user-action-row {
+    @apply flex w-full justify-end;
+  }
+
+  .admin-user-action-row button {
+    @apply min-h-[40px] rounded-full px-4;
+  }
+
+  .teams-operational-card {
+    @apply rounded-[26px] p-4 transition;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.012)),
+      #111B2C;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.03),
+      0 14px 30px rgba(2,8,20,.26);
+  }
+
+  .teams-operational-card:hover {
+    transform: translateY(-1px);
+  }
+
+  .teams-guest-card {
+    @apply rounded-[24px] p-4;
+    background:
+      radial-gradient(circle at top left, rgba(57,255,136,0.08), transparent 38%),
+      linear-gradient(180deg, rgba(255,255,255,0.028), rgba(255,255,255,0.01)),
+      #101A29;
+    box-shadow:
+      inset 0 0 0 1px rgba(57,255,136,.10),
+      0 14px 28px rgba(2,8,20,.26);
+  }
+
+  .teams-soft-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
+  }
+
   /* team logo badge */
   .team-logo { width: 76px; height: 76px; border-radius: 16px; overflow: hidden; @apply bg-white/10 border border-white/15 shadow-[0_8px_28px_rgba(0,0,0,.35)] backdrop-blur; }
   .team-logo img { width:100%; height:100%; object-fit:cover; display:block; }

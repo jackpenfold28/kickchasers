@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { Search } from 'lucide-react'
 import PortalCard from '@/components/cards/PortalCard'
-import DataTable from '@/components/portal/DataTable'
 import { listUserGames, type GameLogRow } from '@/lib/portal-games'
 import { supabase } from '@/lib/supabase'
+import GameLogCard, { matchesStatusFilter } from '@/components/portal/games/GameLogCard'
 
-function statusLabel(status: string | null) {
-  const lower = (status || '').toLowerCase()
-  if (lower === 'complete') return 'Final'
-  if (lower === 'in_progress') return 'Live'
-  if (lower === 'scheduled') return 'Scheduled'
-  return status || 'Unknown'
+function parseSeasonYear(value: string | null) {
+  if (!value) return null
+  const parsed = new Date(value)
+  const year = parsed.getFullYear()
+  return Number.isNaN(year) ? null : year
 }
+
 
 export default function GamesPage() {
   const navigate = useNavigate()
@@ -52,18 +53,45 @@ export default function GamesPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return rows.filter((row) => {
-      if (statusFilter !== 'all' && (row.status || '').toLowerCase() !== statusFilter) {
-        return false
-      }
-      if (!q) return true
-      return (
-        (row.opponent || '').toLowerCase().includes(q) ||
-        (row.squadName || '').toLowerCase().includes(q) ||
-        (row.venue || '').toLowerCase().includes(q)
-      )
-    })
+    return rows
+      .filter((row) => {
+        if (!matchesStatusFilter(row.status, statusFilter)) {
+          return false
+        }
+        if (!q) return true
+        return (
+          (row.opponent || '').toLowerCase().includes(q) ||
+          (row.squadName || '').toLowerCase().includes(q) ||
+          (row.venue || '').toLowerCase().includes(q)
+        )
+      })
+      .sort((left, right) => {
+        const leftTime = left.date ? new Date(left.date).getTime() : 0
+        const rightTime = right.date ? new Date(right.date).getTime() : 0
+        return rightTime - leftTime
+      })
   }, [query, rows, statusFilter])
+
+  const seasonSections = useMemo(() => {
+    const groups = new Map<string, { title: string; rows: GameLogRow[]; sortKey: number }>()
+
+    for (const row of filtered) {
+      const season = parseSeasonYear(row.date)
+      const key = season ? String(season) : 'unknown'
+      const existing = groups.get(key)
+      if (existing) {
+        existing.rows.push(row)
+        continue
+      }
+      groups.set(key, {
+        title: season ? `${season} Season` : 'Unknown Season',
+        rows: [row],
+        sortKey: season ?? -1,
+      })
+    }
+
+    return Array.from(groups.values()).sort((left, right) => right.sortKey - left.sortKey)
+  }, [filtered])
 
   if (loading) {
     return <main className="min-h-screen p-6 app-bg">Loading game log…</main>
@@ -71,118 +99,79 @@ export default function GamesPage() {
 
   return (
     <section className="grid gap-6">
-      <PortalCard>
-        <h2 className="text-2xl font-semibold text-white">Game Log</h2>
-        <p className="mt-1 text-sm text-slate-400">
-          Review tracked and manual games, then open full match summaries.
-        </p>
-      </PortalCard>
+      <PortalCard className="overflow-hidden bg-[linear-gradient(180deg,rgba(16,26,42,0.96)_0%,rgba(9,16,28,0.98)_100%)]">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">Game Log</p>
+            <h2 className="mt-2 text-[1.8rem] font-black italic leading-none tracking-[-0.05em] text-white sm:text-[2rem]">
+              Season Match Cards
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-400">
+              Review tracked and manual games with compact match-day card parity and season grouping.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_auto] xl:min-w-[640px] xl:max-w-[760px] xl:flex-1">
+            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 focus-within:border-white/20 focus-within:bg-white/[0.06]">
+              <Search className="h-4 w-4 text-slate-500" />
+              <input
+                className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search squad, opponent, venue"
+              />
+            </label>
 
-      <PortalCard title="Filters">
-        <div className="grid gap-3 md:grid-cols-3">
-          <input className="input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search squad, opponent, venue" />
-          <select className="input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as any)}>
-            <option value="all">All statuses</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="in_progress">Live</option>
-            <option value="complete">Final</option>
-          </select>
-          <div className="flex items-center text-xs text-slate-400">{filtered.length} games</div>
+            <select
+              className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-100 outline-none transition hover:bg-white/[0.06] focus:border-white/20 focus:bg-white/[0.06]"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as 'all' | 'scheduled' | 'in_progress' | 'complete')}
+            >
+              <option value="all">All statuses</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="in_progress">Live</option>
+              <option value="complete">Final</option>
+            </select>
+
+            <div className="flex items-center rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-400">
+              {filtered.length} game{filtered.length === 1 ? '' : 's'}
+            </div>
+          </div>
         </div>
       </PortalCard>
 
-      {error && (
+      {error ? (
         <PortalCard>
           <p className="text-sm text-red-300">{error}</p>
         </PortalCard>
-      )}
+      ) : null}
 
-      <PortalCard title="Games" subtitle="Recent games first">
-        <DataTable
-          rows={filtered}
-          getRowKey={(row) => `${row.id}:${row.manualId || 'tracked'}`}
-          emptyLabel="No games found for the current filters."
-          mobileCardRender={(row) => (
-            <div className="space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-medium text-white">
-                    {row.squadName || 'My Squad'} vs {row.opponent || 'Opponent'}
-                  </p>
-                  <p className="text-xs text-slate-500">{row.venue || 'Venue TBC'}</p>
+      <div className="grid gap-6">
+        {seasonSections.length ? (
+          seasonSections.map((section) => (
+            <section key={section.title} className="grid gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Season</p>
+                  <h3 className="mt-1 text-xl font-black italic tracking-[-0.04em] text-white">{section.title}</h3>
                 </div>
-                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-200">
-                  {statusLabel(row.status)}
-                </span>
+                <p className="text-sm text-slate-500">
+                  {section.rows.length} game{section.rows.length === 1 ? '' : 's'}
+                </p>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Date</p>
-                  <p className="mt-1 text-slate-200">{row.date ? new Date(row.date).toLocaleDateString() : '-'}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Score</p>
-                  <p className="mt-1 text-slate-200">
-                    {row.scoreHomeGoals != null
-                      ? `${row.scoreHomeGoals}.${row.scoreHomeBehinds} - ${row.scoreAwayGoals}.${row.scoreAwayBehinds}`
-                      : '-'}
-                  </p>
-                </div>
+
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {section.rows.map((row) => (
+                  <GameLogCard key={`${row.id}:${row.manualId || 'tracked'}`} row={row} />
+                ))}
               </div>
-              <Link
-                className="btn btn-secondary w-full"
-                to={row.isManual && row.manualId ? `/games/manual/${row.manualId}` : `/games/${row.id}`}
-              >
-                View Summary
-              </Link>
-            </div>
-          )}
-          columns={[
-            {
-              key: 'date',
-              label: 'Date',
-              render: (row) => (row.date ? new Date(row.date).toLocaleDateString() : '-'),
-            },
-            {
-              key: 'matchup',
-              label: 'Matchup',
-              render: (row) => (
-                <div>
-                  <p className="font-medium text-white">{row.squadName || 'My Squad'} vs {row.opponent || 'Opponent'}</p>
-                  <p className="text-xs text-slate-500">{row.venue || 'Venue TBC'}</p>
-                </div>
-              ),
-            },
-            {
-              key: 'score',
-              label: 'Score',
-              render: (row) =>
-                row.scoreHomeGoals != null
-                  ? `${row.scoreHomeGoals}.${row.scoreHomeBehinds} - ${row.scoreAwayGoals}.${row.scoreAwayBehinds}`
-                  : '-',
-            },
-            {
-              key: 'status',
-              label: 'Status',
-              render: (row) => (
-                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs">{statusLabel(row.status)}</span>
-              ),
-            },
-            {
-              key: 'action',
-              label: 'Action',
-              render: (row) => (
-                <Link
-                  className="btn btn-secondary px-3 py-1.5 text-xs"
-                  to={row.isManual && row.manualId ? `/games/manual/${row.manualId}` : `/games/${row.id}`}
-                >
-                  View Summary
-                </Link>
-              ),
-            },
-          ]}
-        />
-      </PortalCard>
+            </section>
+          ))
+        ) : (
+          <PortalCard className="border-dashed bg-white/[0.03]">
+            <p className="text-sm text-slate-400">No games found for the current filters.</p>
+          </PortalCard>
+        )}
+      </div>
     </section>
   )
 }
