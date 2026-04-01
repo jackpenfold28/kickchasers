@@ -56,8 +56,8 @@ export default function SquadHeader({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Link to="/squads" className="btn btn-secondary">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Link to="/squads" className="btn btn-secondary w-full sm:w-auto">
             Back to Squads
           </Link>
           {canLeave && (
@@ -65,7 +65,7 @@ export default function SquadHeader({
               type="button"
               onClick={onLeave}
               disabled={leaving}
-              className="btn border-red-500/60 text-red-300 hover:bg-red-950/40 disabled:opacity-60"
+              className="btn w-full border-red-500/60 text-red-300 hover:bg-red-950/40 disabled:opacity-60 sm:w-auto"
             >
               {leaving ? 'Leaving…' : 'Leave Squad'}
             </button>

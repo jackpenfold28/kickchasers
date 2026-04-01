@@ -250,7 +250,7 @@ export default function ProfilePage() {
       </PortalCard>
 
       <PortalCard title="Profile Summary" subtitle="Season stats and game history wiring comes in the next phase">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border border-white/10 bg-white/5 p-3">
             <p className="text-xs uppercase tracking-wide text-slate-400">Games</p>
             <p className="mt-1 text-2xl font-semibold text-white">-</p>

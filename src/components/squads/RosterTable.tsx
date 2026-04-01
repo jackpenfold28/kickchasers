@@ -39,17 +39,84 @@ export default function RosterTable({
 
   return (
     <PortalCard title="Roster" subtitle="Desktop roster management with quick inline edits">
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <input
           value={filter}
           onChange={(event) => setFilter(event.target.value)}
           placeholder="Search roster"
-          className="input max-w-xs"
+          className="input w-full sm:max-w-xs"
         />
         <p className="text-xs text-slate-400">{filtered.length} members</p>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="grid gap-3 md:hidden">
+        {filtered.map((member) => {
+          const isBusy = savingMemberId === member.id
+          return (
+            <div key={member.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-medium text-white">{labelForMember(member)}</div>
+                  {member.guestEmail && <div className="text-xs text-slate-400">{member.guestEmail}</div>}
+                </div>
+                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300">
+                  {member.role}
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div>
+                  <p className="mb-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">Jersey</p>
+                  {canManage ? (
+                    <input
+                      className="input"
+                      type="number"
+                      defaultValue={member.jerseyNumber ?? ''}
+                      onBlur={async (event) => {
+                        const raw = event.target.value.trim()
+                        const next = raw ? Number(raw) : null
+                        if (next === member.jerseyNumber) return
+                        await onUpdateNumber(member.id, Number.isFinite(next as number) ? next : null)
+                      }}
+                      disabled={isBusy}
+                    />
+                  ) : (
+                    <p className="text-slate-200">{member.jerseyNumber ?? '-'}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="mb-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">Status</p>
+                  <p className="text-slate-200">{member.status}</p>
+                </div>
+              </div>
+              <div className="mt-3">
+                <p className="mb-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">Position</p>
+                {canManage ? (
+                  <input
+                    className="input"
+                    defaultValue={member.position ?? ''}
+                    onBlur={async (event) => {
+                      const next = event.target.value.trim() || null
+                      if (next === member.position) return
+                      await onUpdatePosition(member.id, next)
+                    }}
+                    disabled={isBusy}
+                    placeholder="MID"
+                  />
+                ) : (
+                  <p className="text-slate-200">{member.position || '-'}</p>
+                )}
+              </div>
+              {canManage ? (
+                <button className="btn mt-4 w-full border-red-500/50 text-red-300" onClick={() => onRemove(member.id)} disabled={isBusy}>
+                  Remove
+                </button>
+              ) : null}
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="min-w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wide text-slate-400">

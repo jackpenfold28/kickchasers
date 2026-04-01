@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  X,
   History,
   LayoutDashboard,
   Settings,
@@ -46,7 +47,7 @@ const LeaderboardsIcon: NavItem['icon'] = ({ className }) => (
 const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Match Day', path: '/match-day', icon: MatchDayIcon },
-  { label: 'Squads', path: '/squads', icon: UsersRound },
+  { label: 'Teams', path: '/teams', icon: UsersRound },
   { label: 'Game Log', path: '/games', icon: History },
   { label: 'Leaderboards', path: '/stats', icon: LeaderboardsIcon },
   { label: 'Notifications', path: '/notifications', icon: Bell },
@@ -136,10 +137,10 @@ export default function SidebarNavigation({
 
   return (
     <>
-      {mobileOpen && <button className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={onCloseMobile} />}
+      {mobileOpen && <button className="fixed inset-0 z-30 bg-black/60 backdrop-blur-[2px] lg:hidden" onClick={onCloseMobile} aria-label="Close navigation overlay" />}
       <aside
         className={clsx(
-          'fixed inset-y-0 left-0 z-40 w-[240px] border-r border-white/10 bg-[#081225] px-4 py-5 transition-[width,transform,padding] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:w-[var(--portal-sidebar-width)] lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-40 w-[min(88vw,240px)] border-r border-white/10 bg-[#081225] px-4 py-5 transition-[width,transform,padding] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:w-[var(--portal-sidebar-width)] lg:translate-x-0',
           collapsed ? 'lg:px-3' : 'lg:px-4',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
@@ -162,6 +163,14 @@ export default function SidebarNavigation({
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {collapsed ? <ChevronRight className="h-[15px] w-[15px]" /> : <ChevronLeft className="h-[15px] w-[15px]" />}
+            </button>
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              className="absolute right-0 top-0 inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-white/[0.04] hover:text-white lg:hidden"
+              aria-label="Close navigation"
+            >
+              <X className="h-4 w-4" />
             </button>
 
             <div className={clsx('min-w-0', collapsed ? 'flex justify-center' : 'flex flex-col items-center text-center')}>

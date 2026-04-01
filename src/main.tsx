@@ -19,6 +19,7 @@ import DashboardPage from './routes/portal/DashboardPage'
 import SquadsPage from './routes/portal/SquadsPage'
 import SquadCreatePage from './routes/portal/SquadCreatePage'
 import SquadDetailPage from './routes/portal/SquadDetailPage'
+import TeamSelectionPage from './routes/portal/TeamSelectionPage'
 import GamesPage from './routes/portal/GamesPage'
 import GameSummaryPage from './routes/portal/GameSummaryPage'
 import ManualGameSummaryPage from './routes/portal/ManualGameSummaryPage'
@@ -70,9 +71,14 @@ const router = createBrowserRouter([
         children: [
           { path: 'dashboard', element: <DashboardPage /> },
           { path: 'match-day', element: <MatchDayPage /> },
+          { path: 'teams', element: <SquadsPage /> },
+          { path: 'teams/new', element: <SquadCreatePage /> },
+          { path: 'teams/:id', element: <SquadDetailPage /> },
+          { path: 'teams/:id/team-selection', element: <TeamSelectionPage /> },
           { path: 'squads', element: <SquadsPage /> },
           { path: 'squads/new', element: <SquadCreatePage /> },
           { path: 'squads/:id', element: <SquadDetailPage /> },
+          { path: 'squads/:id/team-selection', element: <TeamSelectionPage /> },
           { path: 'games', element: <GamesPage /> },
           { path: 'games/:id', element: <GameSummaryPage /> },
           { path: 'games/manual/:id', element: <ManualGameSummaryPage /> },

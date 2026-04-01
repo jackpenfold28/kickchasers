@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import PortalCard from '@/components/cards/PortalCard'
-import NotificationRow from '@/components/portal/NotificationRow'
+import DataTable from '@/components/portal/DataTable'
 import {
   decideGuestMerge,
   decideJoinRequest,
@@ -56,6 +57,17 @@ export default function NotificationsPage() {
   }, [])
 
   const unreadCount = useMemo(() => rows.filter((row) => !row.readAt).length, [rows])
+
+  function notificationHref(notification: PortalNotification) {
+    if (!notification.squadId) return '/notifications'
+    if (notification.type === 'squad_join_request_created' || notification.type === 'guest_merge_request_created') {
+      return `/teams/${notification.squadId}?tab=manage`
+    }
+    if (notification.type === 'squad_invite') {
+      return `/teams/${notification.squadId}`
+    }
+    return `/teams/${notification.squadId}`
+  }
 
   async function withAction(id: string, action: () => Promise<void>) {
     try {
@@ -170,43 +182,160 @@ export default function NotificationsPage() {
       )}
 
       <PortalCard title="Inbox" subtitle="Supported actions are enabled where payload contracts are clear">
-        <div className="overflow-x-auto rounded-xl border border-white/10">
-          <table className="min-w-full border-collapse text-sm">
-            <thead className="bg-white/5">
-              <tr className="text-left text-xs uppercase tracking-wide text-slate-400">
-                <th className="px-3 py-3">Type</th>
-                <th className="px-3 py-3">Context</th>
-                <th className="px-3 py-3">Time</th>
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length ? (
-                rows.map((notification) => (
-                  <NotificationRow
-                    key={notification.id}
-                    notification={notification}
-                    busy={workingId === notification.id}
-                    onMarkRead={onMarkRead}
-                    onAcceptInvite={onAcceptInvite}
-                    onDeclineInvite={onDeclineInvite}
-                    onApproveJoinRequest={onApproveJoinRequest}
-                    onDeclineJoinRequest={onDeclineJoinRequest}
-                    onApproveGuestMerge={onApproveGuestMerge}
-                    onDeclineGuestMerge={onDeclineGuestMerge}
-                  />
-                ))
-              ) : (
-                <tr>
-                  <td className="px-3 py-8 text-center text-slate-400" colSpan={5}>
-                    No notifications yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          rows={rows}
+          getRowKey={(row) => row.id}
+          emptyLabel="No notifications yet."
+          mobileCardRender={(notification) => {
+            const busy = workingId === notification.id
+            const actor = notification.actorHandle || notification.actorName || 'Someone'
+            const squad = notification.squadName || ((notification.payload?.squad_name as string | undefined) ?? 'this squad')
+            return (
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{notification.type.replaceAll('_', ' ')}</p>
+                    <p className="mt-1 font-medium text-white">{actor}</p>
+                    <p className="text-sm text-slate-400">{squad}</p>
+                  </div>
+                  <span className={`rounded-full px-2.5 py-1 text-xs ${notification.readAt ? 'bg-emerald-500/10 text-emerald-300' : 'bg-amber-500/10 text-amber-200'}`}>
+                    {notification.readAt ? 'Read' : 'Unread'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">{new Date(notification.createdAt).toLocaleString()}</p>
+                <div className="flex flex-wrap gap-2">
+                  {notification.squadId && (
+                    <Link className="btn btn-secondary flex-1 sm:flex-none" to={notificationHref(notification)}>
+                      View team
+                    </Link>
+                  )}
+                  {!notification.readAt && (
+                    <button className="btn btn-secondary flex-1 sm:flex-none" disabled={busy} onClick={() => onMarkRead(notification.id)}>
+                      Mark read
+                    </button>
+                  )}
+                  {notification.type === 'squad_invite' && (
+                    <>
+                      <button className="btn btn-secondary flex-1 sm:flex-none" disabled={busy} onClick={() => onAcceptInvite(notification)}>
+                        Accept
+                      </button>
+                      <button className="btn flex-1 border-red-500/60 text-red-300 sm:flex-none" disabled={busy} onClick={() => onDeclineInvite(notification)}>
+                        Decline
+                      </button>
+                    </>
+                  )}
+                  {notification.type === 'squad_join_request_created' && (
+                    <>
+                      <button className="btn btn-secondary flex-1 sm:flex-none" disabled={busy} onClick={() => onApproveJoinRequest(notification)}>
+                        Approve
+                      </button>
+                      <button className="btn flex-1 border-red-500/60 text-red-300 sm:flex-none" disabled={busy} onClick={() => onDeclineJoinRequest(notification)}>
+                        Reject
+                      </button>
+                    </>
+                  )}
+                  {notification.type === 'guest_merge_request_created' && (
+                    <>
+                      <button className="btn btn-secondary flex-1 sm:flex-none" disabled={busy} onClick={() => onApproveGuestMerge(notification)}>
+                        Approve
+                      </button>
+                      <button className="btn flex-1 border-red-500/60 text-red-300 sm:flex-none" disabled={busy} onClick={() => onDeclineGuestMerge(notification)}>
+                        Reject
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )
+          }}
+          columns={[
+            {
+              key: 'type',
+              label: 'Type',
+              render: (notification) => (
+                <span className="text-xs text-slate-400">{notification.type.replaceAll('_', ' ')}</span>
+              ),
+            },
+            {
+              key: 'context',
+              label: 'Context',
+              render: (notification) => {
+                const actor = notification.actorHandle || notification.actorName || 'Someone'
+                const squad = notification.squadName || ((notification.payload?.squad_name as string | undefined) ?? 'this squad')
+                return (
+                  <>
+                    <p className="font-medium text-white">{actor}</p>
+                    <p className="text-xs text-slate-400">{squad}</p>
+                  </>
+                )
+              },
+            },
+            {
+              key: 'time',
+              label: 'Time',
+              render: (notification) => (
+                <span className="text-xs text-slate-400">{new Date(notification.createdAt).toLocaleString()}</span>
+              ),
+            },
+            {
+              key: 'status',
+              label: 'Status',
+              render: (notification) =>
+                notification.readAt ? <span className="text-emerald-300">Read</span> : <span className="text-amber-300">Unread</span>,
+            },
+            {
+              key: 'actions',
+              label: 'Actions',
+              render: (notification) => {
+                const busy = workingId === notification.id
+                return (
+                  <div className="flex flex-wrap gap-2">
+                    {notification.squadId && (
+                      <Link className="btn btn-secondary px-2 py-1 text-xs" to={notificationHref(notification)}>
+                        View team
+                      </Link>
+                    )}
+                    {!notification.readAt && (
+                      <button className="btn btn-secondary px-2 py-1 text-xs" disabled={busy} onClick={() => onMarkRead(notification.id)}>
+                        Mark read
+                      </button>
+                    )}
+                    {notification.type === 'squad_invite' && (
+                      <>
+                        <button className="btn btn-secondary px-2 py-1 text-xs" disabled={busy} onClick={() => onAcceptInvite(notification)}>
+                          Accept
+                        </button>
+                        <button className="btn border-red-500/60 px-2 py-1 text-xs text-red-300" disabled={busy} onClick={() => onDeclineInvite(notification)}>
+                          Decline
+                        </button>
+                      </>
+                    )}
+                    {notification.type === 'squad_join_request_created' && (
+                      <>
+                        <button className="btn btn-secondary px-2 py-1 text-xs" disabled={busy} onClick={() => onApproveJoinRequest(notification)}>
+                          Approve
+                        </button>
+                        <button className="btn border-red-500/60 px-2 py-1 text-xs text-red-300" disabled={busy} onClick={() => onDeclineJoinRequest(notification)}>
+                          Reject
+                        </button>
+                      </>
+                    )}
+                    {notification.type === 'guest_merge_request_created' && (
+                      <>
+                        <button className="btn btn-secondary px-2 py-1 text-xs" disabled={busy} onClick={() => onApproveGuestMerge(notification)}>
+                          Approve
+                        </button>
+                        <button className="btn border-red-500/60 px-2 py-1 text-xs text-red-300" disabled={busy} onClick={() => onDeclineGuestMerge(notification)}>
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )
+              },
+            },
+          ]}
+        />
       </PortalCard>
     </section>
   )

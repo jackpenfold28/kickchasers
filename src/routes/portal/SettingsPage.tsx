@@ -230,13 +230,13 @@ export default function SettingsPage() {
               placeholder="Type DELETE"
             />
 
-            <div className="mt-4 flex justify-end gap-2">
-              <button type="button" className="btn btn-secondary" onClick={() => setDeleteModalOpen(false)} disabled={working}>
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button type="button" className="btn btn-secondary w-full sm:w-auto" onClick={() => setDeleteModalOpen(false)} disabled={working}>
                 Cancel
               </button>
               <button
                 type="submit"
-                className="btn border-red-500/60 bg-red-600/25 text-red-200 disabled:opacity-60"
+                className="btn w-full border-red-500/60 bg-red-600/25 text-red-200 disabled:opacity-60 sm:w-auto"
                 disabled={!deleteBlocked || working}
               >
                 {working ? 'Deleting…' : 'Confirm Delete'}

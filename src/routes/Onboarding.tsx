@@ -1018,7 +1018,7 @@ export default function Onboarding() {
 
   return (
     <main className="min-h-screen bg-[#040817] px-4 py-5 text-[#F8FAFC] sm:px-6 sm:py-6 lg:px-10 xl:px-12">
-      <div className="mx-auto flex min-h-[calc(100vh-2.5rem)] max-w-[1120px] flex-col justify-between">
+      <div className="mx-auto flex min-h-[calc(100vh-2.5rem)] max-w-[1120px] flex-col justify-between gap-5">
         <div>
           <div className="relative flex items-center justify-center pb-6">
             <button
@@ -1352,22 +1352,24 @@ export default function Onboarding() {
           </section>
         </div>
 
-        <div className="mx-auto mt-4 flex w-full max-w-[1020px] gap-3 pb-1 pt-2">
+        <div className="sticky bottom-0 z-20 -mx-1 mt-1 bg-[linear-gradient(180deg,rgba(4,8,23,0)_0%,rgba(4,8,23,0.86)_22%,rgba(4,8,23,0.98)_100%)] px-1 pb-1 pt-4">
+          <div className="mx-auto flex w-full max-w-[1020px] flex-col gap-3 sm:flex-row">
           <button
             type="button"
-            className="flex-1 rounded-full bg-[#0D1526] px-5 py-3.5 text-sm font-semibold text-slate-100 transition hover:bg-[#14203a]"
+            className="min-h-[52px] flex-1 rounded-full bg-[#0D1526] px-5 py-3.5 text-sm font-semibold text-slate-100 transition hover:bg-[#14203a]"
             onClick={goBack}
           >
             Back
           </button>
           <button
             type="button"
-            className="flex-1 rounded-full bg-[#39FF88] px-5 py-3.5 text-sm font-semibold text-[#081120] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-[52px] flex-1 rounded-full bg-[#39FF88] px-5 py-3.5 text-sm font-semibold text-[#081120] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={saving || (currentStep !== 'welcome' && !stepValidity[currentStep])}
             onClick={() => void goNext()}
           >
             {saving ? 'Saving…' : currentStep === 'role' ? 'Finish' : 'Next'}
           </button>
+        </div>
         </div>
       </div>
 

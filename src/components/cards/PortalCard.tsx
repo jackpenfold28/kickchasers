@@ -12,7 +12,7 @@ export default function PortalCard({ title, subtitle, children, className }: Por
   return (
     <section
       className={clsx(
-        'rounded-2xl border border-white/10 bg-[#101A2A] p-5 shadow-[0_12px_32px_rgba(3,8,20,0.28)]',
+        'rounded-2xl border border-white/10 bg-[#101A2A] p-4 shadow-[0_12px_32px_rgba(3,8,20,0.28)] sm:p-5',
         className
       )}
     >

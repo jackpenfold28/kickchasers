@@ -102,6 +102,41 @@ export default function GamesPage() {
           rows={filtered}
           getRowKey={(row) => `${row.id}:${row.manualId || 'tracked'}`}
           emptyLabel="No games found for the current filters."
+          mobileCardRender={(row) => (
+            <div className="space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-white">
+                    {row.squadName || 'My Squad'} vs {row.opponent || 'Opponent'}
+                  </p>
+                  <p className="text-xs text-slate-500">{row.venue || 'Venue TBC'}</p>
+                </div>
+                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-200">
+                  {statusLabel(row.status)}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Date</p>
+                  <p className="mt-1 text-slate-200">{row.date ? new Date(row.date).toLocaleDateString() : '-'}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Score</p>
+                  <p className="mt-1 text-slate-200">
+                    {row.scoreHomeGoals != null
+                      ? `${row.scoreHomeGoals}.${row.scoreHomeBehinds} - ${row.scoreAwayGoals}.${row.scoreAwayBehinds}`
+                      : '-'}
+                  </p>
+                </div>
+              </div>
+              <Link
+                className="btn btn-secondary w-full"
+                to={row.isManual && row.manualId ? `/games/manual/${row.manualId}` : `/games/${row.id}`}
+              >
+                View Summary
+              </Link>
+            </div>
+          )}
           columns={[
             {
               key: 'date',

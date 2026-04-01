@@ -39,6 +39,32 @@ export default function PlayerStatsTable({ rows }: PlayerStatsTableProps) {
         rows={sorted}
         getRowKey={(row) => row.playerId}
         emptyLabel="No player stats available for this game."
+        mobileCardRender={(row) => (
+          <div className="space-y-3">
+            <div>
+              <p className="font-medium text-white">{row.name}</p>
+              <p className="text-xs text-slate-500">
+                {row.teamSide.toUpperCase()} {row.number != null ? `• #${row.number}` : ''}
+              </p>
+            </div>
+            <div className="grid grid-cols-4 gap-2 text-center text-sm">
+              {[
+                ['D', row.disposals],
+                ['K', row.kicks],
+                ['HB', row.handballs],
+                ['M', row.marks],
+                ['T', row.tackles],
+                ['G', row.goals],
+                ['B', row.behinds],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="rounded-xl border border-white/8 bg-white/[0.03] px-2 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+                  <p className="mt-1 font-semibold text-white">{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         columns={[
           {
             key: 'player',

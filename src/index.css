@@ -5,6 +5,7 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -31,13 +32,13 @@
   body { @apply app-bg; }
 
   /* cards / headings */
-  .card { @apply relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-5 overflow-hidden; }
+  .card { @apply relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden p-4 sm:p-5; }
   .card::before { /* soft inner glow */ content:""; position:absolute; inset:0; pointer-events:none; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
   .h1 { @apply text-2xl font-semibold; }
   .h2 { @apply text-xl font-semibold; }
 
   /* buttons / tabs */
-  .btn { @apply inline-flex items-center justify-center rounded-xl px-4 py-2 bg-white/10 border border-white/10 hover:bg-white/20 transition shadow-sm active:scale-[.98]; }
+  .btn { @apply inline-flex min-h-[44px] items-center justify-center rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-sm hover:bg-white/20 transition shadow-sm active:scale-[.98]; }
   .btn-primary { @apply bg-[#1A4DFF] text-white border-0 hover:brightness-110 shadow-[0_8px_24px_rgba(26,77,255,.25)] active:shadow-[0_4px_16px_rgba(26,77,255,.25)]; }
   .btn-secondary { @apply bg-white/5 border-white/15 hover:bg-white/10 hover:border-white/25 text-white/90 hover:text-white; }
   .btn-ghost { @apply bg-transparent border-transparent hover:bg-white/10 text-white/70 hover:text-white shadow-none; }
@@ -48,7 +49,7 @@
 
   /* form card + inputs (fix Sign in & Setup look) */
   .form-card { @apply max-w-md mx-auto card space-y-4; }
-  .input { @apply w-full rounded-xl bg-white/[.08] border border-white/10 px-3 py-3 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/20; }
+  .input { @apply w-full min-h-[44px] rounded-xl bg-white/[.08] border border-white/10 px-3 py-3 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/20; }
   .row { @apply grid grid-cols-[68px,1fr,96px] gap-2 items-center; }
 
   /* number inputs – remove spinners and match height */

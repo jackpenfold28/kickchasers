@@ -621,7 +621,7 @@ function buildRecentActivity(notifications: PortalNotification[], games: GameLog
       ? `${notification.type.replaceAll('_', ' ')} in ${notification.squadName}`
       : notification.type.replaceAll('_', ' '),
     createdAt: notification.createdAt,
-    href: notification.squadId ? `/squads/${notification.squadId}` : '/notifications',
+    href: notification.squadId ? `/teams/${notification.squadId}` : '/notifications',
   }))
 
   const gameItems: DashboardActivityItem[] = games.slice(0, 4).map((game) => ({

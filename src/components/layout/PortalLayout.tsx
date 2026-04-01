@@ -1,6 +1,6 @@
 import { type CSSProperties, useEffect, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Menu } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import clsx from 'clsx'
 import { supabase } from '@/lib/supabase'
 import SidebarNavigation from '@/components/layout/SidebarNavigation'
@@ -135,17 +135,21 @@ export default function PortalLayout() {
           'min-w-0 lg:ml-[var(--portal-sidebar-width)] lg:w-[calc(100%-var(--portal-sidebar-width))] transition-[margin,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
         )}
       >
-        <main className="min-w-0 px-4 py-5 sm:px-6 sm:py-6 lg:py-8">
+        <main className="min-w-0 px-3 py-4 sm:px-6 sm:py-6 lg:py-8">
           <div className="mx-auto grid min-w-0 max-w-[1320px] gap-6">
-            <div className="flex items-center lg:hidden">
+            <div className="sticky top-3 z-30 flex items-center justify-between rounded-2xl border border-white/10 bg-[#0B1324]/90 px-3 py-2 backdrop-blur lg:hidden">
               <button
                 type="button"
                 onClick={() => setMobileOpen((value) => !value)}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-200 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.95)] transition hover:bg-white/[0.08] hover:text-white"
-                aria-label="Toggle navigation"
+                aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
               >
-                <Menu className="h-5 w-5" />
+                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
+              <div className="min-w-0 px-3 text-right">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">KickChasers</p>
+                <p className="truncate text-sm font-semibold text-white">Portal</p>
+              </div>
             </div>
             <Outlet />
           </div>

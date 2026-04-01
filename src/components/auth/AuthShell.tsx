@@ -42,19 +42,19 @@ export function AuthShell({ title, eyebrow = 'KickChasers Access', description, 
       <div className="pointer-events-none absolute inset-y-0 left-0 w-[16vw] bg-[linear-gradient(90deg,rgba(0,0,0,0.26),transparent)]" />
       <div className="pointer-events-none absolute inset-y-0 right-0 w-[16vw] bg-[linear-gradient(270deg,rgba(0,0,0,0.26),transparent)]" />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-7xl items-center px-6 py-10 lg:px-10 lg:py-14">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-7xl items-center px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-14">
         <div className="grid w-full items-center gap-10 lg:grid-cols-[1.02fr_.98fr] lg:gap-12">
-          <section className="relative max-w-2xl">
+          <section className="order-2 relative max-w-2xl lg:order-1">
             <div className="pointer-events-none absolute -left-24 top-1/2 h-[30rem] w-[30rem] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(57,255,20,0.14)_0%,rgba(12,56,150,0.12)_42%,rgba(2,9,26,0)_74%)] blur-3xl" />
             <div className="flex flex-col items-start">
               <Link to="/" className="relative inline-flex items-center">
-                <img src="/kickchasers_logo.png" alt="KickChasers" className="h-16 w-auto sm:h-20" />
+                <img src="/kickchasers_logo.png" alt="KickChasers" className="h-14 w-auto sm:h-20" />
               </Link>
               <p className="mt-4 inline-flex rounded-full border border-white/15 bg-white/[0.02] px-3.5 py-1.5 text-[11px] uppercase tracking-[0.24em] text-slate-300">
                 PERFORMANCE PLATFORM FOR FOOTBALLERS
               </p>
             </div>
-            <h1 className="mt-5 max-w-[12ch] text-4xl font-semibold leading-[1.01] tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="mt-5 max-w-[12ch] text-[2.35rem] font-semibold leading-[1.01] tracking-tight sm:text-5xl lg:text-6xl">
               {title}
             </h1>
             <p className="mt-5 max-w-[50ch] text-base leading-relaxed text-slate-300 sm:text-lg">
@@ -67,7 +67,7 @@ export function AuthShell({ title, eyebrow = 'KickChasers Access', description, 
             </p>
           </section>
 
-          <section className="relative mx-auto w-full max-w-[34rem]">
+          <section className="order-1 relative mx-auto w-full max-w-[34rem] lg:order-2">
             <div className="pointer-events-none absolute left-1/2 top-[45%] h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(57,255,20,0.12)_0%,rgba(7,66,145,0.1)_42%,transparent_74%)] blur-3xl" />
             <div className={authCardClassName}>
               <div className="pointer-events-none absolute inset-x-0 top-0 h-28 rounded-t-[34px] bg-[radial-gradient(70%_100%_at_50%_0%,rgba(255,255,255,0.08),rgba(255,255,255,0))]" />
@@ -77,7 +77,7 @@ export function AuthShell({ title, eyebrow = 'KickChasers Access', description, 
 
               <div className="relative">
                 <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{eyebrow}</p>
-                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-[2rem]">{title}</h2>
+                <h2 className="mt-3 text-[1.8rem] font-semibold tracking-tight text-white sm:text-[2rem]">{title}</h2>
                 <p className="mt-3 text-sm leading-relaxed text-slate-300">{description}</p>
               </div>
 

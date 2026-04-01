@@ -14,6 +14,8 @@ export type SquadSummary = {
   leagueShortName: string | null
   clubId: string | null
   gradeId: string | null
+  gradeName: string | null
+  createdAt: string | null
 }
 
 export type SquadDetail = {
@@ -27,10 +29,13 @@ export type SquadDetail = {
   leagueName: string | null
   leagueShortName: string | null
   gradeId: string | null
+  gradeName: string | null
   isOfficial: boolean
   primaryColorHex: string | null
   secondaryColorHex: string | null
   tertiaryColorHex: string | null
+  stateCode: string | null
+  createdAt: string | null
 }
 
 export type SquadMember = {
@@ -96,6 +101,26 @@ export type SquadMembership = {
   status: string | null
 }
 
+export type TeamInvite = {
+  memberId: string
+  squadId: string
+  squadName: string | null
+  squadLogoUrl: string | null
+  invitedBy: string | null
+  createdAt: string
+}
+
+export type GuestMergeStatus = 'pending' | 'approved' | 'declined'
+
+export type GuestMergeRequestStatusRow = {
+  id: string
+  guestSquadMemberId: string
+  status: GuestMergeStatus
+  requestedAt: string
+}
+
+export type ClubRole = 'player' | 'coach' | 'tracker' | 'member' | 'supporter' | 'admin' | 'club_member'
+
 export type StateOption = {
   code: string
   name: string | null
@@ -145,6 +170,24 @@ async function countAcceptedMembers(squadId: string): Promise<number> {
   return rows.reduce((sum, row) => (row.status === 'accepted' ? sum + 1 : sum), 0)
 }
 
+async function fetchGradeNameMap(gradeIds: string[]) {
+  const filtered = Array.from(new Set(gradeIds.filter(Boolean)))
+  if (!filtered.length) return new Map<string, string | null>()
+
+  const { data, error } = await supabase
+    .from('league_grades')
+    .select('id,name,grade_catalog(label)')
+    .in('id', filtered)
+
+  if (error) throw error
+
+  const map = new Map<string, string | null>()
+  ;((data ?? []) as any[]).forEach((row) => {
+    map.set(row.id, row.grade_catalog?.label ?? row.name ?? null)
+  })
+  return map
+}
+
 export async function listMySquads(userId: string): Promise<SquadSummary[]> {
   const { data, error } = await supabase.rpc('f_squads_for_user_v2', { _uid: userId })
   if (error) throw error
@@ -160,6 +203,7 @@ export async function listMySquads(userId: string): Promise<SquadSummary[]> {
     grade_id?: string | null
     league_grade_id?: string | null
     is_official?: boolean | null
+    created_at?: string | null
   }[]
 
   const squadIds = rows.map((row) => row.squad_id).filter((id): id is string => Boolean(id))
@@ -167,13 +211,16 @@ export async function listMySquads(userId: string): Promise<SquadSummary[]> {
     squadIds.length
       ? supabase
           .from('squads')
-          .select('id, is_official, club_id, league_id, league:leagues(name, short_name)')
+          .select('id, is_official, club_id, league_id, grade_id, league_grade_id, created_at, league:leagues(name, short_name)')
           .in('id', squadIds)
       : Promise.resolve({ data: [], error: null }),
     Promise.all(squadIds.map((id) => countAcceptedMembers(id))),
   ])
 
   if (metaError) throw metaError
+  const gradeNameMap = await fetchGradeNameMap(
+    ((meta ?? []) as any[]).map((row) => row.league_grade_id ?? row.grade_id).filter((id): id is string => Boolean(id))
+  )
 
   const metaMap = new Map<
     string,
@@ -183,6 +230,8 @@ export async function listMySquads(userId: string): Promise<SquadSummary[]> {
       leagueId: string | null
       leagueName: string | null
       leagueShortName: string | null
+      gradeName: string | null
+      createdAt: string | null
     }
   >()
 
@@ -190,12 +239,15 @@ export async function listMySquads(userId: string): Promise<SquadSummary[]> {
     const id = (row as { id?: string | null }).id
     if (!id) return
     const league = (row as { league?: { name?: string | null; short_name?: string | null } | null }).league
+    const gradeId = (row as { league_grade_id?: string | null; grade_id?: string | null }).league_grade_id ?? (row as { grade_id?: string | null }).grade_id ?? null
     metaMap.set(id, {
       isOfficial: Boolean((row as { is_official?: boolean | null }).is_official),
       clubId: (row as { club_id?: string | null }).club_id ?? null,
       leagueId: (row as { league_id?: string | null }).league_id ?? null,
       leagueName: league?.name ?? null,
       leagueShortName: league?.short_name ?? null,
+      gradeName: gradeId ? gradeNameMap.get(gradeId) ?? null : null,
+      createdAt: (row as { created_at?: string | null }).created_at ?? null,
     })
   })
 
@@ -218,9 +270,26 @@ export async function listMySquads(userId: string): Promise<SquadSummary[]> {
         leagueShortName: m?.leagueShortName ?? null,
         clubId: m?.clubId ?? null,
         gradeId: row.league_grade_id ?? row.grade_id ?? null,
+        gradeName: m?.gradeName ?? null,
+        createdAt: m?.createdAt ?? row.created_at ?? null,
       }
     })
     .filter((row): row is SquadSummary => Boolean(row))
+    .sort((a, b) => {
+      if (a.isOfficial !== b.isOfficial) return a.isOfficial ? -1 : 1
+      const roleRank = (row: SquadSummary) => {
+        const role = row.role?.toLowerCase() ?? ''
+        if (row.ownerId === userId || role === 'owner') return 0
+        if (role === 'admin') return 1
+        if (role === 'member') return 2
+        return 3
+      }
+      const rankDelta = roleRank(a) - roleRank(b)
+      if (rankDelta !== 0) return rankDelta
+      const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return bDate - aDate
+    })
 }
 
 export async function listFollowedClubs(userId: string): Promise<SquadSummary[]> {
@@ -235,8 +304,9 @@ export async function listFollowedClubs(userId: string): Promise<SquadSummary[]>
 
   const { data: squads, error: squadsError } = await supabase
     .from('squads')
-    .select('id, name, logo_url, owner_id, league_id, grade_id, league_grade_id, is_official, club_id, league:leagues(name, short_name)')
+    .select('id, name, logo_url, owner_id, league_id, grade_id, league_grade_id, is_official, club_id, created_at, league:leagues(name, short_name)')
     .in('club_id', clubIds)
+    .eq('is_official', true)
     .is('archived_at', null)
 
   if (squadsError) throw squadsError
@@ -251,32 +321,45 @@ export async function listFollowedClubs(userId: string): Promise<SquadSummary[]>
     league_grade_id?: string | null
     is_official?: boolean | null
     club_id?: string | null
+    created_at?: string | null
     league?: { name?: string | null; short_name?: string | null } | null
+    grade?: { name?: string | null; code?: string | null; grade_catalog?: { label?: string | null } | null } | null
   }[]
 
-  const counts = await Promise.all(rows.map((row) => countAcceptedMembers(row.id)))
+  const [counts, gradeNameMap] = await Promise.all([
+    Promise.all(rows.map((row) => countAcceptedMembers(row.id))),
+    fetchGradeNameMap(rows.map((row) => row.league_grade_id ?? row.grade_id).filter((id): id is string => Boolean(id))),
+  ])
 
-  return rows.map((row, idx) => ({
-    id: row.id,
-    name: row.name ?? null,
-    logoUrl: resolvePublicUrl(row.logo_url ?? null),
-    ownerId: row.owner_id ?? null,
-    role: null,
-    status: 'following',
-    memberCount: counts[idx] ?? 0,
-    isOfficial: Boolean(row.is_official),
-    leagueId: row.league_id ?? null,
-    leagueName: row.league?.name ?? null,
-    leagueShortName: row.league?.short_name ?? null,
-    clubId: row.club_id ?? null,
-    gradeId: row.league_grade_id ?? row.grade_id ?? null,
-  }))
+  return rows
+    .map((row, idx) => ({
+      id: row.id,
+      name: row.name ?? null,
+      logoUrl: resolvePublicUrl(row.logo_url ?? null),
+      ownerId: row.owner_id ?? null,
+      role: null,
+      status: 'following',
+      memberCount: counts[idx] ?? 0,
+      isOfficial: Boolean(row.is_official),
+      leagueId: row.league_id ?? null,
+      leagueName: row.league?.name ?? null,
+      leagueShortName: row.league?.short_name ?? null,
+      clubId: row.club_id ?? null,
+      gradeId: row.league_grade_id ?? row.grade_id ?? null,
+      gradeName: (row.league_grade_id ?? row.grade_id) ? gradeNameMap.get(row.league_grade_id ?? row.grade_id ?? '') ?? null : null,
+      createdAt: row.created_at ?? null,
+    }))
+    .sort((a, b) => {
+      const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return bDate - aDate
+    })
 }
 
 export async function getSquadDetail(squadId: string): Promise<SquadDetail | null> {
   const { data, error } = await supabase
     .from('squads')
-    .select('id, name, logo_url, cover_image_url, owner_id, club_id, league_id, grade_id, league_grade_id, is_official, primary_color_hex, secondary_color_hex, tertiary_color_hex, league:leagues(name, short_name)')
+    .select('id, name, logo_url, cover_image_url, owner_id, club_id, league_id, grade_id, league_grade_id, is_official, primary_color_hex, secondary_color_hex, tertiary_color_hex, state_code, created_at, league:leagues(name, short_name)')
     .eq('id', squadId)
     .maybeSingle()
 
@@ -297,8 +380,12 @@ export async function getSquadDetail(squadId: string): Promise<SquadDetail | nul
     primary_color_hex?: string | null
     secondary_color_hex?: string | null
     tertiary_color_hex?: string | null
+    state_code?: string | null
+    created_at?: string | null
     league?: { name?: string | null; short_name?: string | null } | null
   }
+  const gradeId = row.league_grade_id ?? row.grade_id ?? null
+  const gradeNameMap = await fetchGradeNameMap(gradeId ? [gradeId] : [])
 
   return {
     id: row.id,
@@ -311,10 +398,13 @@ export async function getSquadDetail(squadId: string): Promise<SquadDetail | nul
     leagueName: row.league?.name ?? null,
     leagueShortName: row.league?.short_name ?? null,
     gradeId: row.league_grade_id ?? row.grade_id ?? null,
+    gradeName: gradeId ? gradeNameMap.get(gradeId) ?? null : null,
     isOfficial: Boolean(row.is_official),
     primaryColorHex: row.primary_color_hex ?? null,
     secondaryColorHex: row.secondary_color_hex ?? null,
     tertiaryColorHex: row.tertiary_color_hex ?? null,
+    stateCode: row.state_code ?? null,
+    createdAt: row.created_at ?? null,
   }
 }
 
@@ -399,6 +489,27 @@ export async function leaveSquad(squadId: string) {
   if (error) throw error
 }
 
+export async function deleteSquad(squadId: string) {
+  const { error } = await supabase.from('squads').delete().eq('id', squadId)
+  if (error) throw error
+}
+
+export async function updateSquadGrade(
+  squadId: string,
+  payload: { gradeId: string; leagueId?: string | null; stateCode?: string | null }
+) {
+  const updates: Record<string, string | null> = {
+    grade_id: payload.gradeId,
+    league_grade_id: payload.gradeId,
+  }
+
+  if (payload.leagueId !== undefined) updates.league_id = payload.leagueId ?? null
+  if (payload.stateCode !== undefined) updates.state_code = payload.stateCode ?? null
+
+  const { error } = await supabase.from('squads').update(updates).eq('id', squadId)
+  if (error) throw error
+}
+
 export async function listFollowConnections(userId: string): Promise<FollowConnection[]> {
   const [{ data: following, error: followingError }, { data: followers, error: followersError }] = await Promise.all([
     supabase.from('follows').select('followee_id').eq('follower_id', userId),
@@ -448,6 +559,35 @@ export async function inviteByHandle(inviterId: string, squadId: string, handle:
     _guest_email: null,
     _jersey: null,
     _position: null,
+  })
+  if (error) throw error
+}
+
+export async function listPendingInvitesForUser(userId: string): Promise<TeamInvite[]> {
+  const { data, error } = await supabase
+    .from('squad_members')
+    .select('id,squad_id,invited_by,created_at,squads(name,logo_url)')
+    .eq('user_id', userId)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  return ((data ?? []) as any[]).map((row) => ({
+    memberId: row.id,
+    squadId: row.squad_id,
+    squadName: row.squads?.name ?? null,
+    squadLogoUrl: resolvePublicUrl(row.squads?.logo_url ?? null),
+    invitedBy: row.invited_by ?? null,
+    createdAt: row.created_at,
+  }))
+}
+
+export async function respondInvite(userId: string, memberId: string, accept: boolean) {
+  const { error } = await supabase.rpc('f_respond_invite', {
+    _uid: userId,
+    _member_id: memberId,
+    _accept: accept,
   })
   if (error) throw error
 }
@@ -615,6 +755,143 @@ export async function decideGuestMergeRequest(requestId: string, decision: 'appr
     _decision: decision,
     _reason: null,
   })
+  if (error) throw error
+}
+
+export async function listMyGuestMergeRequests(squadId: string, userId: string): Promise<GuestMergeRequestStatusRow[]> {
+  const { data, error } = await supabase
+    .from('guest_merge_requests')
+    .select('id,guest_squad_member_id,status,requested_at')
+    .eq('squad_id', squadId)
+    .eq('user_id', userId)
+    .order('requested_at', { ascending: false })
+
+  if (error) throw error
+
+  return ((data ?? []) as any[]).map((row) => ({
+    id: row.id,
+    guestSquadMemberId: row.guest_squad_member_id,
+    status: row.status,
+    requestedAt: row.requested_at,
+  }))
+}
+
+export async function requestGuestMerge(squadId: string, guestSquadMemberId: string, guestName: string, userId: string) {
+  const { error } = await supabase.from('guest_merge_requests').insert({
+    squad_id: squadId,
+    guest_squad_member_id: guestSquadMemberId,
+    guest_name: guestName,
+    user_id: userId,
+    status: 'pending',
+  })
+  if (error) throw error
+}
+
+export async function linkGuestMemberToUser(memberId: string, userId: string) {
+  const { error } = await supabase
+    .from('squad_members')
+    .update({
+      user_id: userId,
+      guest_name: null,
+      guest_email: null,
+      handle: null,
+    })
+    .eq('id', memberId)
+
+  if (error) throw error
+}
+
+export async function searchProfileByHandle(handle: string) {
+  const normalized = handle.trim().replace(/^@+/, '')
+  if (!normalized) return null
+
+  const { data, error } = await supabase
+    .from('profiles_directory')
+    .select('user_id,name,handle,avatar_url,avatar_path')
+    .ilike('handle', normalized)
+    .maybeSingle()
+
+  if (error && error.code !== 'PGRST116') throw error
+  if (!data?.user_id) return null
+
+  return {
+    userId: data.user_id as string,
+    name: (data as { name?: string | null }).name ?? null,
+    handle: (data as { handle?: string | null }).handle ?? null,
+    avatarUrl: resolvePublicUrl(
+      ((data as { avatar_url?: string | null }).avatar_url ?? (data as { avatar_path?: string | null }).avatar_path ?? null),
+      'profile-avatars'
+    ),
+  }
+}
+
+export async function getJoinRequestStatus(squadId: string, userId: string) {
+  const { data, error } = await supabase
+    .from('squad_join_requests')
+    .select('status')
+    .eq('squad_id', squadId)
+    .eq('requester_user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  if (error) throw error
+  return ((data ?? [])[0] as { status?: string | null } | undefined)?.status ?? null
+}
+
+export async function requestToJoinSquad(squadId: string, userId: string, requestedRole = 'member') {
+  const { error } = await supabase.from('squad_join_requests').insert({
+    squad_id: squadId,
+    requester_user_id: userId,
+    requested_role: requestedRole,
+    status: 'pending',
+  })
+
+  if (error && error.code !== '23505') throw error
+}
+
+export async function getClubFollowState(clubId: string | null, userId: string | null) {
+  if (!clubId || !userId) return false
+
+  const { data, error } = await supabase
+    .from('club_follows')
+    .select('club_id')
+    .eq('club_id', clubId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error && error.code !== 'PGRST116') throw error
+  return Boolean(data?.club_id)
+}
+
+export async function followClub(clubId: string, userId: string) {
+  const { error } = await supabase.from('club_follows').insert({ club_id: clubId, user_id: userId })
+  if (error && error.code !== '23505') throw error
+}
+
+export async function unfollowClub(clubId: string, userId: string) {
+  const { error } = await supabase.from('club_follows').delete().eq('club_id', clubId).eq('user_id', userId)
+  if (error) throw error
+}
+
+export async function listClubRoles(clubId: string, userId: string): Promise<ClubRole[]> {
+  const { data, error } = await supabase.from('club_roles').select('role').eq('club_id', clubId).eq('user_id', userId)
+  if (error) throw error
+  return ((data ?? []) as Array<{ role?: ClubRole | null }>).map((row) => row.role).filter((role): role is ClubRole => Boolean(role))
+}
+
+export async function addGuestPlayer(
+  squadId: string,
+  payload: { name: string; email?: string | null; jerseyNumber?: number | null }
+) {
+  const { error } = await supabase.from('squad_members').insert({
+    squad_id: squadId,
+    guest_name: payload.name,
+    guest_email: payload.email ?? null,
+    jersey_number: payload.jerseyNumber ?? null,
+    status: 'accepted',
+    role: 'member',
+  })
+
   if (error) throw error
 }
 

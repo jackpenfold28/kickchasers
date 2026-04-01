@@ -54,7 +54,7 @@ export default function Topbar({
 
         <div className="hidden w-full max-w-sm items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 md:flex">
           <Search className="h-4 w-4 text-slate-400" />
-          <span className="text-sm text-slate-400">Search players, squads, games...</span>
+          <span className="text-sm text-slate-400">Search players, teams, games...</span>
         </div>
 
         <button

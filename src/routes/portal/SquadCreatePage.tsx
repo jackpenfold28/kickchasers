@@ -186,7 +186,7 @@ export default function SquadCreatePage() {
         logoUrl: logoPath,
       })
 
-      navigate(`/squads/${squadId}`, { replace: true })
+      navigate(`/teams/${squadId}`, { replace: true })
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'Unable to create squad.')
     } finally {
@@ -195,7 +195,7 @@ export default function SquadCreatePage() {
   }
 
   if (loading) {
-    return <main className="min-h-screen p-6 app-bg">Loading create squad form…</main>
+    return <main className="min-h-screen p-6 app-bg">Loading new team form…</main>
   }
 
   return (
@@ -204,9 +204,9 @@ export default function SquadCreatePage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-2xl font-semibold text-white">Create Squad</h2>
-            <p className="mt-1 text-sm text-slate-400">Set up your squad roster workspace for portal management.</p>
+            <p className="mt-1 text-sm text-slate-400">Create a new team workspace for roster and management flows.</p>
           </div>
-          <Link to="/squads" className="btn btn-secondary">
+          <Link to="/teams" className="btn btn-secondary">
             Cancel
           </Link>
         </div>

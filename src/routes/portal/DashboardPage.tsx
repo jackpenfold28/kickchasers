@@ -115,7 +115,11 @@ function actionAccentClass(accent: DashboardActionItem['accent']) {
 }
 
 function actionHref(action: DashboardActionItem) {
-  return action.squadId ? `/squads/${action.squadId}` : '/notifications'
+  if (!action.squadId) return '/notifications'
+  if (action.type === 'squad_join_request_created' || action.type === 'guest_merge_request_created') {
+    return `/teams/${action.squadId}?tab=manage`
+  }
+  return `/teams/${action.squadId}`
 }
 
 function actionTitle(action: DashboardActionItem) {
@@ -409,7 +413,7 @@ export default function DashboardPage() {
               actionSlot={
                 <Link
                   to={matchFocusHref}
-                  className="btn inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#07101D] hover:bg-white/90"
+                  className="btn inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#07101D] hover:bg-white/90 sm:w-auto"
                 >
                   Open Match
                   <ArrowRight className="h-4 w-4" />
@@ -476,7 +480,7 @@ export default function DashboardPage() {
 
           <Link
             to="/notifications"
-            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-[#9CE8BE] hover:bg-white/[0.05]"
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-[#9CE8BE] hover:bg-white/[0.05] sm:w-auto"
           >
             Open full inbox
             <ChevronRight className="h-4 w-4" />
@@ -508,7 +512,7 @@ export default function DashboardPage() {
                     to={game.isManual && game.manualId ? `/games/manual/${game.manualId}` : `/games/${game.id}`}
                     className="block rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045)_0%,rgba(255,255,255,0.025)_100%)] px-3.5 py-3 transition hover:border-[#39FF88]/25 hover:bg-white/[0.06]"
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -555,7 +559,7 @@ export default function DashboardPage() {
 
           <Link
             to="/games"
-            className="mt-3 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-[#9CE8BE] hover:bg-white/[0.05]"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-[#9CE8BE] hover:bg-white/[0.05] sm:w-auto"
           >
             View all games
             <ChevronRight className="h-4 w-4" />
@@ -568,7 +572,7 @@ export default function DashboardPage() {
               data.squads.map((squad) => (
                 <Link
                   key={squad.id}
-                  to={`/squads/${squad.id}`}
+                  to={`/teams/${squad.id}`}
                   className="block rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition hover:border-[#39FF88]/30 hover:bg-white/[0.06]"
                 >
                   <div className="flex items-start gap-3">
@@ -602,13 +606,13 @@ export default function DashboardPage() {
               ))
             ) : (
               <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.03] p-5 text-sm text-slate-400">
-                Managed squads will appear here with direct links into the squad workspace.
+                Managed squads will appear here with direct links into the Teams workspace.
               </div>
             )}
           </div>
 
-          <Link to="/squads?tab=my" className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#9CE8BE]">
-            Open squad workspace
+          <Link to="/teams?tab=my-squads" className="mt-4 inline-flex w-full items-center justify-center gap-2 text-sm font-medium text-[#9CE8BE] sm:w-auto sm:justify-start">
+            Open Teams workspace
             <ChevronRight className="h-4 w-4" />
           </Link>
         </PortalCard>
@@ -627,7 +631,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
               <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Season Games</p>
               <p className="mt-2 text-3xl font-semibold text-white">{data.profile.seasonGames}</p>
@@ -758,7 +762,7 @@ export default function DashboardPage() {
             </div>
           )}
 
-          <Link to="/stats" className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#9CE8BE]">
+          <Link to="/stats" className="mt-4 inline-flex w-full items-center justify-center gap-2 text-sm font-medium text-[#9CE8BE] sm:w-auto sm:justify-start">
             Open full leaderboard
             <ChevronRight className="h-4 w-4" />
           </Link>

@@ -263,12 +263,12 @@ export function SummaryActionBar({ onShare, onDownload, isDownloading }: ActionB
         <span className="hidden text-white/12 md:inline">|</span>
         <span className="text-[0.68rem] uppercase tracking-[0.24em] text-slate-500">Summary Actions</span>
       </div>
-      <div className="flex items-center gap-1.5">
-        <button type="button" className="btn btn-ghost gap-2 rounded-[1rem] px-3.5 py-2 text-sm text-slate-200 hover:bg-white/[0.06]" onClick={onShare}>
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-1.5">
+        <button type="button" className="btn btn-ghost w-full gap-2 rounded-[1rem] px-3.5 py-2 text-sm text-slate-200 hover:bg-white/[0.06] sm:w-auto" onClick={onShare}>
           <Share2 className="h-4 w-4" />
           Share
         </button>
-        <button type="button" className="btn gap-2 rounded-[1rem] bg-[#39FF88] px-4 py-2 text-sm font-semibold text-[#061120] shadow-[0_10px_24px_rgba(57,255,136,0.16)] hover:bg-[#39FF88]" onClick={onDownload} disabled={isDownloading}>
+        <button type="button" className="btn w-full gap-2 rounded-[1rem] bg-[#39FF88] px-4 py-2 text-sm font-semibold text-[#061120] shadow-[0_10px_24px_rgba(57,255,136,0.16)] hover:bg-[#39FF88] sm:w-auto" onClick={onDownload} disabled={isDownloading}>
           <Download className="h-4 w-4" />
           {isDownloading ? 'Preparing…' : 'Download PDF'}
         </button>
@@ -416,10 +416,10 @@ export function SummaryPlayersTable({
         <p className="text-[0.68rem] font-bold uppercase tracking-[0.34em] text-slate-500">Players</p>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-[860px] border-collapse text-sm">
+        <table className="min-w-[720px] border-collapse text-sm md:min-w-[860px]">
           <thead className="bg-white/[0.025]">
             <tr className="text-left text-[0.68rem] uppercase tracking-[0.24em] text-slate-500">
-              <th className="sticky left-0 z-20 min-w-[240px] bg-[#0d1728] px-4 py-3">
+              <th className="sticky left-0 z-20 min-w-[180px] bg-[#0d1728] px-4 py-3 md:min-w-[240px]">
                 <button type="button" className="font-semibold text-left" onClick={() => onSort('name')}>
                   Player{sortKey === 'name' ? sortDirection === 'asc' ? ' ▲' : ' ▼' : ''}
                 </button>
@@ -576,7 +576,7 @@ export function StickyMatchHeader({
   return (
     <div
       className={clsx(
-        'pointer-events-none fixed left-0 right-0 top-[72px] z-40 px-4 transition duration-200',
+        'pointer-events-none fixed left-0 right-0 top-[72px] z-40 hidden px-4 transition duration-200 lg:block',
         visible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
       )}
     >
