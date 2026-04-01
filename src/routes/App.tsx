@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { getProfileCompletion, isProfileComplete } from '@/lib/auth'
 import { setClubColours } from '@/lib/theme'
 
-const UNAUTH_ROUTES = new Set([
+const PUBLIC_ROUTES = new Set([
   '/',
   '/how-it-works',
   '/terms',
@@ -16,20 +16,24 @@ const UNAUTH_ROUTES = new Set([
   '/sign-up',
   '/signup',
   '/register',
+  '/check-email',
   '/forgot',
   '/reset-password',
   '/landing',
 ])
 
-function isUnauthRoute(pathname: string) {
-  return UNAUTH_ROUTES.has(pathname)
+function isPublicRoute(pathname: string) {
+  return PUBLIC_ROUTES.has(pathname)
+}
+
+function isOnboardingAllowedRoute(pathname: string) {
+  return pathname === '/onboarding' || pathname === '/request-league' || pathname === '/request-club'
 }
 
 export default function App() {
   const navigate = useNavigate()
   const location = useLocation()
   const [checking, setChecking] = useState(true)
-  const [needsEmailVerify, setNeedsEmailVerify] = useState(false)
   const hasResolvedInitialGate = useRef(false)
 
   useEffect(() => {
@@ -51,16 +55,20 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false
+
     ;(async () => {
       const pathname = location.pathname
-      const onUnauthRoute = isUnauthRoute(pathname)
+      const publicRoute = isPublicRoute(pathname)
+      const onCheckEmailRoute = pathname === '/check-email'
+      const onOnboardingRoute = pathname === '/onboarding'
+      const onboardingAllowedRoute = isOnboardingAllowedRoute(pathname)
+      const isEditOnboarding = onOnboardingRoute && new URLSearchParams(location.search).get('mode') === 'edit'
 
       const { data: sessionData } = await supabase.auth.getSession()
       const session = sessionData.session
 
       if (!session) {
-        setNeedsEmailVerify(false)
-        if (!onUnauthRoute) {
+        if (!publicRoute) {
           const redirect = `${pathname}${location.search || ''}`
           navigate(`/sign-in?redirect=${encodeURIComponent(redirect)}`, { replace: true })
         }
@@ -71,12 +79,11 @@ export default function App() {
         return
       }
 
-      setNeedsEmailVerify(!session.user.email_confirmed_at)
-      const profile = await getProfileCompletion(session.user.id)
-      const complete = isProfileComplete(profile)
-
-      if (onUnauthRoute && pathname !== '/reset-password') {
-        navigate(complete ? '/dashboard' : '/onboarding?new=1', { replace: true })
+      const verified = Boolean(session.user.email_confirmed_at)
+      if (!verified) {
+        if (!onCheckEmailRoute && pathname !== '/reset-password') {
+          navigate('/check-email', { replace: true })
+        }
         if (!cancelled) {
           hasResolvedInitialGate.current = true
           setChecking(false)
@@ -84,8 +91,29 @@ export default function App() {
         return
       }
 
-      if (!complete && pathname !== '/onboarding' && pathname !== '/reset-password') {
-        navigate('/onboarding?new=1', { replace: true })
+      const profile = await getProfileCompletion(session.user.id)
+      const complete = isProfileComplete(profile)
+
+      if ((publicRoute || onCheckEmailRoute) && pathname !== '/reset-password') {
+        navigate(complete ? '/dashboard' : '/onboarding', { replace: true })
+        if (!cancelled) {
+          hasResolvedInitialGate.current = true
+          setChecking(false)
+        }
+        return
+      }
+
+      if (!complete && !onboardingAllowedRoute && pathname !== '/reset-password') {
+        navigate('/onboarding', { replace: true })
+        if (!cancelled) {
+          hasResolvedInitialGate.current = true
+          setChecking(false)
+        }
+        return
+      }
+
+      if (complete && onOnboardingRoute && !isEditOnboarding) {
+        navigate('/dashboard', { replace: true })
         if (!cancelled) {
           hasResolvedInitialGate.current = true
           setChecking(false)
@@ -113,14 +141,5 @@ export default function App() {
     return <main className="min-h-screen p-6 app-bg">Checking session…</main>
   }
 
-  return (
-    <>
-      {needsEmailVerify && !isUnauthRoute(location.pathname) && (
-        <div className="sticky top-0 z-50 border-b border-amber-400/35 bg-amber-500/10 px-4 py-2 text-sm text-amber-100">
-          Verify your email to secure your account. Then refresh this page.
-        </div>
-      )}
-      <Outlet />
-    </>
-  )
+  return <Outlet />
 }

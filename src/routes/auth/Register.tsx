@@ -45,8 +45,8 @@ export default function Register() {
       return
     }
 
-    setInfo('If verification is required, confirm your email and continue.')
-    navigate('/onboarding?new=1', { replace: true })
+    setInfo('Account created. Check your email and verify the account to continue.')
+    navigate('/check-email?new=1', { replace: true })
   }
 
   return (

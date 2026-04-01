@@ -5,6 +5,7 @@ import './index.css'
 import App from './routes/App'
 import Login from './routes/auth/Login'
 import Register from './routes/auth/Register'
+import CheckEmail from './routes/auth/CheckEmail'
 import Forgot from './routes/auth/Forgot'
 import ResetPassword from './routes/auth/ResetPassword'
 import Squad from './routes/Squad'
@@ -31,6 +32,8 @@ import UpdateEmailPage from './routes/portal/settings/UpdateEmailPage'
 import RolesPage from './routes/portal/settings/RolesPage'
 import BlockedUsersPage from './routes/portal/settings/BlockedUsersPage'
 import LegalDocumentPage from './routes/LegalDocumentPage'
+import RequestLeague from './routes/RequestLeague'
+import RequestClub from './routes/RequestClub'
 import { legalDocuments } from './content/legalDocuments'
 
 const router = createBrowserRouter([
@@ -53,9 +56,12 @@ const router = createBrowserRouter([
       { path: 'register', element: <Register /> },
       { path: 'signup', element: <Register /> },
       { path: 'sign-up', element: <Register /> },
+      { path: 'check-email', element: <CheckEmail /> },
       { path: 'forgot', element: <Forgot /> },
       { path: 'reset-password', element: <ResetPassword /> },
       { path: 'onboarding', element: <Onboarding /> },
+      { path: 'request-league', element: <RequestLeague /> },
+      { path: 'request-club', element: <RequestClub /> },
       { path: 'hub', element: <Navigate to="/dashboard" replace /> },
       { path: 'account/update-email', element: <Navigate to="/settings/update-email" replace /> },
       { path: 'squad', element: <Squad /> },
