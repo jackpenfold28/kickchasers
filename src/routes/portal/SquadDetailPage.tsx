@@ -1,23 +1,16 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
-  ArrowLeft,
   ArrowRight,
-  Check,
+  ArrowDown,
+  ArrowUp,
   ChevronRight,
-  Link2,
-  Lock,
-  MoreVertical,
-  Palette,
-  Share2,
-  ShieldCheck,
-  Trophy,
-  UserPlus,
-  Users,
-  X,
 } from 'lucide-react'
 import PortalCard from '@/components/cards/PortalCard'
+import MatchScoreCard from '@/components/dashboard/MatchScoreCard'
+import TeamPageIcon from '@/components/icons/TeamPageIcon'
 import SquadBrandingPanel from '@/components/squads/SquadBrandingPanel'
+import { resolveLogoPublicUrl } from '@/lib/logo-storage'
 import { supabase } from '@/lib/supabase'
 import {
   addGuestPlayer,
@@ -62,6 +55,7 @@ import {
 type DetailTab = 'activity' | 'players' | 'team' | 'manage'
 type PeopleTab = 'players' | 'coaches' | 'members' | 'trackers'
 type TeamResultFilter = 'all' | 'wins' | 'losses'
+type LeaderboardValueMode = 'total' | 'average'
 
 type ClubRolePerson = {
   id: string
@@ -82,6 +76,12 @@ type SquadGameSummary = {
   trackBothTeams: boolean
   gradeId: string | null
   gradeName: string | null
+  homePrimaryColorHex: string | null
+  awayPrimaryColorHex: string | null
+  homeLeagueLogoUrl: string | null
+  homeLeagueName: string | null
+  awayLeagueLogoUrl: string | null
+  awayLeagueName: string | null
   scoreHomeGoals: number
   scoreHomeBehinds: number
   scoreAwayGoals: number
@@ -153,6 +153,16 @@ type ManagePerson = {
 
 const POSITION_OPTIONS = ['Forward', 'Midfield', 'Defence', 'Ruck', 'Utility', 'Bench'] as const
 const RESULT_FILTERS: TeamResultFilter[] = ['all', 'wins', 'losses']
+const TEAM_STAT_CARD_BACKGROUNDS = [
+  'bg-[linear-gradient(180deg,rgba(32,52,88,0.28)_0%,rgba(15,24,43,0.12)_100%)] hover:bg-[linear-gradient(180deg,rgba(45,72,118,0.34)_0%,rgba(18,30,53,0.16)_100%)]',
+  'bg-[linear-gradient(180deg,rgba(28,46,79,0.24)_0%,rgba(14,23,40,0.1)_100%)] hover:bg-[linear-gradient(180deg,rgba(40,66,110,0.3)_0%,rgba(17,28,49,0.15)_100%)]',
+  'bg-[linear-gradient(180deg,rgba(24,38,66,0.22)_0%,rgba(13,21,37,0.1)_100%)] hover:bg-[linear-gradient(180deg,rgba(35,57,97,0.28)_0%,rgba(17,27,48,0.14)_100%)]',
+  'bg-[linear-gradient(180deg,rgba(25,36,62,0.22)_0%,rgba(13,21,36,0.1)_100%)] hover:bg-[linear-gradient(180deg,rgba(38,52,88,0.28)_0%,rgba(17,27,47,0.14)_100%)]',
+  'bg-[linear-gradient(180deg,rgba(24,42,56,0.24)_0%,rgba(13,21,34,0.1)_100%)] hover:bg-[linear-gradient(180deg,rgba(34,60,79,0.3)_0%,rgba(16,27,42,0.14)_100%)]',
+  'bg-[linear-gradient(180deg,rgba(35,36,68,0.24)_0%,rgba(16,21,38,0.1)_100%)] hover:bg-[linear-gradient(180deg,rgba(46,50,92,0.3)_0%,rgba(19,27,46,0.14)_100%)]',
+  'bg-[linear-gradient(180deg,rgba(26,48,52,0.24)_0%,rgba(13,23,29,0.1)_100%)] hover:bg-[linear-gradient(180deg,rgba(38,68,73,0.3)_0%,rgba(18,29,35,0.14)_100%)]',
+  'bg-[linear-gradient(180deg,rgba(44,38,68,0.24)_0%,rgba(17,21,38,0.1)_100%)] hover:bg-[linear-gradient(180deg,rgba(58,52,90,0.3)_0%,rgba(20,27,46,0.14)_100%)]',
+] as const
 const TRACKED_STAT_KEYS: LeaderboardStatKey[] = [
   'disposals',
   'kicks',
@@ -286,6 +296,7 @@ function formatPosition(value: string | null | undefined) {
 
 function formatRoundLabel(round: number | null | undefined) {
   if (round == null || Number.isNaN(round)) return 'Unknown round'
+  if (Number(round) === 106) return 'TRIAL'
   return `Round ${round}`
 }
 
@@ -302,6 +313,37 @@ function totalScore(goals: number, behinds: number) {
 
 function scoreText(goals: number, behinds: number) {
   return `${goals}.${behinds}`
+}
+
+function formatMatchStatus(status: string | null | undefined) {
+  const normalized = (status ?? '').trim().toLowerCase()
+  if (!normalized) return 'Scheduled'
+  if (normalized === 'live' || normalized === 'in_progress' || normalized === 'in progress') return 'Live'
+  if (normalized === 'final' || normalized === 'complete' || normalized === 'completed' || normalized === 'finished')
+    return 'Final'
+  if (normalized === 'scheduled' || normalized === 'upcoming') return 'Scheduled'
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1)
+}
+
+function buildCompetitionLogos(game: SquadGameSummary) {
+  const logos: Array<{ logoUrl: string | null; label: string | null }> = []
+  if (game.homeLeagueLogoUrl || game.homeLeagueName) {
+    logos.push({
+      logoUrl: game.homeLeagueLogoUrl,
+      label: game.homeLeagueName,
+    })
+  }
+  const hasDifferentOpponentLeague =
+    (game.awayLeagueLogoUrl || game.awayLeagueName) &&
+    (game.awayLeagueLogoUrl !== game.homeLeagueLogoUrl || game.awayLeagueName !== game.homeLeagueName)
+
+  if (hasDifferentOpponentLeague) {
+    logos.push({
+      logoUrl: game.awayLeagueLogoUrl,
+      label: game.awayLeagueName,
+    })
+  }
+  return logos.length ? logos : undefined
 }
 
 function averageTotals(totals: Partial<Record<LeaderboardStatKey, number>>, games: number) {
@@ -408,18 +450,77 @@ async function fetchAvatarMap(userIds: string[]) {
   return map
 }
 
+async function fetchLeagueBySquadName(names: string[]) {
+  const cleanedNames = Array.from(new Set(names.map((name) => name.trim()).filter(Boolean)))
+  if (!cleanedNames.length) return new Map<string, { name: string | null; logoUrl: string | null }>()
+
+  const { data, error } = await supabase
+    .from('squads')
+    .select('name,league:leagues(name,short_name,logo_path)')
+    .in('name', cleanedNames)
+
+  if (error) throw error
+
+  const result = new Map<string, { name: string | null; logoUrl: string | null }>()
+  ;(
+    (data ?? []) as Array<{
+      name?: string | null
+      league?: { name?: string | null; short_name?: string | null; logo_path?: string | null } | null
+    }>
+  ).forEach((row) => {
+    const squadName = row.name?.trim()
+    if (!squadName || result.has(squadName)) return
+    const league = row.league ?? null
+    result.set(squadName, {
+      name: league?.short_name ?? league?.name ?? null,
+      logoUrl: resolveLogoPublicUrl(league?.logo_path ?? null),
+    })
+  })
+
+  return result
+}
+
+async function fetchPrimaryColorBySquadName(names: string[]) {
+  const cleanedNames = Array.from(new Set(names.map((name) => name.trim()).filter(Boolean)))
+  if (!cleanedNames.length) return new Map<string, string>()
+
+  const { data, error } = await supabase
+    .from('squads')
+    .select('name,primary_color_hex')
+    .in('name', cleanedNames)
+
+  if (error) throw error
+
+  const result = new Map<string, string>()
+  ;((data ?? []) as Array<{ name?: string | null; primary_color_hex?: string | null }>).forEach((row) => {
+    const squadName = row.name?.trim()
+    const color = row.primary_color_hex?.trim() || null
+    if (!squadName || !color || result.has(squadName)) return
+    result.set(squadName, color)
+  })
+
+  return result
+}
+
 async function fetchSquadGames(squadId: string): Promise<SquadGameSummary[]> {
   const { data: links, error: linksError } = await supabase
     .from('game_squads')
-    .select('game_id')
+    .select('game_id,team_side')
     .eq('squad_id', squadId)
     .order('created_at', { ascending: false })
 
   if (linksError) throw linksError
-  const gameIds = ((links ?? []) as Array<{ game_id?: string | null }>).map((row) => row.game_id).filter((id): id is string => Boolean(id))
+  const linkRows = (links ?? []) as Array<{ game_id?: string | null; team_side?: string | null }>
+  const sideByGame = new Map<string, 'home' | 'away'>()
+  linkRows.forEach((row) => {
+    if (!row.game_id) return
+    sideByGame.set(row.game_id, row.team_side === 'away' ? 'away' : 'home')
+  })
+
+  const gameIds = linkRows.map((row) => row.game_id).filter((id): id is string => Boolean(id))
   if (!gameIds.length) return []
 
-  const [{ data: games, error: gamesError }, { data: scoreRows, error: scoreError }] = await Promise.all([
+  const [{ data: games, error: gamesError }, { data: scoreRows, error: scoreError }, { data: gameSquads, error: gameSquadsError }] = await Promise.all([
     supabase
       .from('games')
       .select('id,opponent,opponent_logo_path,grade_id,date,round,status,track_both_teams')
@@ -429,10 +530,27 @@ async function fetchSquadGames(squadId: string): Promise<SquadGameSummary[]> {
       .select('game_id,team_side,stat_key')
       .in('game_id', gameIds)
       .in('stat_key', ['G', 'GOAL', 'B', 'BEHIND']),
+    supabase
+      .from('game_squads')
+      .select('game_id,squad_id,team_side,squads(league_id,primary_color_hex,league:leagues(name,short_name,logo_path))')
+      .in('game_id', gameIds),
   ])
 
   if (gamesError) throw gamesError
   if (scoreError) throw scoreError
+  if (gameSquadsError) throw gameSquadsError
+
+  const opponentLeagueFallback = await fetchLeagueBySquadName(
+    ((games ?? []) as Array<{ opponent?: string | null }>)
+      .filter((game) => Boolean(game.opponent?.trim()))
+      .map((game) => game.opponent as string)
+  )
+  const opponentColorFallback = await fetchPrimaryColorBySquadName(
+    ((games ?? []) as Array<{ opponent?: string | null }>)
+      .filter((game) => Boolean(game.opponent?.trim()))
+      .map((game) => game.opponent as string)
+  )
+
   const { data: gradeRows, error: gradeError } = await supabase
     .from('league_grades')
     .select('id,name,grade_catalog(label)')
@@ -450,6 +568,47 @@ async function fetchSquadGames(squadId: string): Promise<SquadGameSummary[]> {
   })
 
   const scoreMap = new Map<string, { hg: number; hb: number; ag: number; ab: number }>()
+  const leagueMap = new Map<
+    string,
+    {
+      home: { name: string | null; logoUrl: string | null; primaryColorHex: string | null }
+      away: { name: string | null; logoUrl: string | null; primaryColorHex: string | null }
+      squad: { name: string | null; logoUrl: string | null; primaryColorHex: string | null }
+      opponent: { name: string | null; logoUrl: string | null; primaryColorHex: string | null }
+    }
+  >()
+
+  ;(
+    (gameSquads ?? []) as Array<{
+      game_id?: string | null
+      squad_id?: string | null
+      team_side?: string | null
+      squads?: {
+        primary_color_hex?: string | null
+        league?: { name?: string | null; short_name?: string | null; logo_path?: string | null } | null
+      } | null
+    }>
+  ).forEach((row) => {
+    if (!row.game_id) return
+    const side = row.team_side === 'away' ? 'away' : 'home'
+    const league = row.squads?.league ?? null
+    const value = {
+      name: league?.short_name ?? league?.name ?? null,
+      logoUrl: resolveLogoPublicUrl(league?.logo_path ?? null),
+      primaryColorHex: row.squads?.primary_color_hex ?? null,
+    }
+    const current = leagueMap.get(row.game_id) ?? {
+      home: { name: null, logoUrl: null, primaryColorHex: null },
+      away: { name: null, logoUrl: null, primaryColorHex: null },
+      squad: { name: null, logoUrl: null, primaryColorHex: null },
+      opponent: { name: null, logoUrl: null, primaryColorHex: null },
+    }
+    current[side] = value
+    if (row.squad_id === squadId) current.squad = value
+    else current.opponent = value
+    leagueMap.set(row.game_id, current)
+  })
+
   ;(scoreRows ?? []).forEach((row) => {
     const event = row as { game_id?: string | null; team_side?: string | null; stat_key?: string | null }
     if (!event.game_id) return
@@ -470,16 +629,35 @@ async function fetchSquadGames(squadId: string): Promise<SquadGameSummary[]> {
   return ((games ?? []) as Array<{ id: string; opponent?: string | null; opponent_logo_path?: string | null; grade_id?: string | null; date?: string | null; round?: number | null; status?: string | null; track_both_teams?: boolean | null }>)
     .map((game) => {
       const score = scoreMap.get(game.id) ?? { hg: 0, hb: 0, ag: 0, ab: 0 }
+      const leagues = leagueMap.get(game.id) ?? {
+        home: { name: null, logoUrl: null, primaryColorHex: null },
+        away: { name: null, logoUrl: null, primaryColorHex: null },
+        squad: { name: null, logoUrl: null, primaryColorHex: null },
+        opponent: { name: null, logoUrl: null, primaryColorHex: null },
+      }
+      const squadSide = sideByGame.get(game.id) ?? 'home'
+      const opponentSide = squadSide === 'home' ? 'away' : 'home'
+      const opponentLeagueFallbackValue = opponentLeagueFallback.get(game.opponent?.trim() ?? '')
+      const opponentColorFallbackValue = opponentColorFallback.get(game.opponent?.trim() ?? '') ?? null
       return {
         id: game.id,
         opponent: game.opponent ?? null,
         opponentLogoUrl: storageUrl(game.opponent_logo_path ?? null),
         gradeId: game.grade_id ?? null,
         gradeName: game.grade_id ? gradeNameMap.get(game.grade_id) ?? null : null,
+        homePrimaryColorHex: leagues[squadSide].primaryColorHex ?? leagues.squad.primaryColorHex ?? null,
+        awayPrimaryColorHex:
+          leagues[opponentSide].primaryColorHex ?? leagues.opponent.primaryColorHex ?? opponentColorFallbackValue,
         date: game.date ?? null,
         round: game.round ?? null,
         status: game.status ?? null,
         trackBothTeams: Boolean(game.track_both_teams),
+        homeLeagueLogoUrl: leagues[squadSide].logoUrl ?? leagues.squad.logoUrl ?? null,
+        homeLeagueName: leagues[squadSide].name ?? leagues.squad.name ?? null,
+        awayLeagueLogoUrl:
+          leagues[opponentSide].logoUrl ?? leagues.opponent.logoUrl ?? opponentLeagueFallbackValue?.logoUrl ?? null,
+        awayLeagueName:
+          leagues[opponentSide].name ?? leagues.opponent.name ?? opponentLeagueFallbackValue?.name ?? null,
         scoreHomeGoals: score.hg,
         scoreHomeBehinds: score.hb,
         scoreAwayGoals: score.ag,
@@ -640,7 +818,12 @@ async function fetchPlayersLeaderboard(squadId: string, seasonYear: number | nul
   }
 }
 
-async function fetchTeamAverages(squadId: string, seasonYear: number | null, gradeId: string | null): Promise<TeamAveragesDataset> {
+async function fetchTeamAverages(
+  squadId: string,
+  seasonYear: number | null,
+  gradeId: string | null,
+  includeTrials: boolean
+): Promise<TeamAveragesDataset> {
   const { data: links, error: linkError } = await supabase.from('game_squads').select('game_id,team_side').eq('squad_id', squadId)
   if (linkError) throw linkError
 
@@ -655,7 +838,7 @@ async function fetchTeamAverages(squadId: string, seasonYear: number | null, gra
     return { grades: [], seasonYears: [], finalGameCount: 0, allCount: 0, winCount: 0, lossCount: 0, all: {}, wins: {}, losses: {} }
   }
 
-  let gamesQuery = supabase.from('games').select('id,date,track_both_teams,grade_id').in('id', allGameIds)
+  let gamesQuery = supabase.from('games').select('id,date,track_both_teams,grade_id,round').in('id', allGameIds)
   if (gradeId) gamesQuery = gamesQuery.eq('grade_id', gradeId)
   const { data: games, error: gamesError } = await gamesQuery
   if (gamesError) throw gamesError
@@ -672,8 +855,9 @@ async function fetchTeamAverages(squadId: string, seasonYear: number | null, gra
     )
   ).sort((a, b) => b - a)
 
-  const filteredGames = ((games ?? []) as Array<{ id: string; date?: string | null; track_both_teams?: boolean | null; grade_id?: string | null }>)
+  const filteredGames = ((games ?? []) as Array<{ id: string; date?: string | null; track_both_teams?: boolean | null; grade_id?: string | null; round?: number | null }>)
     .filter((game) => {
+      if (!includeTrials && Number(game.round ?? 0) === 106) return false
       if (!seasonYear) return true
       if (!game.date) return false
       const year = new Date(game.date).getFullYear()
@@ -734,9 +918,11 @@ async function fetchTeamAverages(squadId: string, seasonYear: number | null, gra
     const side = sideByGame.get(game.id) ?? 'home'
     const gameEvents = eventsByGame.get(game.id) ?? []
     if (!gameEvents.length) return
-    const trackBothTeams = Boolean(game.track_both_teams)
-    const ourEvents = trackBothTeams ? gameEvents.filter((event) => event.team_side === side) : gameEvents
-    const oppEvents = trackBothTeams ? gameEvents.filter((event) => event.team_side !== side) : []
+    const hasBothSides =
+      gameEvents.some((event) => event.team_side === side) &&
+      gameEvents.some((event) => event.team_side !== side)
+    const ourEvents = hasBothSides ? gameEvents.filter((event) => event.team_side === side) : gameEvents
+    const oppEvents = hasBothSides ? gameEvents.filter((event) => event.team_side !== side) : []
     if (!ourEvents.length) return
 
     const applyTotals = (target: Partial<Record<LeaderboardStatKey, number>>, rows: Array<{ stat_key: string | null }>) => {
@@ -763,7 +949,7 @@ async function fetchTeamAverages(squadId: string, seasonYear: number | null, gra
 
     const ourScore = scoreFor(ourEvents)
     const oppScore = scoreFor(oppEvents)
-    if (trackBothTeams && ourScore !== oppScore) {
+    if (hasBothSides && ourScore !== oppScore) {
       if (ourScore > oppScore) {
         winCount += 1
         applyTotals(winTotals, ourEvents)
@@ -819,7 +1005,7 @@ function TeamsModal({
             {subtitle ? <p className="mt-1 text-sm text-slate-400">{subtitle}</p> : null}
           </div>
           <button className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white" onClick={onClose}>
-            <X className="h-4 w-4" />
+            <TeamPageIcon name="close" className="h-4 w-4" />
           </button>
         </div>
         <div className="max-h-[78vh] overflow-y-auto p-5 sm:p-6">{children}</div>
@@ -883,6 +1069,7 @@ export default function SquadDetailPage() {
   const [leaderboardLoading, setLeaderboardLoading] = useState(false)
   const [leaderboard, setLeaderboard] = useState<LeaderboardDataset>({ topStatKeys: [], players: [], isEmpty: true })
   const [selectedStatKey, setSelectedStatKey] = useState<LeaderboardStatKey>('disposals')
+  const [leaderboardValueMode, setLeaderboardValueMode] = useState<LeaderboardValueMode>('total')
 
   const [teamStatsLoading, setTeamStatsLoading] = useState(false)
   const [teamStats, setTeamStats] = useState<TeamAveragesDataset>({
@@ -898,6 +1085,7 @@ export default function SquadDetailPage() {
   })
   const [teamGradeId, setTeamGradeId] = useState<string | null>(null)
   const [teamResultFilter, setTeamResultFilter] = useState<TeamResultFilter>('all')
+  const [includeTrials, setIncludeTrials] = useState(false)
 
   const [addPlayerOpen, setAddPlayerOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -1139,7 +1327,7 @@ export default function SquadDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [seasonYear, selectedStatKey, squad?.id, viewerState])
+  }, [seasonYear, squad?.id, viewerState])
 
   useEffect(() => {
     if (!squad?.id || viewerState === 'locked' || viewerState === 'follower') return
@@ -1147,7 +1335,7 @@ export default function SquadDetailPage() {
     ;(async () => {
       try {
         setTeamStatsLoading(true)
-        const data = await fetchTeamAverages(squad.id, seasonYear, teamGradeId)
+        const data = await fetchTeamAverages(squad.id, seasonYear, teamGradeId, includeTrials)
         if (cancelled) return
         setTeamStats(data)
         if (!teamGradeId && (squad.gradeId || data.grades[0]?.id)) {
@@ -1162,7 +1350,7 @@ export default function SquadDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [seasonYear, squad?.gradeId, squad?.id, teamGradeId, viewerState])
+  }, [includeTrials, seasonYear, squad?.gradeId, squad?.id, teamGradeId, viewerState])
 
   async function onUpdateNumber(memberId: string, jersey: number | null) {
     setSavingMemberId(memberId)
@@ -1482,16 +1670,40 @@ export default function SquadDetailPage() {
   }, [games, seasonYear])
 
   const sortedLeaderboard = useMemo(() => {
-    if (!leaderboard.players.length) return [] as Array<LeaderboardPlayer & { statValue: number }>
+    if (!leaderboard.players.length)
+      return [] as Array<LeaderboardPlayer & { statValue: number; displayValue: string }>
     return [...leaderboard.players]
-      .map((row) => ({ ...row, statValue: Number(row.stats[selectedStatKey] ?? 0) }))
+      .map((row) => {
+        const totalValue = Number(row.stats[selectedStatKey] ?? 0)
+        const averageValue = row.games > 0 ? totalValue / row.games : 0
+        const statValue = leaderboardValueMode === 'average' ? averageValue : totalValue
+        return {
+          ...row,
+          statValue,
+          displayValue: leaderboardValueMode === 'average' ? statValue.toFixed(1) : String(totalValue),
+        }
+      })
       .filter((row) => row.statValue > 0)
       .sort((a, b) => {
         if (b.statValue !== a.statValue) return b.statValue - a.statValue
         return b.games - a.games
       })
       .slice(0, 10)
-  }, [leaderboard.players, selectedStatKey])
+  }, [leaderboard.players, leaderboardValueMode, selectedStatKey])
+
+  const leaderboardStatOptions = useMemo(() => {
+    const keysWithData = TRACKED_STAT_KEYS.filter((key) =>
+      leaderboard.players.some((player) => Number(player.stats[key] ?? 0) > 0)
+    )
+    return keysWithData.length ? keysWithData : TRACKED_STAT_KEYS
+  }, [leaderboard.players])
+
+  useEffect(() => {
+    if (!leaderboardStatOptions.length) return
+    if (!leaderboardStatOptions.includes(selectedStatKey)) {
+      setSelectedStatKey(leaderboardStatOptions[0])
+    }
+  }, [leaderboardStatOptions, selectedStatKey])
 
   const activeTeamStats = useMemo(() => {
     if (teamResultFilter === 'wins') return teamStats.wins
@@ -1503,8 +1715,31 @@ export default function SquadDetailPage() {
     () =>
       TRACKED_STAT_KEYS.filter((key) => Number(activeTeamStats[key] ?? 0) > 0)
         .slice(0, 8)
-        .map((key) => ({ key, label: STAT_LABELS[key], value: activeTeamStats[key] ?? 0 })),
-    [activeTeamStats]
+        .map((key) => {
+          const value = Number(activeTeamStats[key] ?? 0)
+          const winsValue = Number(teamStats.wins[key] ?? 0)
+          const lossesValue = Number(teamStats.losses[key] ?? 0)
+          const comparisonValue =
+            teamResultFilter === 'wins' ? lossesValue : teamResultFilter === 'losses' ? winsValue : null
+          const delta =
+            comparisonValue != null && (value > 0 || comparisonValue > 0)
+              ? Number((value - comparisonValue).toFixed(1))
+              : null
+
+          return {
+            key,
+            label: STAT_LABELS[key],
+            value,
+            displayValue: value.toFixed(1),
+            winsValue,
+            lossesValue,
+            delta,
+            comparisonLabel:
+              teamResultFilter === 'wins' ? 'L' : teamResultFilter === 'losses' ? 'W' : null,
+            comparisonValue,
+          }
+        }),
+    [activeTeamStats, teamResultFilter, teamStats.losses, teamStats.wins]
   )
 
   const playersPeople = useMemo(
@@ -1613,7 +1848,7 @@ export default function SquadDetailPage() {
     {
       key: 'share',
       label: 'Share',
-      icon: <Share2 className="h-5 w-5" />,
+      icon: <TeamPageIcon name="share" className="h-5 w-5" />,
       onClick: () => void onShare(),
       visible: true,
       accent: false,
@@ -1622,7 +1857,7 @@ export default function SquadDetailPage() {
     {
       key: 'invite',
       label: 'Invite',
-      icon: <UserPlus className="h-5 w-5" />,
+      icon: <TeamPageIcon name="person-add-outline" className="h-5 w-5" />,
       onClick: () => setInviteOpen(true),
       visible: canInvite,
       accent: false,
@@ -1631,7 +1866,7 @@ export default function SquadDetailPage() {
     {
       key: 'merge-guest',
       label: 'Merge Guest',
-      icon: <Link2 className="h-5 w-5" />,
+      icon: <TeamPageIcon name="person-outline" className="h-5 w-5" />,
       onClick: () => setTab('manage'),
       visible: canManageGuests && guestMembers.length > 0,
       accent: false,
@@ -1640,7 +1875,7 @@ export default function SquadDetailPage() {
     {
       key: 'team-selection',
       label: 'Selection',
-      icon: <Trophy className="h-5 w-5" />,
+      icon: <TeamPageIcon name="oval1" className="h-5 w-5" />,
       href: `/teams/${squad.id}/team-selection`,
       visible: canUseTeamSelection,
       accent: false,
@@ -1649,7 +1884,7 @@ export default function SquadDetailPage() {
     {
       key: 'pending',
       label: 'Pending',
-      icon: <Users className="h-5 w-5" />,
+      icon: <TeamPageIcon name="people-outline" className="h-5 w-5" />,
       onClick: () => setTab('manage'),
       visible: canApprove,
       accent: false,
@@ -1659,7 +1894,7 @@ export default function SquadDetailPage() {
     {
       key: 'follow',
       label: followState ? 'Following' : 'Follow',
-      icon: <Check className="h-5 w-5" />,
+      icon: <TeamPageIcon name={followState ? 'star' : 'star-outline'} className="h-5 w-5" />,
       onClick: onToggleFollow,
       visible: Boolean(squad.isOfficial && squad.clubId),
       accent: !followState,
@@ -1685,7 +1920,7 @@ export default function SquadDetailPage() {
             aria-label="Back to Teams"
             className="absolute left-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/35 text-white shadow-[0_10px_24px_rgba(0,0,0,0.28)] backdrop-blur-sm transition hover:bg-black/55"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <TeamPageIcon name="arrow-back" className="h-4 w-4" />
           </Link>
           {Boolean(userId && !isOwner && isAcceptedMember) ? (
             <button
@@ -1694,7 +1929,7 @@ export default function SquadDetailPage() {
               onClick={() => setHeroMenuOpen(true)}
               className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/35 text-white shadow-[0_10px_24px_rgba(0,0,0,0.28)] backdrop-blur-sm transition hover:bg-black/55"
             >
-              <MoreVertical className="h-4 w-4" />
+              <TeamPageIcon name="settings-outline" className="h-4 w-4" />
             </button>
           ) : null}
           <div
@@ -1725,7 +1960,7 @@ export default function SquadDetailPage() {
                     <p className="teams-kicker">Teams</p>
                     {squad.isOfficial && (
                       <span className="team-official-badge">
-                        <ShieldCheck className="h-3.5 w-3.5" />
+                        <TeamPageIcon name="verified" className="h-3.5 w-3.5 text-[#39FF88]" />
                         Official
                       </span>
                     )}
@@ -1735,9 +1970,18 @@ export default function SquadDetailPage() {
                   </h2>
                   <p className="mt-2 text-sm font-medium uppercase tracking-[0.18em] text-slate-300">{leagueLabel}</p>
                   <div className="teams-hero-meta-row mt-4">
-                    <span className="team-meta-pill">{memberCount} members</span>
-                    <span className="team-meta-pill">{viewerState.replaceAll('-', ' ')}</span>
-                    <span className="team-meta-pill">{squad.isOfficial ? 'Official club team' : 'Custom squad'}</span>
+                    <span className="team-meta-pill inline-flex items-center gap-2">
+                      <TeamPageIcon name="football" className="h-4 w-4 text-slate-300" />
+                      Australian Rules
+                    </span>
+                    <span className="team-meta-pill inline-flex items-center gap-2">
+                      <TeamPageIcon name="people-outline" className="h-4 w-4 text-slate-300" />
+                      {memberCount} members
+                    </span>
+                    <span className="team-meta-pill inline-flex items-center gap-2">
+                      <TeamPageIcon name="lock-closed-outline" className="h-4 w-4 text-slate-300" />
+                      {squad.isOfficial ? 'Official club team' : 'Private squad'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1802,7 +2046,7 @@ export default function SquadDetailPage() {
             <div className="flex flex-col items-start gap-4">
               <div className="flex items-center gap-3">
                 <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-amber-400/12 text-amber-200">
-                  <Lock className="h-5 w-5" />
+                  <TeamPageIcon name="lock" className="h-5 w-5" />
                 </span>
                 <div>
                   <p className="text-lg font-semibold text-white">Join this team to view roster, stats and games</p>
@@ -1839,7 +2083,7 @@ export default function SquadDetailPage() {
                       onClick={() => setDismissedGuestBanner(true)}
                       aria-label="Close guest merge suggestion"
                     >
-                      <X className="h-4 w-4" />
+                      <TeamPageIcon name="close" className="h-4 w-4" />
                     </button>
                   </div>
                   {guestClaimCandidates.slice(0, 2).map((member) => (
@@ -1893,28 +2137,35 @@ export default function SquadDetailPage() {
                         </div>
                         <div className="grid gap-3">
                           {roundGames.map((game) => (
-                            <Link key={game.id} to={`/games/${game.id}`} className="team-row-card block">
-                              <div className="flex items-center gap-4">
-                                <div className="team-row-logo">
-                                  {squad.logoUrl ? <img src={squad.logoUrl} alt={squad.name || 'Team'} /> : <span className="text-sm font-semibold text-slate-300">{initialsFromName(squad.name)}</span>}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="truncate text-base font-semibold text-white">{squad.name || 'Team'} vs {game.opponent || 'Opponent'}</h4>
-                                  </div>
-                                  <p className="mt-1 text-sm text-slate-400">{formatDateLabel(game.date)} • {game.status || 'Tracked game'}</p>
-                                  <div className="mt-3 flex flex-wrap gap-2">
-                                    <span className="team-meta-pill">{game.gradeName || squad.gradeName || 'Grade TBC'}</span>
-                                    <span className="team-meta-pill">{scoreText(game.scoreHomeGoals, game.scoreHomeBehinds)} - {scoreText(game.scoreAwayGoals, game.scoreAwayBehinds)}</span>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-lg font-semibold text-white">{totalScore(game.scoreHomeGoals, game.scoreHomeBehinds)} - {totalScore(game.scoreAwayGoals, game.scoreAwayBehinds)}</p>
-                                  <div className="team-forward mt-2 ml-auto">
-                                    <ChevronRight className="h-4 w-4" />
-                                  </div>
-                                </div>
-                              </div>
+                            <Link key={game.id} to={`/games/${game.id}`} className="block">
+                              <MatchScoreCard
+                                variant="hero"
+                                status={formatMatchStatus(game.status)}
+                                dateLabel={formatDateLabel(game.date)}
+                                roundLabel={formatRoundLabel(game.round)}
+                                competitionLabel={game.gradeName || squad.gradeName || 'Grade TBC'}
+                                competitionLogos={buildCompetitionLogos(game)}
+                                homeTint={game.homePrimaryColorHex ?? squad.primaryColorHex ?? '#18283E'}
+                                awayTint={game.awayPrimaryColorHex ?? '#0F5132'}
+                                homeTeam={{
+                                  name: squad.name || 'Team',
+                                  logoUrl: squad.logoUrl ?? null,
+                                }}
+                                awayTeam={{
+                                  name: game.opponent || 'Opponent',
+                                  logoUrl: game.opponentLogoUrl ?? null,
+                                }}
+                                homeScore={totalScore(game.scoreHomeGoals, game.scoreHomeBehinds)}
+                                awayScore={totalScore(game.scoreAwayGoals, game.scoreAwayBehinds)}
+                                homeBreakdown={scoreText(game.scoreHomeGoals, game.scoreHomeBehinds)}
+                                awayBreakdown={scoreText(game.scoreAwayGoals, game.scoreAwayBehinds)}
+                                actionSlot={
+                                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80 transition hover:bg-white/[0.09]">
+                                    View Game
+                                    <ChevronRight className="h-3.5 w-3.5" />
+                                  </span>
+                                }
+                              />
                             </Link>
                           ))}
                         </div>
@@ -1951,13 +2202,25 @@ export default function SquadDetailPage() {
               </div>
 
               <div className="teams-action-scroll">
-                {(leaderboard.topStatKeys.length ? leaderboard.topStatKeys : ['disposals']).map((key) => (
+                {leaderboardStatOptions.map((key) => (
                   <button
                     key={key}
-                    onClick={() => setSelectedStatKey(key as LeaderboardStatKey)}
+                    onClick={() => setSelectedStatKey(key)}
                     className={`teams-action-chip ${selectedStatKey === key ? 'teams-action-chip--accent' : ''}`}
                   >
-                    {STAT_LABELS[key as LeaderboardStatKey]}
+                    {STAT_LABELS[key]}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {(['total', 'average'] as LeaderboardValueMode[]).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setLeaderboardValueMode(mode)}
+                    className={`teams-action-chip ${leaderboardValueMode === mode ? 'teams-action-chip--accent' : ''}`}
+                  >
+                    {mode === 'total' ? 'Total' : 'Average'}
                   </button>
                 ))}
               </div>
@@ -1986,8 +2249,10 @@ export default function SquadDetailPage() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xl font-black text-[#39FF88]">{row.statValue}</p>
-                          <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-slate-500">{STAT_LABELS[selectedStatKey]}</p>
+                          <p className="text-xl font-black text-[#39FF88]">{row.displayValue}</p>
+                          <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-slate-500">
+                            {STAT_LABELS[selectedStatKey]} {leaderboardValueMode === 'average' ? 'AVG' : 'TOTAL'}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -2025,6 +2290,15 @@ export default function SquadDetailPage() {
                 <span className="rounded-full bg-white/5 px-3 py-1.5 text-sm text-slate-300">
                   Grade: {teamStats.grades.find((grade) => grade.id === teamGradeId)?.name ?? squad.gradeName ?? 'Current'}
                 </span>
+                <label className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-sm text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={includeTrials}
+                    onChange={(event) => setIncludeTrials(event.target.checked)}
+                    className="h-4 w-4 rounded border-white/20 bg-transparent text-[#39FF88] accent-[#39FF88]"
+                  />
+                  Include Trials
+                </label>
                 {RESULT_FILTERS.map((filter) => (
                   <button
                     key={filter}
@@ -2036,17 +2310,60 @@ export default function SquadDetailPage() {
                 ))}
               </div>
 
-              {teamStatsLoading ? (
+              {teamStatsLoading && teamStatCards.length ? (
+                <p className="text-sm text-slate-400">Refreshing team averages…</p>
+              ) : null}
+
+              {teamStatsLoading && !teamStatCards.length ? (
                 <p className="text-sm text-slate-400">Loading team averages…</p>
               ) : !teamStatCards.length ? (
                 <div className="rounded-[24px] bg-white/[0.03] p-5 text-sm text-slate-400">No team stats yet. Team averages unlock from tracked games tied to this team.</div>
               ) : (
                 <>
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    {teamStatCards.map((card) => (
-                      <div key={card.key} className="rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_14px_32px_rgba(2,8,20,0.22)]">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{card.label}</p>
-                        <p className="mt-3 text-3xl font-black text-white">{card.value}</p>
+                    {teamStatCards.map((card, index) => (
+                      <div
+                        key={card.key}
+                        className={`group relative overflow-hidden rounded-[26px] border border-white/[0.07] p-4 text-center transition duration-200 ease-out hover:-translate-y-[1px] hover:border-white/[0.1] hover:shadow-[0_18px_38px_rgba(2,8,20,0.28),inset_0_1px_0_rgba(255,255,255,0.05)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_14px_32px_rgba(2,8,20,0.22)] ${TEAM_STAT_CARD_BACKGROUNDS[index % TEAM_STAT_CARD_BACKGROUNDS.length]}`}
+                      >
+                        <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-200 group-hover:opacity-100 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),transparent_60%)]" />
+                        <div className="pointer-events-none absolute inset-x-5 top-0 h-[2px] rounded-full bg-[linear-gradient(90deg,rgba(57,255,136,0),rgba(57,255,136,0.34),rgba(57,255,136,0))]" />
+                        <div className="flex min-h-[124px] flex-col items-center">
+                          <div className="flex h-[28px] items-center justify-center">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{card.label}</p>
+                          </div>
+                          <div className="mt-3 flex min-h-[48px] items-center justify-center gap-3">
+                            <p className="quick6-value-motion text-[2rem] font-black italic leading-none tracking-[-0.04em] text-white lg:text-[2.15rem] [text-shadow:0_1px_0_rgba(255,255,255,0.04)]">
+                              {card.displayValue}
+                            </p>
+                            {teamResultFilter !== 'all' ? (
+                              <>
+                                {card.delta != null && Math.abs(card.delta) > 0 ? (
+                                  <>
+                                    {card.delta > 0 ? (
+                                      <ArrowUp className="h-3.5 w-3.5 text-[#39FF88]" />
+                                    ) : (
+                                      <ArrowDown className="h-3.5 w-3.5 text-red-400" />
+                                    )}
+                                    <span className={`text-xs font-semibold ${card.delta > 0 ? 'text-[#9CE8BE]' : 'text-red-300'}`}>
+                                      {card.delta > 0 ? '+' : ''}
+                                      {card.delta.toFixed(1)}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span className="opacity-0">+0.0</span>
+                                )}
+                              </>
+                            ) : null}
+                          </div>
+                          <div className="mt-1 flex h-[34px] items-start justify-center">
+                            {teamResultFilter !== 'all' && card.comparisonLabel && card.comparisonValue != null ? (
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-600">
+                                {card.comparisonLabel}: {card.comparisonValue.toFixed(1)}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -2088,35 +2405,45 @@ export default function SquadDetailPage() {
                   <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-5">
                     {canManageGuests ? (
                       <button className="teams-operational-card text-left" onClick={() => setAddPlayerOpen(true)}>
-                        <Users className="h-5 w-5 text-[#9CE8BE]" />
+                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.06] text-[#9CE8BE] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                          <TeamPageIcon name="person-add" className="h-5 w-5" />
+                        </span>
                         <p className="mt-3 font-semibold text-white">Add Player</p>
                         <p className="mt-1 text-sm text-slate-400">Add a guest or roster player entry.</p>
                       </button>
                     ) : null}
                     {canInvite ? (
                       <button className="teams-operational-card text-left" onClick={() => setInviteOpen(true)}>
-                        <UserPlus className="h-5 w-5 text-[#9CE8BE]" />
+                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.06] text-[#9CE8BE] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                          <TeamPageIcon name="send" className="h-5 w-5" />
+                        </span>
                         <p className="mt-3 font-semibold text-white">Invite Member</p>
                         <p className="mt-1 text-sm text-slate-400">Send an official invite by handle.</p>
                       </button>
                     ) : null}
                     {canEditBranding ? (
                       <button className="teams-operational-card text-left" onClick={() => setBrandingOpen(true)}>
-                        <Palette className="h-5 w-5 text-[#9CE8BE]" />
+                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.06] text-[#9CE8BE] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                          <TeamPageIcon name="palette" className="h-5 w-5" />
+                        </span>
                         <p className="mt-3 font-semibold text-white">Edit Club Branding</p>
                         <p className="mt-1 text-sm text-slate-400">Logo, colours and cover identity.</p>
                       </button>
                     ) : null}
                     {canManageGuests ? (
                       <button className="teams-operational-card text-left" onClick={() => setPeopleTab('players')}>
-                        <Link2 className="h-5 w-5 text-[#9CE8BE]" />
+                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.06] text-[#9CE8BE] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                          <TeamPageIcon name="group" className="h-5 w-5" />
+                        </span>
                         <p className="mt-3 font-semibold text-white">Manage Guest Users</p>
                         <p className="mt-1 text-sm text-slate-400">Guests, merge requests, and direct linking.</p>
                       </button>
                     ) : null}
                     {canChangeLeague ? (
                       <button className="teams-operational-card text-left" onClick={() => setChangeLeagueOpen(true)}>
-                        <Trophy className="h-5 w-5 text-[#9CE8BE]" />
+                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.06] text-[#9CE8BE] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                          <TeamPageIcon name="emoji-events" className="h-5 w-5" />
+                        </span>
                         <p className="mt-3 font-semibold text-white">Change League</p>
                         <p className="mt-1 text-sm text-slate-400">Update grade assignment for this team.</p>
                       </button>
@@ -2252,7 +2579,7 @@ export default function SquadDetailPage() {
                               className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-slate-400 transition hover:bg-white/10 hover:text-white"
                               onClick={() => setActionMember(person.member)}
                             >
-                              <MoreVertical className="h-4 w-4" />
+                              <TeamPageIcon name="more-vert" className="h-4 w-4" />
                             </button>
                           ) : null}
                         </div>
@@ -2359,12 +2686,16 @@ export default function SquadDetailPage() {
         {actionMember ? (
           <div className="grid gap-2">
             <button className="teams-action-chip justify-between" onClick={() => { setNumberModalMember(actionMember); setNumberModalValue(actionMember.jerseyNumber?.toString() ?? ''); setActionMember(null) }}>
-              Edit jersey number
-              <ArrowRight className="h-4 w-4" />
+              <span className="inline-flex items-center gap-2">
+                <TeamPageIcon name="tag" className="h-4 w-4" />
+                Edit jersey number
+              </span>
             </button>
             <button className="teams-action-chip justify-between" onClick={() => { setPositionMember(actionMember); setActionMember(null) }}>
-              Edit position
-              <ArrowRight className="h-4 w-4" />
+              <span className="inline-flex items-center gap-2">
+                <TeamPageIcon name="sports-soccer" className="h-4 w-4" />
+                Edit position
+              </span>
             </button>
             {canManageTeamAdminStuff && !actionMember.userId ? (
               <button
@@ -2377,29 +2708,39 @@ export default function SquadDetailPage() {
                   setActionMember(null)
                 }}
               >
-                Edit guest name / number
-                <ArrowRight className="h-4 w-4" />
+                <span className="inline-flex items-center gap-2">
+                  <TeamPageIcon name="edit" className="h-4 w-4" />
+                  Edit guest name / number
+                </span>
               </button>
             ) : null}
             {canManageGuests && !actionMember.userId ? (
               <button className="teams-action-chip justify-between" onClick={() => { setMergeModalMember(actionMember); setLinkHandle(''); setFoundProfile(null); setActionMember(null) }}>
-                Link guest to user
-                <ArrowRight className="h-4 w-4" />
+                <span className="inline-flex items-center gap-2">
+                  <TeamPageIcon name="person-search" className="h-4 w-4" />
+                  Link guest to user
+                </span>
               </button>
             ) : null}
             {canManageTeamAdminStuff && actionMember.userId ? (
               <>
                 <button className="teams-action-chip justify-between" onClick={() => void updateRosterRole(actionMember, 'coach', 'grant')}>
-                  Promote to coach
-                  <ArrowRight className="h-4 w-4" />
+                  <span className="inline-flex items-center gap-2">
+                    <TeamPageIcon name="school" className="h-4 w-4" />
+                    Promote to coach
+                  </span>
                 </button>
                 <button className="teams-action-chip justify-between" onClick={() => void updateRosterRole(actionMember, 'tracker', 'grant')}>
-                  Promote to tracker
-                  <ArrowRight className="h-4 w-4" />
+                  <span className="inline-flex items-center gap-2">
+                    <TeamPageIcon name="track-changes" className="h-4 w-4" />
+                    Promote to tracker
+                  </span>
                 </button>
                 <button className="teams-action-chip justify-between" onClick={() => void updateRosterRole(actionMember, 'admin', 'grant')}>
-                  Promote to admin
-                  <ArrowRight className="h-4 w-4" />
+                  <span className="inline-flex items-center gap-2">
+                    <TeamPageIcon name="admin-panel-settings" className="h-4 w-4" />
+                    Promote to admin
+                  </span>
                 </button>
               </>
             ) : null}
@@ -2414,8 +2755,10 @@ export default function SquadDetailPage() {
                   void onRemoveMember(actionMember.id)
                 }}
               >
-                Remove from squad
-                <ArrowRight className="h-4 w-4" />
+                <span className="inline-flex items-center gap-2">
+                  <TeamPageIcon name="delete" className="h-4 w-4" />
+                  Remove from squad
+                </span>
               </button>
             ) : null}
           </div>
@@ -2457,8 +2800,10 @@ export default function SquadDetailPage() {
                 setPositionMember(null)
               }}
             >
-              {position}
-              <ArrowRight className="h-4 w-4" />
+              <span className="inline-flex items-center gap-2">
+                <TeamPageIcon name="sports-soccer" className="h-4 w-4" />
+                {position}
+              </span>
             </button>
           ))}
         </div>
@@ -2480,14 +2825,17 @@ export default function SquadDetailPage() {
           <div className="flex gap-2">
             <input className="input flex-1" value={linkHandle} onChange={(event) => setLinkHandle(event.target.value)} placeholder="@playerhandle" />
             <button className="teams-action-chip inline-flex items-center gap-2" disabled={workingAction === 'search-link' || !linkHandle.trim()} onClick={() => void onSearchHandle()}>
-              <Link2 className="h-4 w-4" />
+              <TeamPageIcon name="person-search" className="h-4 w-4" />
               Search
             </button>
           </div>
           {foundProfile ? (
-            <div className="teams-guest-card">
-              <p className="font-semibold text-white">{foundProfile.name || foundProfile.handle || 'Profile found'}</p>
-              <p className="mt-1 text-sm text-slate-400">{foundProfile.handle || 'No handle'}</p>
+            <div className="teams-guest-card flex items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold text-white">{foundProfile.name || foundProfile.handle || 'Profile found'}</p>
+                <p className="mt-1 text-sm text-slate-400">{foundProfile.handle || 'No handle'}</p>
+              </div>
+              <TeamPageIcon name="check-circle" className="h-5 w-5 text-[#39FF88]" />
             </div>
           ) : null}
           {linkError ? <p className="text-sm text-red-300">{linkError}</p> : null}
@@ -2510,7 +2858,7 @@ export default function SquadDetailPage() {
               className="teams-action-chip justify-between !text-red-300"
             >
               {leaving ? 'Leaving…' : 'Leave team'}
-              <ArrowRight className="h-4 w-4" />
+              <TeamPageIcon name="delete" className="h-4 w-4" />
             </button>
           ) : null}
         </div>

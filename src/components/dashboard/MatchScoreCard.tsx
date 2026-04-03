@@ -10,6 +10,10 @@ type MatchScoreCardProps = {
   venueLabel?: string | null
   competitionLabel?: string | null
   competitionLogoUrl?: string | null
+  competitionLogos?: Array<{
+    logoUrl: string | null
+    label?: string | null
+  }>
   homeTint?: string | null
   awayTint?: string | null
   title?: string | null
@@ -147,6 +151,7 @@ export default function MatchScoreCard({
   venueLabel,
   competitionLabel,
   competitionLogoUrl,
+  competitionLogos,
   homeTint,
   awayTint,
   title,
@@ -163,6 +168,12 @@ export default function MatchScoreCard({
   const hasScore = homeScore != null && awayScore != null
   const resolvedSurface = surface ?? (isHero ? 'tinted' : 'flat')
   const layers = buildCardLayers({ variant, surface: resolvedSurface, status, homeTint, awayTint })
+  const resolvedCompetitionLogos =
+    competitionLogos && competitionLogos.length
+      ? competitionLogos.slice(0, 2)
+      : competitionLogoUrl || competitionLabel
+        ? [{ logoUrl: competitionLogoUrl ?? null, label: competitionLabel ?? null }]
+        : []
 
   return (
     <div
@@ -257,7 +268,7 @@ export default function MatchScoreCard({
                       <div className="text-[3.4rem] font-black italic leading-none tracking-[-0.04em] text-white lg:text-[4.2rem]">{homeScore}</div>
                       <div className="mt-1.5 text-[13px] font-bold text-slate-400">{homeBreakdown || '-'}</div>
                     </div>
-                    <div className="pb-6 text-[11px] font-bold uppercase tracking-[0.26em] text-slate-500">vs</div>
+                    <div className="self-start pt-3 text-[11px] font-bold uppercase tracking-[0.26em] text-slate-500">vs</div>
                     <div className="text-center">
                       <div className="text-[3.4rem] font-black italic leading-none tracking-[-0.04em] text-white lg:text-[4.2rem]">{awayScore}</div>
                       <div className="mt-1.5 text-[13px] font-bold text-slate-400">{awayBreakdown || '-'}</div>
@@ -284,14 +295,24 @@ export default function MatchScoreCard({
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
             <div className="flex flex-wrap items-center gap-2">
-              {competitionLogoUrl || competitionLabel ? (
-                <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-[#101A2D] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                  {competitionLogoUrl ? (
-                    <img src={competitionLogoUrl} alt={competitionLabel || 'League'} className="h-full w-full object-cover object-center" />
-                  ) : (
-                    <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-200">{leagueInitials(competitionLabel)}</span>
-                  )}
-                </span>
+              {resolvedCompetitionLogos.length ? (
+                <div className="flex items-center -space-x-2">
+                  {resolvedCompetitionLogos.map((logo, index) => (
+                    <span
+                      key={`${logo.label ?? 'league'}-${index}`}
+                      className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-[#101A2D] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                      title={logo.label ?? 'League'}
+                    >
+                      {logo.logoUrl ? (
+                        <img src={logo.logoUrl} alt={logo.label || 'League'} className="h-full w-full object-cover object-center" />
+                      ) : (
+                        <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-200">
+                          {leagueInitials(logo.label)}
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </div>
               ) : null}
               {venueLabel ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-slate-400">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Sparkles, Users, Wrench } from 'lucide-react'
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Minus, Sparkles, Users, Wrench } from 'lucide-react'
 import PortalCard from '@/components/cards/PortalCard'
 import GameLogCard from '@/components/portal/games/GameLogCard'
 import { listPlatformGames, type GameLogRow } from '@/lib/portal-games'
@@ -54,6 +54,33 @@ function userInitial(value: string | null) {
 function userContext(user: RecentAdminUser) {
   const parts = [user.stateCode, user.clubName, user.leagueShortName || user.leagueName].filter(Boolean)
   return parts.join(' • ') || 'Profile context pending'
+}
+
+function renderTrend(current: number, previous: number, noun = '') {
+  const diff = current - previous
+  const suffix = noun ? ` ${noun}` : ''
+
+  if (diff > 0) {
+    return {
+      icon: ArrowUpRight,
+      className: 'text-[#9CE8BE]',
+      label: `+${diff}${suffix} vs prior 30d`,
+    }
+  }
+
+  if (diff < 0) {
+    return {
+      icon: ArrowDownRight,
+      className: 'text-rose-300',
+      label: `${diff}${suffix} vs prior 30d`,
+    }
+  }
+
+  return {
+    icon: Minus,
+    className: 'text-slate-500',
+    label: `No change vs prior 30d`,
+  }
 }
 
 export default function AdminPage() {
@@ -133,6 +160,38 @@ export default function AdminPage() {
   }
 
   const pendingRequests = data.squadRequests.length + data.directoryRequests.length
+  const statCards = [
+    {
+      label: 'New users (30d)',
+      value: data.stats.newUsers30d,
+      trend: renderTrend(data.stats.newUsers30d, data.stats.newUsersPrevious30d),
+    },
+    {
+      label: 'Onboarding completed',
+      value: data.stats.onboardingCompleted,
+      trend: renderTrend(data.stats.onboardingCompleted30d, data.stats.onboardingCompletedPrevious30d),
+    },
+    {
+      label: 'Games tracked',
+      value: data.stats.gamesTracked,
+      trend: renderTrend(data.stats.gamesTracked30d, data.stats.gamesTrackedPrevious30d),
+    },
+    {
+      label: 'Official squads',
+      value: data.stats.officialSquadsCount,
+      trend: renderTrend(data.stats.officialSquadsAdded30d, data.stats.officialSquadsAddedPrevious30d),
+    },
+    {
+      label: 'Pending requests',
+      value: pendingRequests,
+      trend: null,
+    },
+    {
+      label: 'Leagues',
+      value: data.stats.leaguesCount,
+      trend: renderTrend(data.stats.leaguesAdded30d, data.stats.leaguesAddedPrevious30d),
+    },
+  ] as const
 
   return (
     <section className="grid gap-6">
@@ -164,17 +223,20 @@ export default function AdminPage() {
 
       {data.stats ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          {[
-            ['New users (30d)', data.stats.newUsers30d],
-            ['Onboarding completed', data.stats.onboardingCompleted],
-            ['Games tracked', data.stats.gamesTracked],
-            ['Official squads', data.stats.officialSquadsCount],
-            ['Pending requests', pendingRequests],
-            ['Leagues', data.stats.leaguesCount],
-          ].map(([label, value]) => (
-            <PortalCard key={label} className="bg-[#0F192C]">
+          {statCards.map(({ label, value, trend }) => (
+            <PortalCard key={label} className="flex min-h-[124px] flex-col items-center justify-center bg-[#0F192C] text-center">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{label}</p>
-              <p className="mt-4 text-3xl font-semibold text-white">{new Intl.NumberFormat('en-AU').format(Number(value))}</p>
+              <p className="mt-4 text-[2.15rem] font-black italic leading-none tracking-[-0.04em] text-white">
+                {new Intl.NumberFormat('en-AU').format(Number(value))}
+              </p>
+              {trend ? (
+                <div className={`mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold ${trend.className}`}>
+                  <trend.icon className="h-3.5 w-3.5" />
+                  <span>{trend.label}</span>
+                </div>
+              ) : (
+                <div className="mt-3 text-[11px] font-semibold text-slate-500">Live queue</div>
+              )}
             </PortalCard>
           ))}
         </div>
@@ -276,7 +338,7 @@ export default function AdminPage() {
             description="Latest tracked and manual games across the platform."
             actions={<Link to="/admin/games" className="inline-flex items-center gap-2 text-sm font-medium text-[#9CE8BE]">View all tracked games <ArrowRight className="h-4 w-4" /></Link>}
           />
-          <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-6 grid gap-3">
             {data.recentGames.length ? data.recentGames.map((row) => (
               <GameLogCard key={`${row.id}:${row.manualId || 'tracked'}`} row={row} />
             )) : <EmptyState label="No tracked games found." />}

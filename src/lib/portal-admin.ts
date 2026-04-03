@@ -143,12 +143,21 @@ export type AdminProfilesFilter = {
 
 export type AdminOverviewStats = {
   newUsers30d: number
+  newUsersPrevious30d: number
   onboardingCompleted: number
+  onboardingCompleted30d: number
+  onboardingCompletedPrevious30d: number
   gamesTracked: number
+  gamesTracked30d: number
+  gamesTrackedPrevious30d: number
   pendingOfficialAdminRequests: number
   pendingDirectoryRequests: number
   officialSquadsCount: number
+  officialSquadsAdded30d: number
+  officialSquadsAddedPrevious30d: number
   leaguesCount: number
+  leaguesAdded30d: number
+  leaguesAddedPrevious30d: number
   clubsCount: number
 }
 
@@ -285,26 +294,55 @@ function throwFriendly(error: any, fallback: string): never {
 }
 
 export async function fetchAdminOverviewStats(): Promise<AdminOverviewStats> {
-  const recentCutoff = new Date()
+  const now = new Date()
+  const recentCutoff = new Date(now)
   recentCutoff.setDate(recentCutoff.getDate() - 30)
+  const previousCutoff = new Date(now)
+  previousCutoff.setDate(previousCutoff.getDate() - 60)
   const recentIso = recentCutoff.toISOString()
+  const previousIso = previousCutoff.toISOString()
 
   const [
     newUsers30d,
+    newUsersPrevious30d,
     onboardingCompleted,
+    onboardingCompleted30d,
+    onboardingCompletedPrevious30d,
     gamesTracked,
+    gamesTracked30d,
+    gamesTrackedPrevious30d,
     pendingOfficialAdminRequests,
     pendingDirectoryRequests,
     officialSquadsCount,
+    officialSquadsAdded30d,
+    officialSquadsAddedPrevious30d,
     leaguesCount,
+    leaguesAdded30d,
+    leaguesAddedPrevious30d,
     clubsCount,
   ] = await Promise.all([
-    supabase.from('profiles').select('user_id', { count: 'exact', head: true }).gte('created_at', recentIso),
+    supabase.from('profiles_directory').select('user_id', { count: 'exact', head: true }).gte('created_at', recentIso),
+    supabase
+      .from('profiles_directory')
+      .select('user_id', { count: 'exact', head: true })
+      .gte('created_at', previousIso)
+      .lt('created_at', recentIso),
     supabase
       .from('profiles')
       .select('user_id', { count: 'exact', head: true })
       .not('onboarding_completed_at', 'is', null),
+    supabase
+      .from('profiles')
+      .select('user_id', { count: 'exact', head: true })
+      .gte('onboarding_completed_at', recentIso),
+    supabase
+      .from('profiles')
+      .select('user_id', { count: 'exact', head: true })
+      .gte('onboarding_completed_at', previousIso)
+      .lt('onboarding_completed_at', recentIso),
     supabase.from('games').select('id', { count: 'exact', head: true }),
+    supabase.from('games').select('id', { count: 'exact', head: true }).gte('created_at', recentIso),
+    supabase.from('games').select('id', { count: 'exact', head: true }).gte('created_at', previousIso).lt('created_at', recentIso),
     supabase
       .from('official_squad_admin_requests')
       .select('id', { count: 'exact', head: true })
@@ -314,27 +352,49 @@ export async function fetchAdminOverviewStats(): Promise<AdminOverviewStats> {
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending'),
     supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true),
+    supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true).gte('created_at', recentIso),
+    supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true).gte('created_at', previousIso).lt('created_at', recentIso),
     supabase.from('leagues').select('id', { count: 'exact', head: true }),
+    supabase.from('leagues').select('id', { count: 'exact', head: true }).gte('created_at', recentIso),
+    supabase.from('leagues').select('id', { count: 'exact', head: true }).gte('created_at', previousIso).lt('created_at', recentIso),
     supabase.from('clubs').select('id', { count: 'exact', head: true }),
   ])
 
   if (newUsers30d.error) throw newUsers30d.error
+  if (newUsersPrevious30d.error) throw newUsersPrevious30d.error
   if (onboardingCompleted.error) throw onboardingCompleted.error
+  if (onboardingCompleted30d.error) throw onboardingCompleted30d.error
+  if (onboardingCompletedPrevious30d.error) throw onboardingCompletedPrevious30d.error
   if (gamesTracked.error) throw gamesTracked.error
+  if (gamesTracked30d.error) throw gamesTracked30d.error
+  if (gamesTrackedPrevious30d.error) throw gamesTrackedPrevious30d.error
   if (pendingOfficialAdminRequests.error) throw pendingOfficialAdminRequests.error
   if (pendingDirectoryRequests.error) throw pendingDirectoryRequests.error
   if (officialSquadsCount.error) throw officialSquadsCount.error
+  if (officialSquadsAdded30d.error) throw officialSquadsAdded30d.error
+  if (officialSquadsAddedPrevious30d.error) throw officialSquadsAddedPrevious30d.error
   if (leaguesCount.error) throw leaguesCount.error
+  if (leaguesAdded30d.error) throw leaguesAdded30d.error
+  if (leaguesAddedPrevious30d.error) throw leaguesAddedPrevious30d.error
   if (clubsCount.error) throw clubsCount.error
 
   return {
     newUsers30d: newUsers30d.count ?? 0,
+    newUsersPrevious30d: newUsersPrevious30d.count ?? 0,
     onboardingCompleted: onboardingCompleted.count ?? 0,
+    onboardingCompleted30d: onboardingCompleted30d.count ?? 0,
+    onboardingCompletedPrevious30d: onboardingCompletedPrevious30d.count ?? 0,
     gamesTracked: gamesTracked.count ?? 0,
+    gamesTracked30d: gamesTracked30d.count ?? 0,
+    gamesTrackedPrevious30d: gamesTrackedPrevious30d.count ?? 0,
     pendingOfficialAdminRequests: pendingOfficialAdminRequests.count ?? 0,
     pendingDirectoryRequests: pendingDirectoryRequests.count ?? 0,
     officialSquadsCount: officialSquadsCount.count ?? 0,
+    officialSquadsAdded30d: officialSquadsAdded30d.count ?? 0,
+    officialSquadsAddedPrevious30d: officialSquadsAddedPrevious30d.count ?? 0,
     leaguesCount: leaguesCount.count ?? 0,
+    leaguesAdded30d: leaguesAdded30d.count ?? 0,
+    leaguesAddedPrevious30d: leaguesAddedPrevious30d.count ?? 0,
     clubsCount: clubsCount.count ?? 0,
   }
 }
