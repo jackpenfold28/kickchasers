@@ -44,9 +44,11 @@ import BlockedUsersPage from './routes/portal/settings/BlockedUsersPage'
 import LegalDocumentPage from './routes/LegalDocumentPage'
 import RequestLeague from './routes/RequestLeague'
 import RequestClub from './routes/RequestClub'
+import PublicVoteCardPage from './routes/PublicVoteCardPage'
 import { legalDocuments } from './content/legalDocuments'
 
 const router = createBrowserRouter([
+  { path: 'vote-card/:token', element: <PublicVoteCardPage /> },
   {
     path: '/',
     element: <App />,

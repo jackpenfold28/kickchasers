@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Minus, Sparkles, Users, Wrench } from 'lucide-react'
 import PortalCard from '@/components/cards/PortalCard'
 import GameLogCard from '@/components/portal/games/GameLogCard'
 import { listPlatformGames, type GameLogRow } from '@/lib/portal-games'
 import {
+  type AdminOverviewWindowKey,
   fetchAdminOverviewStats,
   listDirectoryRequests,
   listOfficialSquads,
@@ -56,7 +57,7 @@ function userContext(user: RecentAdminUser) {
   return parts.join(' • ') || 'Profile context pending'
 }
 
-function renderTrend(current: number, previous: number, noun = '') {
+function renderTrend(current: number, previous: number, comparisonLabel: string, noun = '') {
   const diff = current - previous
   const suffix = noun ? ` ${noun}` : ''
 
@@ -64,7 +65,7 @@ function renderTrend(current: number, previous: number, noun = '') {
     return {
       icon: ArrowUpRight,
       className: 'text-[#9CE8BE]',
-      label: `+${diff}${suffix} vs prior 30d`,
+      label: `+${diff}${suffix} vs ${comparisonLabel}`,
     }
   }
 
@@ -72,21 +73,29 @@ function renderTrend(current: number, previous: number, noun = '') {
     return {
       icon: ArrowDownRight,
       className: 'text-rose-300',
-      label: `${diff}${suffix} vs prior 30d`,
+      label: `${diff}${suffix} vs ${comparisonLabel}`,
     }
   }
 
   return {
     icon: Minus,
     className: 'text-slate-500',
-    label: `No change vs prior 30d`,
+    label: `No change vs ${comparisonLabel}`,
   }
 }
+
+const BREAKDOWN_TABS: Array<{ key: AdminOverviewWindowKey; label: string }> = [
+  { key: 'day', label: 'Day' },
+  { key: 'week', label: 'Week' },
+  { key: 'month', label: 'Month' },
+  { key: 'year', label: 'Year' },
+]
 
 export default function AdminPage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [breakdownTab, setBreakdownTab] = useState<AdminOverviewWindowKey>('month')
   const [data, setData] = useState<AdminDashboardData>({
     stats: null,
     squadRequests: [],
@@ -147,6 +156,64 @@ export default function AdminPage() {
     }
   }, [navigate])
 
+  const pendingRequests = data.squadRequests.length + data.directoryRequests.length
+  const activeBreakdown = data.stats?.breakdowns[breakdownTab] ?? null
+  const statCards = useMemo(() => {
+    if (!data.stats || !activeBreakdown) return []
+    return [
+      {
+        label: 'Users',
+        value: data.stats.totalUsersCount,
+        periodValue: activeBreakdown.newUsers,
+        periodLabel: activeBreakdown.label,
+        trend: renderTrend(activeBreakdown.newUsers, activeBreakdown.newUsersPrevious, activeBreakdown.comparisonLabel),
+      },
+      {
+        label: 'Onboarding completed',
+        value: data.stats.onboardingCompleted,
+        periodValue: activeBreakdown.onboardingCompleted,
+        periodLabel: activeBreakdown.label,
+        trend: renderTrend(
+          activeBreakdown.onboardingCompleted,
+          activeBreakdown.onboardingCompletedPrevious,
+          activeBreakdown.comparisonLabel
+        ),
+      },
+      {
+        label: 'Games tracked',
+        value: data.stats.gamesTracked,
+        periodValue: activeBreakdown.gamesTracked,
+        periodLabel: activeBreakdown.label,
+        trend: renderTrend(activeBreakdown.gamesTracked, activeBreakdown.gamesTrackedPrevious, activeBreakdown.comparisonLabel),
+      },
+      {
+        label: 'Official squads',
+        value: data.stats.officialSquadsCount,
+        periodValue: activeBreakdown.officialSquadsAdded,
+        periodLabel: activeBreakdown.label,
+        trend: renderTrend(
+          activeBreakdown.officialSquadsAdded,
+          activeBreakdown.officialSquadsAddedPrevious,
+          activeBreakdown.comparisonLabel
+        ),
+      },
+      {
+        label: 'Pending requests',
+        value: pendingRequests,
+        periodValue: null,
+        periodLabel: null,
+        trend: null,
+      },
+      {
+        label: 'Leagues',
+        value: data.stats.leaguesCount,
+        periodValue: activeBreakdown.leaguesAdded,
+        periodLabel: activeBreakdown.label,
+        trend: renderTrend(activeBreakdown.leaguesAdded, activeBreakdown.leaguesAddedPrevious, activeBreakdown.comparisonLabel),
+      },
+    ] as const
+  }, [activeBreakdown, data.stats, pendingRequests])
+
   if (loading) {
     return <main className="min-h-screen p-6 app-bg">Loading platform admin…</main>
   }
@@ -158,40 +225,6 @@ export default function AdminPage() {
       </PortalCard>
     )
   }
-
-  const pendingRequests = data.squadRequests.length + data.directoryRequests.length
-  const statCards = [
-    {
-      label: 'New users (30d)',
-      value: data.stats.newUsers30d,
-      trend: renderTrend(data.stats.newUsers30d, data.stats.newUsersPrevious30d),
-    },
-    {
-      label: 'Onboarding completed',
-      value: data.stats.onboardingCompleted,
-      trend: renderTrend(data.stats.onboardingCompleted30d, data.stats.onboardingCompletedPrevious30d),
-    },
-    {
-      label: 'Games tracked',
-      value: data.stats.gamesTracked,
-      trend: renderTrend(data.stats.gamesTracked30d, data.stats.gamesTrackedPrevious30d),
-    },
-    {
-      label: 'Official squads',
-      value: data.stats.officialSquadsCount,
-      trend: renderTrend(data.stats.officialSquadsAdded30d, data.stats.officialSquadsAddedPrevious30d),
-    },
-    {
-      label: 'Pending requests',
-      value: pendingRequests,
-      trend: null,
-    },
-    {
-      label: 'Leagues',
-      value: data.stats.leaguesCount,
-      trend: renderTrend(data.stats.leaguesAdded30d, data.stats.leaguesAddedPrevious30d),
-    },
-  ] as const
 
   return (
     <section className="grid gap-6">
@@ -222,13 +255,40 @@ export default function AdminPage() {
       ) : null}
 
       {data.stats ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          {statCards.map(({ label, value, trend }) => (
+        <>
+          <PortalCard className="bg-[#0F192C]">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Platform Statistics</p>
+                <p className="mt-2 text-sm text-slate-400">Switch the comparison window for all platform stats at once.</p>
+              </div>
+              <div className="teams-segmented border-b-0 px-0">
+                {BREAKDOWN_TABS.map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setBreakdownTab(tab.key)}
+                    className={`teams-segment pb-0 ${breakdownTab === tab.key ? 'is-active' : ''}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </PortalCard>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+          {statCards.map(({ label, value, periodValue, periodLabel, trend }) => (
             <PortalCard key={label} className="flex min-h-[124px] flex-col items-center justify-center bg-[#0F192C] text-center">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{label}</p>
               <p className="mt-4 text-[2.15rem] font-black italic leading-none tracking-[-0.04em] text-white">
                 {new Intl.NumberFormat('en-AU').format(Number(value))}
               </p>
+              {periodValue != null && periodLabel ? (
+                <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  {new Intl.NumberFormat('en-AU').format(Number(periodValue))} in {periodLabel.toLowerCase()}
+                </p>
+              ) : null}
               {trend ? (
                 <div className={`mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold ${trend.className}`}>
                   <trend.icon className="h-3.5 w-3.5" />
@@ -240,6 +300,7 @@ export default function AdminPage() {
             </PortalCard>
           ))}
         </div>
+        </>
       ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">

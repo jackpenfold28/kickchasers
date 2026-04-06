@@ -142,23 +142,34 @@ export type AdminProfilesFilter = {
 }
 
 export type AdminOverviewStats = {
-  newUsers30d: number
-  newUsersPrevious30d: number
+  totalUsersCount: number
   onboardingCompleted: number
-  onboardingCompleted30d: number
-  onboardingCompletedPrevious30d: number
   gamesTracked: number
-  gamesTracked30d: number
-  gamesTrackedPrevious30d: number
   pendingOfficialAdminRequests: number
   pendingDirectoryRequests: number
   officialSquadsCount: number
-  officialSquadsAdded30d: number
-  officialSquadsAddedPrevious30d: number
   leaguesCount: number
-  leaguesAdded30d: number
-  leaguesAddedPrevious30d: number
   clubsCount: number
+  breakdowns: Record<AdminOverviewWindowKey, AdminOverviewBreakdown>
+}
+
+export type AdminOverviewWindowKey = 'day' | 'week' | 'month' | 'year'
+
+export type AdminOverviewBreakdown = {
+  label: string
+  comparisonLabel: string
+  newUsers: number
+  newUsersPrevious: number
+  onboardingCompleted: number
+  onboardingCompletedPrevious: number
+  gamesTracked: number
+  gamesTrackedPrevious: number
+  officialSquadsAdded: number
+  officialSquadsAddedPrevious: number
+  leaguesAdded: number
+  leaguesAddedPrevious: number
+  clubsAdded: number
+  clubsAddedPrevious: number
 }
 
 export type RecentAdminUser = {
@@ -295,54 +306,92 @@ function throwFriendly(error: any, fallback: string): never {
 
 export async function fetchAdminOverviewStats(): Promise<AdminOverviewStats> {
   const now = new Date()
-  const recentCutoff = new Date(now)
-  recentCutoff.setDate(recentCutoff.getDate() - 30)
-  const previousCutoff = new Date(now)
-  previousCutoff.setDate(previousCutoff.getDate() - 60)
-  const recentIso = recentCutoff.toISOString()
-  const previousIso = previousCutoff.toISOString()
+  const makeWindow = (days: number): { currentStartIso: string; previousStartIso: string } => {
+    const currentStart = new Date(now)
+    currentStart.setDate(currentStart.getDate() - days)
+    const previousStart = new Date(now)
+    previousStart.setDate(previousStart.getDate() - days * 2)
+    return {
+      currentStartIso: currentStart.toISOString(),
+      previousStartIso: previousStart.toISOString(),
+    }
+  }
+
+  const windows: Record<AdminOverviewWindowKey, { days: number; label: string; comparisonLabel: string }> = {
+    day: { days: 1, label: 'Today', comparisonLabel: 'prior day' },
+    week: { days: 7, label: 'Last 7 days', comparisonLabel: 'prior 7d' },
+    month: { days: 30, label: 'Last 30 days', comparisonLabel: 'prior 30d' },
+    year: { days: 365, label: 'Last 12 months', comparisonLabel: 'prior year' },
+  }
+
+  const windowRanges = Object.fromEntries(
+    Object.entries(windows).map(([key, value]) => [key, makeWindow(value.days)])
+  ) as Record<AdminOverviewWindowKey, { currentStartIso: string; previousStartIso: string }>
 
   const [
-    newUsers30d,
-    newUsersPrevious30d,
+    totalUsersCount,
     onboardingCompleted,
-    onboardingCompleted30d,
-    onboardingCompletedPrevious30d,
     gamesTracked,
-    gamesTracked30d,
-    gamesTrackedPrevious30d,
     pendingOfficialAdminRequests,
     pendingDirectoryRequests,
     officialSquadsCount,
-    officialSquadsAdded30d,
-    officialSquadsAddedPrevious30d,
     leaguesCount,
-    leaguesAdded30d,
-    leaguesAddedPrevious30d,
     clubsCount,
+    dayNewUsers,
+    dayNewUsersPrevious,
+    dayOnboardingCompleted,
+    dayOnboardingCompletedPrevious,
+    dayGamesTracked,
+    dayGamesTrackedPrevious,
+    dayOfficialSquadsAdded,
+    dayOfficialSquadsAddedPrevious,
+    dayLeaguesAdded,
+    dayLeaguesAddedPrevious,
+    dayClubsAdded,
+    dayClubsAddedPrevious,
+    weekNewUsers,
+    weekNewUsersPrevious,
+    weekOnboardingCompleted,
+    weekOnboardingCompletedPrevious,
+    weekGamesTracked,
+    weekGamesTrackedPrevious,
+    weekOfficialSquadsAdded,
+    weekOfficialSquadsAddedPrevious,
+    weekLeaguesAdded,
+    weekLeaguesAddedPrevious,
+    weekClubsAdded,
+    weekClubsAddedPrevious,
+    monthNewUsers,
+    monthNewUsersPrevious,
+    monthOnboardingCompleted,
+    monthOnboardingCompletedPrevious,
+    monthGamesTracked,
+    monthGamesTrackedPrevious,
+    monthOfficialSquadsAdded,
+    monthOfficialSquadsAddedPrevious,
+    monthLeaguesAdded,
+    monthLeaguesAddedPrevious,
+    monthClubsAdded,
+    monthClubsAddedPrevious,
+    yearNewUsers,
+    yearNewUsersPrevious,
+    yearOnboardingCompleted,
+    yearOnboardingCompletedPrevious,
+    yearGamesTracked,
+    yearGamesTrackedPrevious,
+    yearOfficialSquadsAdded,
+    yearOfficialSquadsAddedPrevious,
+    yearLeaguesAdded,
+    yearLeaguesAddedPrevious,
+    yearClubsAdded,
+    yearClubsAddedPrevious,
   ] = await Promise.all([
-    supabase.from('profiles_directory').select('user_id', { count: 'exact', head: true }).gte('created_at', recentIso),
-    supabase
-      .from('profiles_directory')
-      .select('user_id', { count: 'exact', head: true })
-      .gte('created_at', previousIso)
-      .lt('created_at', recentIso),
+    supabase.from('profiles_directory').select('user_id', { count: 'exact', head: true }),
     supabase
       .from('profiles')
       .select('user_id', { count: 'exact', head: true })
       .not('onboarding_completed_at', 'is', null),
-    supabase
-      .from('profiles')
-      .select('user_id', { count: 'exact', head: true })
-      .gte('onboarding_completed_at', recentIso),
-    supabase
-      .from('profiles')
-      .select('user_id', { count: 'exact', head: true })
-      .gte('onboarding_completed_at', previousIso)
-      .lt('onboarding_completed_at', recentIso),
     supabase.from('games').select('id', { count: 'exact', head: true }),
-    supabase.from('games').select('id', { count: 'exact', head: true }).gte('created_at', recentIso),
-    supabase.from('games').select('id', { count: 'exact', head: true }).gte('created_at', previousIso).lt('created_at', recentIso),
     supabase
       .from('official_squad_admin_requests')
       .select('id', { count: 'exact', head: true })
@@ -352,50 +401,192 @@ export async function fetchAdminOverviewStats(): Promise<AdminOverviewStats> {
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending'),
     supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true),
-    supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true).gte('created_at', recentIso),
-    supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true).gte('created_at', previousIso).lt('created_at', recentIso),
     supabase.from('leagues').select('id', { count: 'exact', head: true }),
-    supabase.from('leagues').select('id', { count: 'exact', head: true }).gte('created_at', recentIso),
-    supabase.from('leagues').select('id', { count: 'exact', head: true }).gte('created_at', previousIso).lt('created_at', recentIso),
     supabase.from('clubs').select('id', { count: 'exact', head: true }),
+    supabase.from('profiles_directory').select('user_id', { count: 'exact', head: true }).gte('created_at', windowRanges.day.currentStartIso),
+    supabase.from('profiles_directory').select('user_id', { count: 'exact', head: true }).gte('created_at', windowRanges.day.previousStartIso).lt('created_at', windowRanges.day.currentStartIso),
+    supabase.from('profiles').select('user_id', { count: 'exact', head: true }).gte('onboarding_completed_at', windowRanges.day.currentStartIso),
+    supabase.from('profiles').select('user_id', { count: 'exact', head: true }).gte('onboarding_completed_at', windowRanges.day.previousStartIso).lt('onboarding_completed_at', windowRanges.day.currentStartIso),
+    supabase.from('games').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.day.currentStartIso),
+    supabase.from('games').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.day.previousStartIso).lt('created_at', windowRanges.day.currentStartIso),
+    supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true).gte('created_at', windowRanges.day.currentStartIso),
+    supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true).gte('created_at', windowRanges.day.previousStartIso).lt('created_at', windowRanges.day.currentStartIso),
+    supabase.from('leagues').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.day.currentStartIso),
+    supabase.from('leagues').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.day.previousStartIso).lt('created_at', windowRanges.day.currentStartIso),
+    supabase.from('clubs').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.day.currentStartIso),
+    supabase.from('clubs').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.day.previousStartIso).lt('created_at', windowRanges.day.currentStartIso),
+    supabase.from('profiles_directory').select('user_id', { count: 'exact', head: true }).gte('created_at', windowRanges.week.currentStartIso),
+    supabase.from('profiles_directory').select('user_id', { count: 'exact', head: true }).gte('created_at', windowRanges.week.previousStartIso).lt('created_at', windowRanges.week.currentStartIso),
+    supabase.from('profiles').select('user_id', { count: 'exact', head: true }).gte('onboarding_completed_at', windowRanges.week.currentStartIso),
+    supabase.from('profiles').select('user_id', { count: 'exact', head: true }).gte('onboarding_completed_at', windowRanges.week.previousStartIso).lt('onboarding_completed_at', windowRanges.week.currentStartIso),
+    supabase.from('games').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.week.currentStartIso),
+    supabase.from('games').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.week.previousStartIso).lt('created_at', windowRanges.week.currentStartIso),
+    supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true).gte('created_at', windowRanges.week.currentStartIso),
+    supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true).gte('created_at', windowRanges.week.previousStartIso).lt('created_at', windowRanges.week.currentStartIso),
+    supabase.from('leagues').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.week.currentStartIso),
+    supabase.from('leagues').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.week.previousStartIso).lt('created_at', windowRanges.week.currentStartIso),
+    supabase.from('clubs').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.week.currentStartIso),
+    supabase.from('clubs').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.week.previousStartIso).lt('created_at', windowRanges.week.currentStartIso),
+    supabase.from('profiles_directory').select('user_id', { count: 'exact', head: true }).gte('created_at', windowRanges.month.currentStartIso),
+    supabase.from('profiles_directory').select('user_id', { count: 'exact', head: true }).gte('created_at', windowRanges.month.previousStartIso).lt('created_at', windowRanges.month.currentStartIso),
+    supabase.from('profiles').select('user_id', { count: 'exact', head: true }).gte('onboarding_completed_at', windowRanges.month.currentStartIso),
+    supabase.from('profiles').select('user_id', { count: 'exact', head: true }).gte('onboarding_completed_at', windowRanges.month.previousStartIso).lt('onboarding_completed_at', windowRanges.month.currentStartIso),
+    supabase.from('games').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.month.currentStartIso),
+    supabase.from('games').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.month.previousStartIso).lt('created_at', windowRanges.month.currentStartIso),
+    supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true).gte('created_at', windowRanges.month.currentStartIso),
+    supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true).gte('created_at', windowRanges.month.previousStartIso).lt('created_at', windowRanges.month.currentStartIso),
+    supabase.from('leagues').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.month.currentStartIso),
+    supabase.from('leagues').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.month.previousStartIso).lt('created_at', windowRanges.month.currentStartIso),
+    supabase.from('clubs').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.month.currentStartIso),
+    supabase.from('clubs').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.month.previousStartIso).lt('created_at', windowRanges.month.currentStartIso),
+    supabase.from('profiles_directory').select('user_id', { count: 'exact', head: true }).gte('created_at', windowRanges.year.currentStartIso),
+    supabase.from('profiles_directory').select('user_id', { count: 'exact', head: true }).gte('created_at', windowRanges.year.previousStartIso).lt('created_at', windowRanges.year.currentStartIso),
+    supabase.from('profiles').select('user_id', { count: 'exact', head: true }).gte('onboarding_completed_at', windowRanges.year.currentStartIso),
+    supabase.from('profiles').select('user_id', { count: 'exact', head: true }).gte('onboarding_completed_at', windowRanges.year.previousStartIso).lt('onboarding_completed_at', windowRanges.year.currentStartIso),
+    supabase.from('games').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.year.currentStartIso),
+    supabase.from('games').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.year.previousStartIso).lt('created_at', windowRanges.year.currentStartIso),
+    supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true).gte('created_at', windowRanges.year.currentStartIso),
+    supabase.from('squads').select('id', { count: 'exact', head: true }).eq('is_official', true).gte('created_at', windowRanges.year.previousStartIso).lt('created_at', windowRanges.year.currentStartIso),
+    supabase.from('leagues').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.year.currentStartIso),
+    supabase.from('leagues').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.year.previousStartIso).lt('created_at', windowRanges.year.currentStartIso),
+    supabase.from('clubs').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.year.currentStartIso),
+    supabase.from('clubs').select('id', { count: 'exact', head: true }).gte('created_at', windowRanges.year.previousStartIso).lt('created_at', windowRanges.year.currentStartIso),
   ])
 
-  if (newUsers30d.error) throw newUsers30d.error
-  if (newUsersPrevious30d.error) throw newUsersPrevious30d.error
+  if (totalUsersCount.error) throw totalUsersCount.error
   if (onboardingCompleted.error) throw onboardingCompleted.error
-  if (onboardingCompleted30d.error) throw onboardingCompleted30d.error
-  if (onboardingCompletedPrevious30d.error) throw onboardingCompletedPrevious30d.error
   if (gamesTracked.error) throw gamesTracked.error
-  if (gamesTracked30d.error) throw gamesTracked30d.error
-  if (gamesTrackedPrevious30d.error) throw gamesTrackedPrevious30d.error
   if (pendingOfficialAdminRequests.error) throw pendingOfficialAdminRequests.error
   if (pendingDirectoryRequests.error) throw pendingDirectoryRequests.error
   if (officialSquadsCount.error) throw officialSquadsCount.error
-  if (officialSquadsAdded30d.error) throw officialSquadsAdded30d.error
-  if (officialSquadsAddedPrevious30d.error) throw officialSquadsAddedPrevious30d.error
   if (leaguesCount.error) throw leaguesCount.error
-  if (leaguesAdded30d.error) throw leaguesAdded30d.error
-  if (leaguesAddedPrevious30d.error) throw leaguesAddedPrevious30d.error
   if (clubsCount.error) throw clubsCount.error
+  if (dayNewUsers.error) throw dayNewUsers.error
+  if (dayNewUsersPrevious.error) throw dayNewUsersPrevious.error
+  if (dayOnboardingCompleted.error) throw dayOnboardingCompleted.error
+  if (dayOnboardingCompletedPrevious.error) throw dayOnboardingCompletedPrevious.error
+  if (dayGamesTracked.error) throw dayGamesTracked.error
+  if (dayGamesTrackedPrevious.error) throw dayGamesTrackedPrevious.error
+  if (dayOfficialSquadsAdded.error) throw dayOfficialSquadsAdded.error
+  if (dayOfficialSquadsAddedPrevious.error) throw dayOfficialSquadsAddedPrevious.error
+  if (dayLeaguesAdded.error) throw dayLeaguesAdded.error
+  if (dayLeaguesAddedPrevious.error) throw dayLeaguesAddedPrevious.error
+  if (dayClubsAdded.error) throw dayClubsAdded.error
+  if (dayClubsAddedPrevious.error) throw dayClubsAddedPrevious.error
+  if (weekNewUsers.error) throw weekNewUsers.error
+  if (weekNewUsersPrevious.error) throw weekNewUsersPrevious.error
+  if (weekOnboardingCompleted.error) throw weekOnboardingCompleted.error
+  if (weekOnboardingCompletedPrevious.error) throw weekOnboardingCompletedPrevious.error
+  if (weekGamesTracked.error) throw weekGamesTracked.error
+  if (weekGamesTrackedPrevious.error) throw weekGamesTrackedPrevious.error
+  if (weekOfficialSquadsAdded.error) throw weekOfficialSquadsAdded.error
+  if (weekOfficialSquadsAddedPrevious.error) throw weekOfficialSquadsAddedPrevious.error
+  if (weekLeaguesAdded.error) throw weekLeaguesAdded.error
+  if (weekLeaguesAddedPrevious.error) throw weekLeaguesAddedPrevious.error
+  if (weekClubsAdded.error) throw weekClubsAdded.error
+  if (weekClubsAddedPrevious.error) throw weekClubsAddedPrevious.error
+  if (monthNewUsers.error) throw monthNewUsers.error
+  if (monthNewUsersPrevious.error) throw monthNewUsersPrevious.error
+  if (monthOnboardingCompleted.error) throw monthOnboardingCompleted.error
+  if (monthOnboardingCompletedPrevious.error) throw monthOnboardingCompletedPrevious.error
+  if (monthGamesTracked.error) throw monthGamesTracked.error
+  if (monthGamesTrackedPrevious.error) throw monthGamesTrackedPrevious.error
+  if (monthOfficialSquadsAdded.error) throw monthOfficialSquadsAdded.error
+  if (monthOfficialSquadsAddedPrevious.error) throw monthOfficialSquadsAddedPrevious.error
+  if (monthLeaguesAdded.error) throw monthLeaguesAdded.error
+  if (monthLeaguesAddedPrevious.error) throw monthLeaguesAddedPrevious.error
+  if (monthClubsAdded.error) throw monthClubsAdded.error
+  if (monthClubsAddedPrevious.error) throw monthClubsAddedPrevious.error
+  if (yearNewUsers.error) throw yearNewUsers.error
+  if (yearNewUsersPrevious.error) throw yearNewUsersPrevious.error
+  if (yearOnboardingCompleted.error) throw yearOnboardingCompleted.error
+  if (yearOnboardingCompletedPrevious.error) throw yearOnboardingCompletedPrevious.error
+  if (yearGamesTracked.error) throw yearGamesTracked.error
+  if (yearGamesTrackedPrevious.error) throw yearGamesTrackedPrevious.error
+  if (yearOfficialSquadsAdded.error) throw yearOfficialSquadsAdded.error
+  if (yearOfficialSquadsAddedPrevious.error) throw yearOfficialSquadsAddedPrevious.error
+  if (yearLeaguesAdded.error) throw yearLeaguesAdded.error
+  if (yearLeaguesAddedPrevious.error) throw yearLeaguesAddedPrevious.error
+  if (yearClubsAdded.error) throw yearClubsAdded.error
+  if (yearClubsAddedPrevious.error) throw yearClubsAddedPrevious.error
+
+  const breakdowns: Record<AdminOverviewWindowKey, AdminOverviewBreakdown> = {
+    day: {
+      label: windows.day.label,
+      comparisonLabel: windows.day.comparisonLabel,
+      newUsers: dayNewUsers.count ?? 0,
+      newUsersPrevious: dayNewUsersPrevious.count ?? 0,
+      onboardingCompleted: dayOnboardingCompleted.count ?? 0,
+      onboardingCompletedPrevious: dayOnboardingCompletedPrevious.count ?? 0,
+      gamesTracked: dayGamesTracked.count ?? 0,
+      gamesTrackedPrevious: dayGamesTrackedPrevious.count ?? 0,
+      officialSquadsAdded: dayOfficialSquadsAdded.count ?? 0,
+      officialSquadsAddedPrevious: dayOfficialSquadsAddedPrevious.count ?? 0,
+      leaguesAdded: dayLeaguesAdded.count ?? 0,
+      leaguesAddedPrevious: dayLeaguesAddedPrevious.count ?? 0,
+      clubsAdded: dayClubsAdded.count ?? 0,
+      clubsAddedPrevious: dayClubsAddedPrevious.count ?? 0,
+    },
+    week: {
+      label: windows.week.label,
+      comparisonLabel: windows.week.comparisonLabel,
+      newUsers: weekNewUsers.count ?? 0,
+      newUsersPrevious: weekNewUsersPrevious.count ?? 0,
+      onboardingCompleted: weekOnboardingCompleted.count ?? 0,
+      onboardingCompletedPrevious: weekOnboardingCompletedPrevious.count ?? 0,
+      gamesTracked: weekGamesTracked.count ?? 0,
+      gamesTrackedPrevious: weekGamesTrackedPrevious.count ?? 0,
+      officialSquadsAdded: weekOfficialSquadsAdded.count ?? 0,
+      officialSquadsAddedPrevious: weekOfficialSquadsAddedPrevious.count ?? 0,
+      leaguesAdded: weekLeaguesAdded.count ?? 0,
+      leaguesAddedPrevious: weekLeaguesAddedPrevious.count ?? 0,
+      clubsAdded: weekClubsAdded.count ?? 0,
+      clubsAddedPrevious: weekClubsAddedPrevious.count ?? 0,
+    },
+    month: {
+      label: windows.month.label,
+      comparisonLabel: windows.month.comparisonLabel,
+      newUsers: monthNewUsers.count ?? 0,
+      newUsersPrevious: monthNewUsersPrevious.count ?? 0,
+      onboardingCompleted: monthOnboardingCompleted.count ?? 0,
+      onboardingCompletedPrevious: monthOnboardingCompletedPrevious.count ?? 0,
+      gamesTracked: monthGamesTracked.count ?? 0,
+      gamesTrackedPrevious: monthGamesTrackedPrevious.count ?? 0,
+      officialSquadsAdded: monthOfficialSquadsAdded.count ?? 0,
+      officialSquadsAddedPrevious: monthOfficialSquadsAddedPrevious.count ?? 0,
+      leaguesAdded: monthLeaguesAdded.count ?? 0,
+      leaguesAddedPrevious: monthLeaguesAddedPrevious.count ?? 0,
+      clubsAdded: monthClubsAdded.count ?? 0,
+      clubsAddedPrevious: monthClubsAddedPrevious.count ?? 0,
+    },
+    year: {
+      label: windows.year.label,
+      comparisonLabel: windows.year.comparisonLabel,
+      newUsers: yearNewUsers.count ?? 0,
+      newUsersPrevious: yearNewUsersPrevious.count ?? 0,
+      onboardingCompleted: yearOnboardingCompleted.count ?? 0,
+      onboardingCompletedPrevious: yearOnboardingCompletedPrevious.count ?? 0,
+      gamesTracked: yearGamesTracked.count ?? 0,
+      gamesTrackedPrevious: yearGamesTrackedPrevious.count ?? 0,
+      officialSquadsAdded: yearOfficialSquadsAdded.count ?? 0,
+      officialSquadsAddedPrevious: yearOfficialSquadsAddedPrevious.count ?? 0,
+      leaguesAdded: yearLeaguesAdded.count ?? 0,
+      leaguesAddedPrevious: yearLeaguesAddedPrevious.count ?? 0,
+      clubsAdded: yearClubsAdded.count ?? 0,
+      clubsAddedPrevious: yearClubsAddedPrevious.count ?? 0,
+    },
+  }
 
   return {
-    newUsers30d: newUsers30d.count ?? 0,
-    newUsersPrevious30d: newUsersPrevious30d.count ?? 0,
+    totalUsersCount: totalUsersCount.count ?? 0,
     onboardingCompleted: onboardingCompleted.count ?? 0,
-    onboardingCompleted30d: onboardingCompleted30d.count ?? 0,
-    onboardingCompletedPrevious30d: onboardingCompletedPrevious30d.count ?? 0,
     gamesTracked: gamesTracked.count ?? 0,
-    gamesTracked30d: gamesTracked30d.count ?? 0,
-    gamesTrackedPrevious30d: gamesTrackedPrevious30d.count ?? 0,
     pendingOfficialAdminRequests: pendingOfficialAdminRequests.count ?? 0,
     pendingDirectoryRequests: pendingDirectoryRequests.count ?? 0,
     officialSquadsCount: officialSquadsCount.count ?? 0,
-    officialSquadsAdded30d: officialSquadsAdded30d.count ?? 0,
-    officialSquadsAddedPrevious30d: officialSquadsAddedPrevious30d.count ?? 0,
     leaguesCount: leaguesCount.count ?? 0,
-    leaguesAdded30d: leaguesAdded30d.count ?? 0,
-    leaguesAddedPrevious30d: leaguesAddedPrevious30d.count ?? 0,
     clubsCount: clubsCount.count ?? 0,
+    breakdowns,
   }
 }
 
