@@ -90,9 +90,11 @@ const TRIAL_OPTION: RoundSelection = {
   value: 106,
 }
 
-const EMPTY_SPONSOR_SLOTS = Array.from({ length: 4 }, () => null as string | null)
+const SPONSOR_SLOT_COUNT = 6
+const EMPTY_SPONSOR_SLOTS = Array.from({ length: SPONSOR_SLOT_COUNT }, () => null as string | null)
 const POSTER_WIDTH = 1080
 const POSTER_HEIGHT = 1350
+const POSTER_FRAME_DATA_ATTRIBUTE = 'data-team-selection-poster-frame'
 
 function createInitialLineup(): LineupState {
   return {
@@ -124,7 +126,7 @@ function sponsorStorageKey(squadId: string) {
 
 function normalizeSponsorSlots(input: unknown) {
   if (!Array.isArray(input)) return [...EMPTY_SPONSOR_SLOTS]
-  return Array.from({ length: 4 }, (_value, index) => {
+  return Array.from({ length: SPONSOR_SLOT_COUNT }, (_value, index) => {
     const value = input[index]
     return typeof value === 'string' && value.trim() ? value : null
   })
@@ -222,6 +224,38 @@ async function pickImageAsDataUrl(accept = 'image/*') {
 
   input.remove()
   return result
+}
+
+async function waitForPosterAssets(root: HTMLElement) {
+  const fontSet = document.fonts
+  if (fontSet?.ready) {
+    await fontSet.ready.catch(() => undefined)
+  }
+
+  const imagePromises = Array.from(root.querySelectorAll('img')).map((image) => {
+    if (image.complete) {
+      if (typeof image.decode === 'function') {
+        return image.decode().catch(() => undefined)
+      }
+      return Promise.resolve()
+    }
+    return new Promise<void>((resolve) => {
+      const finalize = () => {
+        image.removeEventListener('load', finalize)
+        image.removeEventListener('error', finalize)
+        resolve()
+      }
+      image.addEventListener('load', finalize)
+      image.addEventListener('error', finalize)
+    })
+  })
+
+  await Promise.all(imagePromises)
+}
+
+async function waitForPaint() {
+  await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
+  await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
 }
 
 function hexToRgb(hex: string) {
@@ -330,9 +364,7 @@ function PickerModal({
   )
 }
 
-function TeamSelectionPoster({
-  width,
-  height,
+function TeamSelectionPosterLayout({
   squadName,
   squadLogoUrl,
   opponentName,
@@ -347,8 +379,6 @@ function TeamSelectionPoster({
   lineup,
   rosterMap,
 }: {
-  width: number
-  height: number
   squadName: string
   squadLogoUrl: string | null
   opponentName: string
@@ -365,17 +395,18 @@ function TeamSelectionPoster({
 }) {
   const rows = useMemo(() => buildPosterRows(lineup, rosterMap), [lineup, rosterMap])
   const accentSoft = shiftHex(accentColor, -0.18)
-  const accentHighlight = shiftHex(accentColor, 0.18)
   const pillColor = shiftHex(accentColor, -0.02)
-  const panelTint = shiftHex(accentColor, -0.44)
   const matchLine = formatPosterDate(matchDate)
   const validSponsors = sponsorLogos.filter((entry): entry is string => Boolean(entry))
+  const sponsorDisplaySlots = Array.from({ length: SPONSOR_SLOT_COUNT }, (_value, index) => validSponsors[index] ?? null)
+  const pillHeight = 80
+  const lineupGap = 8
 
   return (
     <div
       style={{
-        width,
-        height,
+        width: '100%',
+        height: '100%',
         position: 'relative',
         overflow: 'hidden',
         borderRadius: 18,
@@ -413,8 +444,24 @@ function TeamSelectionPoster({
 
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
         <div style={{ flex: 1, minHeight: 0 }}>
+          <div
+            style={{
+              display: 'inline-grid',
+              justifyItems: 'center',
+              gap: 2,
+              fontSize: 9,
+              fontWeight: 800,
+              lineHeight: 1.05,
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.58)',
+            }}
+          >
+            <span>Powered By</span>
+            <span style={{ fontSize: 11, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.72)' }}>KickChasers</span>
+          </div>
           {roundLabel ? (
-            <div style={{ textAlign: 'center', fontSize: 30, fontWeight: 900, letterSpacing: '0.12em' }}>{roundLabel}</div>
+            <div style={{ marginTop: 10, textAlign: 'center', fontSize: 30, fontWeight: 900, letterSpacing: '0.12em' }}>{roundLabel}</div>
           ) : null}
           {gradeLabel ? (
             <div style={{ marginTop: 8, textAlign: 'center', fontSize: 16, fontWeight: 900, letterSpacing: '0.2em' }}>{gradeLabel}</div>
@@ -437,14 +484,14 @@ function TeamSelectionPoster({
             </div>
           </div>
 
-          <div style={{ marginTop: 20, display: 'grid', gap: 12 }}>
+          <div style={{ marginTop: 18, display: 'grid', gap: lineupGap }}>
             {rows.main.map((row, index) => (
-              <div key={row.label} style={{ display: 'grid', gap: index === rows.main.length - 1 ? 10 : 0 }}>
+              <div key={row.label} style={{ display: 'grid', gap: index === rows.main.length - 1 ? lineupGap : 0 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '72px 1fr', alignItems: 'center', gap: 18 }}>
                   <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.72)' }}>{row.label}</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: lineupGap }}>
                     {row.players.map((player) => (
-                      <PosterPill key={player.id} player={player} pillColor={pillColor} />
+                      <PosterPill key={player.id} player={player} pillColor={pillColor} height={pillHeight} />
                     ))}
                   </div>
                 </div>
@@ -460,22 +507,22 @@ function TeamSelectionPoster({
               </div>
             ))}
 
-            <div style={{ display: 'grid', gap: 10, marginTop: -2 }}>
+            <div style={{ display: 'grid', gap: lineupGap, marginTop: -2 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '72px 1fr', alignItems: 'center', gap: 18 }}>
                 <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.72)' }}>INT</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: lineupGap }}>
                   {rows.interchangeTop.map((player) => (
-                    <PosterPill key={player.id} player={player} pillColor={pillColor} />
+                    <PosterPill key={player.id} player={player} pillColor={pillColor} height={pillHeight} />
                   ))}
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '72px 1fr', alignItems: 'center', gap: 18 }}>
                 <div />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: lineupGap }}>
                   {Array.from({ length: 3 }, (_value, index) => {
                     const player = rows.interchangeBottom[index] ?? null
                     if (!player) return <div key={`int-spacer-${index}`} />
-                    return <PosterPill key={player.id} player={player} pillColor={pillColor} />
+                    return <PosterPill key={player.id} player={player} pillColor={pillColor} height={pillHeight} />
                   })}
                 </div>
               </div>
@@ -486,29 +533,60 @@ function TeamSelectionPoster({
         {sponsorEnabled && validSponsors.length ? (
           <div
             style={{
-              marginTop: 8,
+              marginTop: 12,
               paddingTop: 12,
               borderTop: '1px solid rgba(255,255,255,0.14)',
+              display: 'grid',
+              gap: 10,
             }}
           >
-            <div style={{ marginBottom: 12, fontSize: 12, fontWeight: 900, letterSpacing: '0.24em', color: 'rgba(255,255,255,0.72)' }}>SPONSORS</div>
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, validSponsors.length)}, minmax(0, 1fr))`, gap: 14 }}>
-              {validSponsors.map((logo, index) => (
+            <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.24em', color: 'rgba(255,255,255,0.72)' }}>SPONSORS</div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gridTemplateRows: 'repeat(2, 118px)',
+                gap: 8,
+                alignItems: 'stretch',
+              }}
+            >
+              {sponsorDisplaySlots.map((logo, index) => (
                 <div
-                  key={`${logo}-${index}`}
+                  key={logo ? `${logo}-${index}` : `sponsor-empty-${index}`}
                   style={{
-                    height: 162,
+                    height: '100%',
                     borderRadius: 16,
-                    background: `linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.03)), ${panelTint}`,
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '18px 16px',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+                    background: 'transparent',
+                    border: '1px solid transparent',
+                    boxShadow: 'none',
+                    overflow: 'hidden',
+                    position: 'relative',
                   }}
                 >
-                  <img src={logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.2)' }} />
+                  {logo ? (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '8px 10px',
+                      }}
+                    >
+                      <img
+                        src={logo}
+                        alt=""
+                        style={{
+                          display: 'block',
+                          width: 'auto',
+                          height: 'auto',
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                        }}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -521,19 +599,23 @@ function TeamSelectionPoster({
   )
 }
 
-function TeamSelectionPosterSurface({
+function TeamSelectionPosterFrame({
   posterProps,
+  posterRef,
 }: {
-  posterProps: React.ComponentProps<typeof TeamSelectionPoster>
+  posterProps: React.ComponentProps<typeof TeamSelectionPosterLayout>
+  posterRef?: React.Ref<HTMLDivElement>
 }) {
   return (
     <div
+      ref={posterRef}
+      {...{ [POSTER_FRAME_DATA_ATTRIBUTE]: 'true' }}
       style={{
         width: POSTER_WIDTH,
         height: POSTER_HEIGHT,
       }}
     >
-      <TeamSelectionPoster {...posterProps} />
+      <TeamSelectionPosterLayout {...posterProps} />
     </div>
   )
 }
@@ -565,19 +647,22 @@ function PosterLogo({ logoUrl, label }: { logoUrl: string | null; label: string 
 function PosterPill({
   player,
   pillColor,
+  height,
 }: {
   player: PosterPlayer
   pillColor: string
+  height: number
 }) {
   const { first, last } = splitName(player.name)
   const primaryText = last ? last.toUpperCase() : (first || player.name).toUpperCase()
+  const secondaryText = first || '\u00A0'
   return (
     <div
       style={{
         position: 'relative',
-        minHeight: 70,
+        height,
         display: 'grid',
-        gridTemplateColumns: '44px 1fr',
+        gridTemplateColumns: '50px minmax(0, 1fr)',
         borderRadius: 0,
         overflow: 'hidden',
         boxShadow: '0 12px 22px rgba(0,0,0,0.2)',
@@ -589,25 +674,121 @@ function PosterPill({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 20,
-          fontWeight: 900,
+          height,
+          fontSize: 30,
+          fontWeight: 950,
+          fontStyle: 'italic',
+          letterSpacing: '-0.04em',
+          lineHeight: 1,
+          textAlign: 'center',
           color: '#101521',
         }}
       >
-        {player.jerseyNumber != null ? player.jerseyNumber : '—'}
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: '100%',
+            textAlign: 'center',
+            fontVariantNumeric: 'tabular-nums',
+            lineHeight: 1,
+          }}
+        >
+          {player.jerseyNumber != null ? player.jerseyNumber : '—'}
+        </span>
       </div>
       <div
         style={{
           position: 'relative',
-          background: pillColor,
-          clipPath: 'polygon(0 0, 100% 0, 84% 100%, 0 100%)',
-          padding: '9px 22px 9px 12px',
-          display: 'grid',
-          gap: 3,
+          minWidth: 0,
+          height: '100%',
+          overflow: 'hidden',
         }}
       >
-        <div style={{ fontSize: 12, fontWeight: 700, fontStyle: 'italic', color: 'rgba(255,255,255,0.94)', lineHeight: 1 }}>{first}</div>
-        <div style={{ fontSize: 18, fontWeight: 900, fontStyle: 'italic', letterSpacing: '0.02em', color: '#FFFFFF', lineHeight: 1.02, textTransform: 'uppercase' }}>{primaryText}</div>
+        <svg
+          aria-hidden="true"
+          viewBox={`0 0 300 ${height}`}
+          preserveAspectRatio="none"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            display: 'block',
+          }}
+        >
+          <polygon points={`0,0 300,0 252,${height} 0,${height}`} fill={pillColor} />
+        </svg>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 1,
+            minWidth: 0,
+            boxSizing: 'border-box',
+            padding: '13px 18px 12px 12px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: 4,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              minWidth: 0,
+              fontSize: 10,
+              fontWeight: 700,
+              color: 'rgba(255,255,255,0.94)',
+              lineHeight: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              minHeight: 14,
+            }}
+          >
+            <span
+              style={{
+                display: 'block',
+                minWidth: 0,
+                width: '100%',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {secondaryText}
+            </span>
+          </div>
+          <div
+            style={{
+              minWidth: 0,
+              fontSize: 14,
+              fontWeight: 900,
+              letterSpacing: '0.01em',
+              color: '#FFFFFF',
+              lineHeight: '18px',
+              textTransform: 'uppercase',
+              display: 'flex',
+              alignItems: 'center',
+              minHeight: 18,
+            }}
+          >
+            <span
+              style={{
+                display: 'block',
+                minWidth: 0,
+                width: '100%',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {primaryText}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -675,7 +856,7 @@ function TeamSelectionSlot({
                   event.stopPropagation()
                   onClear()
                 }}
-                className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/8 bg-black/25 text-slate-300 transition hover:bg-black/40 hover:text-white"
+                className="absolute right-3 top-3 z-[3] inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-[#09111C]/88 text-white shadow-[0_8px_18px_rgba(0,0,0,0.32)] transition hover:bg-[#09111C] hover:text-white"
                 aria-label={`Clear ${label}`}
               >
                 <TeamPageIcon name="close" className="h-3.5 w-3.5" />
@@ -732,7 +913,8 @@ export default function TeamSelectionPage() {
   const [exportError, setExportError] = useState<string | null>(null)
   const [previewViewport, setPreviewViewport] = useState({ width: 420, height: 525 })
   const previewHostRef = useRef<HTMLDivElement | null>(null)
-  const exportRef = useRef<HTMLDivElement | null>(null)
+  const exportSurfaceRef = useRef<HTMLDivElement | null>(null)
+  const posterFrameRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -951,12 +1133,19 @@ export default function TeamSelectionPage() {
 
   const rosterPlayers = useMemo<RosterPlayer[]>(
     () =>
-      selectableMembers.map((member) => ({
-        id: member.id,
-        name: memberLabel(member),
-        handle: member.handle ? (member.handle.startsWith('@') ? member.handle : `@${member.handle}`) : null,
-        jerseyNumber: member.jerseyNumber,
-      })),
+      selectableMembers
+        .map((member) => ({
+          id: member.id,
+          name: memberLabel(member),
+          handle: member.handle ? (member.handle.startsWith('@') ? member.handle : `@${member.handle}`) : null,
+          jerseyNumber: member.jerseyNumber,
+        }))
+        .sort((a, b) => {
+          const aNumber = a.jerseyNumber ?? Number.POSITIVE_INFINITY
+          const bNumber = b.jerseyNumber ?? Number.POSITIVE_INFINITY
+          if (aNumber !== bNumber) return aNumber - bNumber
+          return a.name.localeCompare(b.name)
+        }),
     [selectableMembers]
   )
 
@@ -1034,8 +1223,6 @@ export default function TeamSelectionPage() {
 
   const posterProps = useMemo(
     () => ({
-      width: POSTER_WIDTH,
-      height: POSTER_HEIGHT,
       squadName: detail?.name ?? 'Squad',
       squadLogoUrl: detail?.logoUrl ?? null,
       opponentName,
@@ -1115,7 +1302,7 @@ export default function TeamSelectionPage() {
   }
 
   async function handleExportImage() {
-    if (!exportRef.current) {
+    if (!exportSurfaceRef.current || !posterFrameRef.current) {
       setExportError('Poster surface is still rendering. Try again in a moment.')
       return
     }
@@ -1127,7 +1314,10 @@ export default function TeamSelectionPage() {
     setExportError(null)
     setExporting(true)
     try {
-      const canvas = await html2canvas(exportRef.current, {
+      await waitForPosterAssets(exportSurfaceRef.current)
+      await waitForPaint()
+
+      const canvas = await html2canvas(exportSurfaceRef.current, {
         backgroundColor: null,
         scale: 1,
         width: POSTER_WIDTH,
@@ -1376,7 +1566,20 @@ export default function TeamSelectionPage() {
                       >
                         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(57,255,136,0.08),transparent_36%)]" />
                         {manualOpponentLogoUrl ? (
-                          <img src={manualOpponentLogoUrl} alt="Opponent logo" className="relative z-[1] h-full w-full object-contain" />
+                          <>
+                            <img src={manualOpponentLogoUrl} alt="Opponent logo" className="relative z-[1] h-full w-full object-contain" />
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                setManualOpponentLogoUrl(null)
+                              }}
+                              className="absolute right-2 top-2 z-[3] inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-[#09111C]/88 text-white shadow-[0_8px_18px_rgba(0,0,0,0.32)] transition hover:bg-[#09111C] hover:text-white"
+                              aria-label="Reset opponent logo"
+                            >
+                              <TeamPageIcon name="close" className="h-3.5 w-3.5" />
+                            </button>
+                          </>
                         ) : (
                           <div className="relative z-[1] grid place-items-center gap-2 text-slate-400">
                             <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/6">
@@ -1400,7 +1603,7 @@ export default function TeamSelectionPage() {
                   >
                     <div>
                       <div className="text-sm font-black uppercase tracking-[0.18em] text-white">Sponsors</div>
-                      <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">4 logo slots on poster</div>
+                      <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">6 logo slots on poster</div>
                     </div>
                     <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${sponsorEnabled ? 'bg-[#39FF88]/18 text-[#39FF88]' : 'bg-white/6 text-slate-500'}`}>
                       {sponsorEnabled ? <TeamPageIcon name="checkmark" className="h-4 w-4" /> : null}
@@ -1408,8 +1611,8 @@ export default function TeamSelectionPage() {
                   </button>
 
                   {sponsorEnabled ? (
-                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                      {Array.from({ length: 4 }, (_value, index) => {
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {Array.from({ length: SPONSOR_SLOT_COUNT }, (_value, index) => {
                         const logo = sponsorSlots[index] ?? null
                         return (
                           <div
@@ -1434,12 +1637,12 @@ export default function TeamSelectionPage() {
                                   onClick={(event) => {
                                     event.stopPropagation()
                                     setSponsorSlots((current) => {
-                                      const next = [...current]
+                                      const next = normalizeSponsorSlots(current)
                                       next[index] = null
                                       return next
                                     })
                                   }}
-                                  className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-white"
+                                  className="absolute right-2 top-2 z-[3] inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-[#09111C]/88 text-white shadow-[0_8px_18px_rgba(0,0,0,0.32)] transition hover:bg-[#09111C] hover:text-white"
                                   aria-label={`Remove sponsor ${index + 1}`}
                                 >
                                   <TeamPageIcon name="close" className="h-3.5 w-3.5" />
@@ -1557,7 +1760,7 @@ export default function TeamSelectionPage() {
                       marginTop: `${-(POSTER_HEIGHT * visiblePreviewScale) / 2}px`,
                     }}
                   >
-                    <TeamSelectionPosterSurface posterProps={posterProps} />
+                    <TeamSelectionPosterFrame posterProps={posterProps} />
                   </div>
                 </div>
 
@@ -1573,9 +1776,19 @@ export default function TeamSelectionPage() {
         </div>
       </section>
 
-      <div className="pointer-events-none fixed -left-[5000px] top-0 opacity-0">
-        <div ref={exportRef}>
-          <TeamSelectionPosterSurface posterProps={posterProps} />
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: '-200vw',
+          width: POSTER_WIDTH,
+          height: POSTER_HEIGHT,
+          pointerEvents: 'none',
+        }}
+      >
+        <div ref={exportSurfaceRef} style={{ width: POSTER_WIDTH, height: POSTER_HEIGHT }}>
+          <TeamSelectionPosterFrame posterProps={posterProps} posterRef={posterFrameRef} />
         </div>
       </div>
 
