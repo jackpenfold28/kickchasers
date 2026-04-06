@@ -1,9 +1,20 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import clsx from 'clsx'
-import { AlertCircle, CheckCircle2, ChevronRight, LoaderCircle, Search, ShieldCheck, Trophy, Users2, X } from 'lucide-react'
-import PortalCard from '@/components/cards/PortalCard'
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronRight,
+  LoaderCircle,
+  PencilLine,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+  X,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { normalizeHexColor, resolveSquadPrimaryColor } from '@/lib/squad-colors'
 
 type AccessState = 'valid' | 'submitted' | 'invalid'
 type MatchupSourceType = 'tracked_game' | 'manual'
@@ -16,6 +27,9 @@ type VoteCardCandidate = {
   subjectName: string
   jerseyNumber: number | null
   isGuest: boolean
+  avatarUrl?: string | null
+  positionLabel?: string | null
+  ratingValue?: number | null
 }
 
 type VoteCardEntry = {
@@ -29,6 +43,18 @@ type VoteCardEntry = {
   squadMemberId: string | null
   profileUserId: string | null
   isGuest: boolean
+  avatarUrl?: string | null
+  positionLabel?: string | null
+  ratingValue?: number | null
+}
+
+type VoteCardRecommendation = {
+  slotIndex?: number | null
+  pointsValue?: number | null
+  subjectKey: string
+  subjectName: string
+  jerseyNumber?: number | null
+  ratingValue?: number | null
 }
 
 type PublicVoteCardContext = {
@@ -49,6 +75,8 @@ type PublicVoteCardContext = {
     id: string | null
     name: string
     logoUrl: string | null
+    primaryColorHex?: string | null
+    secondaryColorHex?: string | null
   }
   voteGroup: {
     id: string | null
@@ -60,6 +88,7 @@ type PublicVoteCardContext = {
     sourceType: MatchupSourceType
     roundLabel: string
     opponentName: string
+    opponentLogoUrl?: string | null
     matchupDate: string | null
     gameId: string | null
     gameSquadId: string | null
@@ -75,6 +104,7 @@ type PublicVoteCardContext = {
   }
   candidatePool: VoteCardCandidate[]
   entries: VoteCardEntry[]
+  recommendations?: VoteCardRecommendation[] | null
 }
 
 type SelectedEntry = {
@@ -95,18 +125,6 @@ const secondaryButtonClassName =
 const fieldClassName =
   'w-full rounded-2xl border border-white/10 bg-[#081121] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-white/20 focus:bg-[#0A1528]'
 
-function formatMatchDate(value: string | null) {
-  if (!value) return 'Date to be confirmed'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Date to be confirmed'
-  return new Intl.DateTimeFormat('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
-
 function formatSubmittedAt(value: string | null) {
   if (!value) return null
   const date = new Date(value)
@@ -122,11 +140,6 @@ function formatSubmittedAt(value: string | null) {
 
 function normalizeSearch(value: string) {
   return value.trim().toLowerCase()
-}
-
-function formatCandidateLabel(candidate: VoteCardCandidate) {
-  const number = candidate.jerseyNumber != null ? `#${candidate.jerseyNumber}` : 'No. TBC'
-  return `${candidate.subjectName} • ${number}`
 }
 
 function getSelectionKey(candidate: VoteCardCandidate | VoteCardEntry, sourceType: MatchupSourceType) {
@@ -200,6 +213,66 @@ function buildSubmitEntries(context: PublicVoteCardContext, selections: Selected
   }))
 }
 
+function toRgb(hex: string) {
+  const normalized = normalizeHexColor(hex) ?? '#1A4DFF'
+  const value = normalized.slice(1)
+  return {
+    red: Number.parseInt(value.slice(0, 2), 16),
+    green: Number.parseInt(value.slice(2, 4), 16),
+    blue: Number.parseInt(value.slice(4, 6), 16),
+  }
+}
+
+function toRgba(hex: string, alpha: number) {
+  const { red, green, blue } = toRgb(hex)
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`
+}
+
+function mixHex(baseHex: string, targetHex: string, weight: number) {
+  const base = toRgb(baseHex)
+  const target = toRgb(targetHex)
+  const ratio = Math.min(1, Math.max(0, weight))
+  const blend = (from: number, to: number) => Math.round(from + (to - from) * ratio)
+  return `#${[blend(base.red, target.red), blend(base.green, target.green), blend(base.blue, target.blue)]
+    .map((value) => value.toString(16).padStart(2, '0').toUpperCase())
+    .join('')}`
+}
+
+function getInitials(value: string) {
+  const parts = value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+  return (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? parts[0]?.[1] ?? '')
+}
+
+function findFirstIncompleteSlot(selections: SelectedEntry[]) {
+  return selections.find((selection) => !selection.candidate)?.slotIndex ?? selections[0]?.slotIndex ?? null
+}
+
+function areAllSelectionsFilled(selections: SelectedEntry[]) {
+  return selections.every((selection) => Boolean(selection.candidate))
+}
+
+function getCandidateMeta(candidate: VoteCardCandidate, sourceType: MatchupSourceType) {
+  if (sourceType === 'tracked_game') {
+    if (typeof candidate.ratingValue === 'number') return `Rating ${candidate.ratingValue.toFixed(1)}`
+    return candidate.isGuest ? 'Guest player' : 'Tracked squad player'
+  }
+
+  const meta: string[] = []
+  if (candidate.jerseyNumber != null) meta.push(`#${candidate.jerseyNumber}`)
+  if (candidate.positionLabel) meta.push(candidate.positionLabel)
+  if (!meta.length) meta.push(candidate.isGuest ? 'Guest player' : 'Squad player')
+  return meta.join(' • ')
+}
+
+function getRecommendationMeta(recommendation: VoteCardRecommendation) {
+  if (typeof recommendation.ratingValue === 'number') return `Rating ${recommendation.ratingValue.toFixed(1)}`
+  if (recommendation.jerseyNumber != null) return `#${recommendation.jerseyNumber}`
+  return 'Recommended'
+}
+
 function StatePanel({
   icon,
   title,
@@ -226,39 +299,166 @@ function StatePanel({
   )
 }
 
-function SlotPickerModal({
+function LogoMark({
+  src,
+  label,
+  className,
+}: {
+  src: string | null | undefined
+  label: string
+  className?: string
+}) {
+  return (
+    <div
+      className={clsx(
+        'flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.18),rgba(255,255,255,0.03))] text-sm font-semibold uppercase text-white shadow-[0_16px_30px_rgba(0,0,0,0.32)]',
+        className
+      )}
+    >
+      {src ? <img src={src} alt={label} className="h-full w-full object-cover" /> : <span>{getInitials(label).slice(0, 2)}</span>}
+    </div>
+  )
+}
+
+function VoteRow({
+  selection,
+  sourceType,
+  isEditable,
+  isBestAndFairest,
+  onOpen,
+  onClear,
+  error,
+}: {
+  selection: SelectedEntry
+  sourceType: MatchupSourceType
+  isEditable: boolean
+  isBestAndFairest: boolean
+  onOpen: () => void
+  onClear: () => void
+  error?: string
+}) {
+  const candidate = selection.candidate
+  const railClassName = isBestAndFairest
+    ? 'bg-gradient-to-b from-[#FFF3B0] via-[#D4AF37] to-[#9C6A00] bg-clip-text text-transparent'
+    : 'text-white'
+
+  return (
+    <button
+      type="button"
+      onClick={isEditable ? onOpen : undefined}
+      className={clsx(
+        'group grid w-full grid-cols-[78px_minmax(0,1fr)_auto] items-center gap-3 border-t border-white/10 px-4 py-4 text-left transition sm:grid-cols-[92px_minmax(0,1fr)_auto] sm:px-5',
+        isEditable ? 'hover:bg-white/[0.05]' : 'cursor-default',
+        error && 'bg-[rgba(122,28,28,0.18)]'
+      )}
+    >
+      <div className="flex justify-center">
+        <div className={clsx('text-center text-[2.1rem] font-black italic leading-none tracking-[-0.05em] sm:text-[2.5rem]', railClassName)}>
+          {selection.pointsValue}
+        </div>
+      </div>
+
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border border-white/10 bg-white/[0.08] text-base font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+          {candidate?.avatarUrl ? (
+            <img src={candidate.avatarUrl} alt={candidate.subjectName} className="h-full w-full object-cover" />
+          ) : candidate ? (
+            getInitials(candidate.subjectName).slice(0, 2)
+          ) : (
+            <UserRound className="h-5 w-5 text-slate-500" />
+          )}
+        </div>
+
+        <div className="min-w-0">
+          {candidate?.isGuest ? (
+            <span className="inline-flex rounded-full border border-white/12 bg-white/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-100">
+              Guest
+            </span>
+          ) : null}
+          <p
+            className={clsx(
+              'truncate text-lg font-black uppercase italic tracking-[-0.03em] text-white',
+              !candidate && 'text-slate-300'
+            )}
+          >
+            {candidate ? candidate.subjectName : 'Select player'}
+          </p>
+          <p className={clsx('mt-1 truncate text-sm text-slate-400', error && 'text-red-200')}>
+            {candidate ? getCandidateMeta(candidate, sourceType) : 'Tap to assign this vote slot.'}
+          </p>
+          {error ? <p className="mt-1 text-xs text-red-200">{error}</p> : null}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        {isEditable && candidate ? (
+          <span
+            role="button"
+            tabIndex={-1}
+            onClick={(event) => {
+              event.stopPropagation()
+              onClear()
+            }}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-slate-300 transition group-hover:bg-white/[0.08] group-hover:text-white"
+            aria-label={`Clear ${candidate.subjectName} from ${selection.pointsValue} vote slot`}
+          >
+            <X className="h-4 w-4" />
+          </span>
+        ) : null}
+        {isEditable ? (
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-slate-300 transition group-hover:border-white/20 group-hover:bg-white/[0.08] group-hover:text-white">
+            <ChevronRight className="h-4 w-4" />
+          </span>
+        ) : null}
+      </div>
+    </button>
+  )
+}
+
+function SelectionDialog({
   open,
   context,
-  activeSlot,
   selections,
+  activeSlotIndex,
   onClose,
-  onSelect,
-  onClear,
+  onActivateSlot,
+  onSelectCandidate,
+  onClearSlot,
+  onConfirm,
 }: {
   open: boolean
   context: PublicVoteCardContext
-  activeSlot: SelectedEntry | null
   selections: SelectedEntry[]
+  activeSlotIndex: number | null
   onClose: () => void
-  onSelect: (candidate: VoteCardCandidate) => void
-  onClear: () => void
+  onActivateSlot: (slotIndex: number) => void
+  onSelectCandidate: (candidate: VoteCardCandidate) => void
+  onClearSlot: () => void
+  onConfirm: () => void
 }) {
   const [search, setSearch] = useState('')
+  const [dialogError, setDialogError] = useState<string | null>(null)
   const deferredSearch = useDeferredValue(search)
 
-  useEffect(() => {
-    if (open) setSearch('')
-  }, [open])
+  const activeSlot = useMemo(
+    () => selections.find((selection) => selection.slotIndex === activeSlotIndex) ?? null,
+    [activeSlotIndex, selections]
+  )
 
-  const selectedKeys = useMemo(() => {
-    const keys = new Set<string>()
-    for (const selection of selections) {
-      if (!selection.candidate || selection.slotIndex === activeSlot?.slotIndex) continue
-      const identifier = getSelectionKey(selection.candidate, context.matchup.sourceType)
-      if (identifier) keys.add(identifier)
+  useEffect(() => {
+    if (!open) return
+    setSearch('')
+    setDialogError(null)
+  }, [open, activeSlotIndex])
+
+  useEffect(() => {
+    if (!open) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
     }
-    return keys
-  }, [activeSlot?.slotIndex, context.matchup.sourceType, selections])
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose, open])
 
   const filteredCandidates = useMemo(() => {
     const query = normalizeSearch(deferredSearch)
@@ -269,36 +469,113 @@ function SlotPickerModal({
     })
   }, [context.candidatePool, deferredSearch])
 
+  const selectedLookup = useMemo(() => {
+    const lookup = new Map<string, number>()
+    for (const selection of selections) {
+      if (!selection.candidate) continue
+      const key = getSelectionKey(selection.candidate, context.matchup.sourceType) ?? selection.candidate.subjectKey
+      lookup.set(key, selection.slotIndex)
+    }
+    return lookup
+  }, [context.matchup.sourceType, selections])
+
   if (!open || !activeSlot) return null
 
+  const selectedCount = selections.filter((selection) => selection.candidate).length
+  const allFilled = areAllSelectionsFilled(selections)
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#020713]/82 p-3 backdrop-blur-sm sm:items-center sm:p-5">
-      <div className={`${surfaceClassName} flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden`}>
-        <div className="flex items-start justify-between gap-4 border-b border-white/8 px-4 py-4 sm:px-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#020713]/84 p-3 backdrop-blur-sm sm:items-center sm:p-5">
+      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(16,25,42,0.98),rgba(7,13,24,0.98))] shadow-[0_36px_90px_rgba(0,0,0,0.56)]">
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-6">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">Choose Player</p>
-            <h2 className="mt-1 text-lg font-semibold text-white">{activeSlot.pointsValue} vote{activeSlot.pointsValue === 1 ? '' : 's'}</h2>
-            <p className="mt-1 text-sm text-slate-400">
-              Search by player name or jersey number. Players already used on this card are locked.
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">Assign Votes</p>
+            <h2 className="mt-1 text-xl font-black uppercase italic tracking-[-0.03em] text-white">
+              {activeSlot.pointsValue} vote{activeSlot.pointsValue === 1 ? '' : 's'} active
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm text-slate-400">
+              Tap a player to assign the active vote value, then confirm the full order.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
-            aria-label="Close picker"
+            aria-label="Close vote selection dialog"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="border-b border-white/8 px-4 py-4 sm:px-6">
+        <div className="grid gap-4 border-b border-white/10 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:px-6">
+          <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Active</p>
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-2xl font-black italic text-white">{activeSlot.pointsValue}</p>
+                <p className="text-sm text-slate-400">
+                  Slot {activeSlot.slotIndex} {activeSlot.candidate ? `• ${activeSlot.candidate.subjectName}` : '• Awaiting player'}
+                </p>
+              </div>
+              {activeSlot.candidate ? (
+                <button type="button" onClick={onClearSlot} className={secondaryButtonClassName}>
+                  Clear slot
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Selected</p>
+            <p className="mt-2 text-2xl font-black italic text-white">
+              {selectedCount}/{selections.length}
+            </p>
+            <p className="text-sm text-slate-400">
+              {allFilled ? 'Full vote order ready to confirm.' : 'Keep filling the order. Players can only be used once.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 border-b border-white/10 px-5 py-4 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] sm:px-6">
+          <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Order</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {selections.map((selection) => (
+                <button
+                  key={selection.slotIndex}
+                  type="button"
+                  onClick={() => onActivateSlot(selection.slotIndex)}
+                  className={clsx(
+                    'inline-flex min-w-[84px] items-center justify-between gap-2 rounded-full border px-3 py-2 text-left text-sm transition',
+                    selection.slotIndex === activeSlot.slotIndex
+                      ? 'border-white/25 bg-white/[0.12] text-white'
+                      : 'border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
+                  )}
+                >
+                  <span className="font-black italic">{selection.pointsValue}</span>
+                  <span className="truncate text-xs uppercase tracking-[0.16em]">{selection.candidate ? 'Set' : 'Open'}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Hint</p>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              {context.matchup.sourceType === 'tracked_game'
+                ? 'Tracked players can show ratings when available. Choosing a used player will move that player into the active vote slot.'
+                : 'Search by name or jumper number. Choosing a used player will move that player into the active vote slot.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="border-b border-white/10 px-5 py-4 sm:px-6">
           <label className="relative block">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search players"
+              placeholder="Search by player name or jumper number"
               className={`${fieldClassName} pl-11`}
             />
           </label>
@@ -306,56 +583,57 @@ function SlotPickerModal({
 
         <div className="overflow-y-auto px-3 py-3 sm:px-4">
           <div className="space-y-2">
-            {activeSlot.candidate ? (
-              <button type="button" onClick={onClear} className={`${secondaryButtonClassName} w-full justify-center`}>
-                Clear current selection
-              </button>
-            ) : null}
-
             {filteredCandidates.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-slate-400">
+              <div className="rounded-[24px] border border-dashed border-white/10 px-4 py-10 text-center text-sm text-slate-400">
                 No players match that search.
               </div>
             ) : (
               filteredCandidates.map((candidate) => {
-                const identifier = getSelectionKey(candidate, context.matchup.sourceType)
-                const disabled = identifier ? selectedKeys.has(identifier) : true
-                const selected = activeSlot.candidate?.subjectKey === candidate.subjectKey
+                const key = getSelectionKey(candidate, context.matchup.sourceType) ?? candidate.subjectKey
+                const usedBySlot = selectedLookup.get(key)
+                const isActiveSelection = activeSlot.candidate?.subjectKey === candidate.subjectKey
+                const isUsedElsewhere = usedBySlot != null && usedBySlot !== activeSlot.slotIndex
                 return (
                   <button
                     key={candidate.subjectKey}
                     type="button"
-                    onClick={() => onSelect(candidate)}
-                    disabled={disabled && !selected}
+                    onClick={() => {
+                      setDialogError(null)
+                      onSelectCandidate(candidate)
+                    }}
                     className={clsx(
-                      'flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition',
-                      selected
+                      'flex w-full items-center justify-between gap-4 rounded-[24px] border px-4 py-3 text-left transition',
+                      isActiveSelection
                         ? 'border-[#2C6BFF] bg-[#0D2249] shadow-[0_14px_34px_rgba(18,67,183,0.22)]'
-                        : 'border-white/8 bg-white/[0.035] hover:border-white/14 hover:bg-white/[0.06]',
-                      disabled && !selected && 'cursor-not-allowed opacity-45'
+                        : 'border-white/8 bg-white/[0.035] hover:border-white/14 hover:bg-white/[0.06]'
                     )}
                   >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#0A1425] text-sm font-semibold text-white">
-                          {candidate.jerseyNumber ?? '—'}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-white">{candidate.subjectName}</p>
-                          <p className="truncate text-xs text-slate-400">
-                            {candidate.isGuest ? 'Guest player' : 'Eligible player'}
-                          </p>
-                        </div>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[16px] border border-white/10 bg-[#0A1425] text-sm font-semibold text-white">
+                        {candidate.avatarUrl ? (
+                          <img src={candidate.avatarUrl} alt={candidate.subjectName} className="h-full w-full object-cover" />
+                        ) : (
+                          getInitials(candidate.subjectName).slice(0, 2)
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        {candidate.isGuest ? (
+                          <span className="inline-flex rounded-full border border-white/12 bg-white/[0.07] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-100">
+                            Guest
+                          </span>
+                        ) : null}
+                        <p className="truncate text-base font-black uppercase italic tracking-[-0.03em] text-white">{candidate.subjectName}</p>
+                        <p className="truncate text-sm text-slate-400">{getCandidateMeta(candidate, context.matchup.sourceType)}</p>
                       </div>
                     </div>
-                    <div className="ml-4 shrink-0 text-right">
-                      {selected ? (
+                    <div className="shrink-0 text-right">
+                      {isActiveSelection ? (
                         <span className="inline-flex rounded-full border border-[#2C6BFF]/50 bg-[#1A4DFF]/20 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-100">
-                          Selected
+                          Active
                         </span>
-                      ) : disabled ? (
-                        <span className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                          Used
+                      ) : isUsedElsewhere ? (
+                        <span className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
+                          Move from {usedBySlot}
                         </span>
                       ) : (
                         <ChevronRight className="h-4 w-4 text-slate-500" />
@@ -365,6 +643,32 @@ function SlotPickerModal({
                 )
               })
             )}
+          </div>
+        </div>
+
+        <div className="border-t border-white/10 px-5 py-4 sm:px-6">
+          {dialogError ? (
+            <div className="mb-3 rounded-2xl border border-[#7F1D1D] bg-[rgba(69,10,10,0.32)] px-4 py-3 text-sm text-red-100">
+              {dialogError}
+            </div>
+          ) : null}
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <button type="button" onClick={onClose} className={secondaryButtonClassName}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!allFilled) {
+                  setDialogError('Complete the full vote order before confirming.')
+                  return
+                }
+                onConfirm()
+              }}
+              className={primaryButtonClassName}
+            >
+              Confirm order
+            </button>
           </div>
         </div>
       </div>
@@ -380,11 +684,14 @@ export default function PublicVoteCardPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [context, setContext] = useState<PublicVoteCardContext | null>(null)
   const [enteredByName, setEnteredByName] = useState('')
-  const [selections, setSelections] = useState<SelectedEntry[]>([])
+  const [committedSelections, setCommittedSelections] = useState<SelectedEntry[]>([])
+  const [draftSelections, setDraftSelections] = useState<SelectedEntry[]>([])
   const [slotErrors, setSlotErrors] = useState<Record<number, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [activeSlotIndex, setActiveSlotIndex] = useState<number | null>(null)
+  const [selectionDialogOpen, setSelectionDialogOpen] = useState(false)
   const [showThankYou, setShowThankYou] = useState(false)
+  const [primaryColor, setPrimaryColor] = useState('#1A4DFF')
 
   useEffect(() => {
     let cancelled = false
@@ -418,9 +725,11 @@ export default function PublicVoteCardPage() {
       }
 
       const nextContext = data as PublicVoteCardContext
+      const initialSelections = buildInitialSelections(nextContext)
       setContext(nextContext)
       setEnteredByName(nextContext.card.assignedVoterName || nextContext.card.enteredByName || '')
-      setSelections(buildInitialSelections(nextContext))
+      setCommittedSelections(initialSelections)
+      setDraftSelections(initialSelections)
       setLoading(false)
     }
 
@@ -431,18 +740,41 @@ export default function PublicVoteCardPage() {
     }
   }, [token])
 
-  const activeSlot = useMemo(
-    () => selections.find((selection) => selection.slotIndex === activeSlotIndex) ?? null,
-    [activeSlotIndex, selections]
+  useEffect(() => {
+    if (!context) return
+    let cancelled = false
+
+    async function resolvePrimary() {
+      const resolved = await resolveSquadPrimaryColor({
+        primaryColorHex: context.squad.primaryColorHex,
+        logoUrl: context.squad.logoUrl,
+        fallbackColor: '#1A4DFF',
+      })
+      if (!cancelled) setPrimaryColor(normalizeHexColor(resolved) ?? '#1A4DFF')
+    }
+
+    void resolvePrimary()
+
+    return () => {
+      cancelled = true
+    }
+  }, [context])
+
+  const secondaryColor = useMemo(
+    () => normalizeHexColor(context?.squad.secondaryColorHex) ?? mixHex(primaryColor, '#07111F', 0.72),
+    [context?.squad.secondaryColorHex, primaryColor]
   )
 
-  const submitDisabled = loading || submitting || !context || context.accessState !== 'valid'
+  const isBestAndFairest = context?.awardType.category === 'best_and_fairest'
+  const cardTitleGradient = isBestAndFairest
+    ? 'linear-gradient(135deg, #FFF3B0 0%, #D4AF37 48%, #9C6A00 100%)'
+    : `linear-gradient(135deg, ${toRgba(primaryColor, 0.98)} 0%, ${toRgba(mixHex(primaryColor, '#FFFFFF', 0.22), 0.95)} 100%)`
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     if (!context || !token) return
 
-    const validation = validateSelections(context, selections)
+    const validation = validateSelections(context, committedSelections)
     setSlotErrors(validation.slotErrors)
     setFormError(validation.formError)
     setSubmitError(null)
@@ -452,7 +784,7 @@ export default function PublicVoteCardPage() {
     }
 
     setSubmitting(true)
-    const payload = buildSubmitEntries(context, selections)
+    const payload = buildSubmitEntries(context, committedSelections)
     const { error } = await supabase.rpc('rpc_submit_public_squad_vote_card', {
       _token: token,
       _entries: payload,
@@ -469,40 +801,76 @@ export default function PublicVoteCardPage() {
     setShowThankYou(true)
   }
 
-  function handleSelection(candidate: VoteCardCandidate) {
-    if (!activeSlot) return
-    setSelections((current) =>
-      current.map((selection) =>
-        selection.slotIndex === activeSlot.slotIndex
-          ? {
-              ...selection,
-              candidate,
-            }
-          : selection
+  function openSelectionDialog(slotIndex?: number) {
+    const snapshot = committedSelections.map((selection) => ({ ...selection }))
+    setDraftSelections(snapshot)
+    setActiveSlotIndex(slotIndex ?? findFirstIncompleteSlot(snapshot))
+    setSelectionDialogOpen(true)
+  }
+
+  function closeSelectionDialog() {
+    setSelectionDialogOpen(false)
+    setActiveSlotIndex(null)
+    setDraftSelections(committedSelections.map((selection) => ({ ...selection })))
+  }
+
+  function handleDraftSelection(candidate: VoteCardCandidate) {
+    setDraftSelections((current) => {
+      if (activeSlotIndex == null) return current
+
+      const identifier = getSelectionKey(candidate, context?.matchup.sourceType ?? 'manual') ?? candidate.subjectKey
+      const nextSelections = current.map((selection) => ({ ...selection }))
+      const activeIndex = nextSelections.findIndex((selection) => selection.slotIndex === activeSlotIndex)
+      if (activeIndex === -1) return current
+
+      const usedIndex = nextSelections.findIndex((selection, index) => {
+        if (index === activeIndex || !selection.candidate) return false
+        const selectionKey = getSelectionKey(selection.candidate, context?.matchup.sourceType ?? 'manual') ?? selection.candidate.subjectKey
+        return selectionKey === identifier
+      })
+
+      if (usedIndex >= 0) nextSelections[usedIndex] = { ...nextSelections[usedIndex], candidate: null }
+      nextSelections[activeIndex] = { ...nextSelections[activeIndex], candidate }
+
+      const nextIncomplete = nextSelections.find(
+        (selection) => selection.slotIndex > activeSlotIndex && !selection.candidate
       )
+      const fallbackIncomplete = nextSelections.find((selection) => !selection.candidate)
+      const nextActive = nextIncomplete?.slotIndex ?? fallbackIncomplete?.slotIndex ?? activeSlotIndex
+      setActiveSlotIndex(nextActive)
+
+      return nextSelections
+    })
+  }
+
+  function clearDraftSelection() {
+    if (activeSlotIndex == null) return
+    setDraftSelections((current) =>
+      current.map((selection) => (selection.slotIndex === activeSlotIndex ? { ...selection, candidate: null } : selection))
+    )
+  }
+
+  function clearCommittedSelection(slotIndex: number) {
+    setCommittedSelections((current) =>
+      current.map((selection) => (selection.slotIndex === slotIndex ? { ...selection, candidate: null } : selection))
     )
     setSlotErrors((current) => {
       const next = { ...current }
-      delete next[activeSlot.slotIndex]
+      delete next[slotIndex]
       return next
     })
     setFormError(null)
     setSubmitError(null)
-    setActiveSlotIndex(null)
   }
 
-  function clearSelection() {
-    if (!activeSlot) return
-    setSelections((current) =>
-      current.map((selection) =>
-        selection.slotIndex === activeSlot.slotIndex
-          ? {
-              ...selection,
-              candidate: null,
-            }
-          : selection
-      )
-    )
+  function confirmDraftSelections() {
+    if (!context) return
+    const validation = validateSelections(context, draftSelections)
+    setCommittedSelections(draftSelections.map((selection) => ({ ...selection })))
+    setSlotErrors(validation.slotErrors)
+    setFormError(validation.formError)
+    setSubmitError(null)
+    setSelectionDialogOpen(false)
     setActiveSlotIndex(null)
   }
 
@@ -586,224 +954,192 @@ export default function PublicVoteCardPage() {
     )
   }
 
+  const submitDisabled = loading || submitting || context.accessState !== 'valid'
+  const allCommittedFilled = areAllSelectionsFilled(committedSelections)
+  const recommendations = context.recommendations?.filter(Boolean) ?? []
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#02091A] px-4 py-6 text-white sm:px-6 sm:py-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(960px_520px_at_12%_0%,rgba(26,77,255,0.18),transparent_58%),radial-gradient(800px_460px_at_100%_10%,rgba(255,255,255,0.05),transparent_54%),linear-gradient(180deg,#02091A_0%,#030A1A_44%,#040B1C_100%)]" />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `
+            radial-gradient(960px 520px at 12% 0%, ${toRgba(primaryColor, 0.26)}, transparent 58%),
+            radial-gradient(780px 420px at 100% 12%, ${toRgba(secondaryColor, 0.2)}, transparent 54%),
+            linear-gradient(180deg, #02091A 0%, #030A1A 44%, #040B1C 100%)
+          `,
+        }}
+      />
 
-      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-5">
-        <section className={`${surfaceClassName} overflow-hidden`}>
-          <div className="grid gap-6 px-5 py-6 sm:px-7 sm:py-7 lg:grid-cols-[1.15fr_.85fr]">
-            <div className="min-w-0">
-              <div className="flex items-center gap-3">
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[20px] border border-white/10 bg-[#0B1425]">
-                  {context.squad.logoUrl ? (
-                    <img src={context.squad.logoUrl} alt={context.squad.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-lg font-semibold text-white">{context.squad.name.slice(0, 2).toUpperCase()}</span>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">KickChasers Vote Card</p>
-                  <h1 className="truncate text-2xl font-semibold tracking-tight text-white sm:text-[2rem]">{context.squad.name}</h1>
-                </div>
-              </div>
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200">
-                  {context.voteGroup.name}
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                  {context.awardType.name}
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                  Card {context.card.cardIndex}
-                </span>
-              </div>
-
-              <p className="mt-5 max-w-[56ch] text-sm leading-6 text-slate-300">
-                Select one player for each vote slot below, then submit once when you are happy with the full card.
+      <form onSubmit={handleSubmit} className="relative mx-auto flex w-full max-w-5xl flex-col gap-6">
+        <section className="flex flex-col gap-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">KickChasers Public Vote Card</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-[2.4rem]">{context.awardType.name}</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                {context.voteGroup.description || 'Complete the card in one clean flow, then submit once when the final order is locked in.'}
               </p>
-            </div>
-
-            <div className="grid gap-3">
-              <div className="rounded-[24px] border border-white/8 bg-[#081121] p-4">
-                <div className="flex items-start gap-3">
-                  <Trophy className="mt-0.5 h-5 w-5 text-slate-300" />
-                  <div>
-                    <p className="text-sm font-semibold text-white">{context.matchup.roundLabel}</p>
-                    <p className="mt-1 text-sm text-slate-400">vs {context.matchup.opponentName}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">{formatMatchDate(context.matchup.matchupDate)}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-[24px] border border-white/8 bg-[#081121] p-4">
-                <div className="flex items-start gap-3">
-                  <Users2 className="mt-0.5 h-5 w-5 text-slate-300" />
-                  <div>
-                    <p className="text-sm font-semibold text-white">
-                      {context.matchup.sourceType === 'tracked_game' ? 'Tracked game player pool' : 'Manual squad player pool'}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-400">
-                      {context.candidatePool.length} eligible player{context.candidatePool.length === 1 ? '' : 's'}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">Duplicates are blocked before submission.</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-[1.05fr_.95fr]">
-          <PortalCard
-            title="Card Details"
-            subtitle={context.voteGroup.description || 'Submit this card once. You will see a confirmation screen immediately after a successful submission.'}
-            className="rounded-[28px] border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(7,16,31,0.94))]"
-          >
-            <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Vote Group</p>
-                <p className="mt-2 text-sm font-semibold text-white">{context.voteGroup.name}</p>
-              </div>
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Award Type</p>
-                <p className="mt-2 text-sm font-semibold text-white">{context.awardType.name}</p>
-              </div>
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Matchup</p>
-                <p className="mt-2 text-sm font-semibold text-white">
-                  {context.matchup.roundLabel} vs {context.matchup.opponentName}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Card Type</p>
-                <p className="mt-2 text-sm font-semibold text-white">
-                  {context.matchup.sourceType === 'tracked_game' ? 'Tracked game selections' : 'Manual squad selections'}
-                </p>
+        <section className={`${surfaceClassName} flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6`}>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Vote order</p>
+            <h2 className="mt-1 text-xl font-semibold text-white">Vote order</h2>
+            <p className="mt-1 text-sm text-slate-400">Pick the full order in one flow. Players can only be used once.</p>
+          </div>
+          <button type="button" onClick={() => openSelectionDialog()} className={primaryButtonClassName}>
+            <PencilLine className="mr-2 h-4 w-4" />
+            {allCommittedFilled ? 'Edit order' : 'Assign votes'}
+          </button>
+        </section>
+
+        <section
+          className="overflow-hidden rounded-[24px] border shadow-[0_34px_90px_rgba(0,0,0,0.44)]"
+          style={{
+            borderColor: 'rgba(255,255,255,0.05)',
+            background: `
+              radial-gradient(circle at 16% 10%, ${toRgba(mixHex(primaryColor, '#FFFFFF', 0.12), 0.38)}, transparent 32%),
+              radial-gradient(circle at 84% 18%, ${toRgba(mixHex(secondaryColor, '#FFFFFF', 0.2), 0.24)}, transparent 32%),
+              linear-gradient(145deg, ${mixHex(primaryColor, '#050A14', 0.42)} 0%, ${mixHex(secondaryColor, '#07111F', 0.2)} 42%, #050B16 100%)
+            `,
+          }}
+        >
+          <div className="relative">
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,12,0.18),rgba(2,6,12,0.78)_48%,rgba(1,4,10,0.94)_100%)]" />
+            <div className="relative px-5 py-5 sm:px-6 sm:py-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full border border-white/10 bg-white/[0.12] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
+                      {context.voteGroup.name}
+                    </span>
+                    <span className="rounded-full border border-white/10 bg-white/[0.12] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
+                      {context.matchup.roundLabel}
+                    </span>
+                  </div>
+
+                  <h2
+                    className="mt-4 text-[2rem] font-black uppercase italic leading-none tracking-[-0.05em] sm:text-[2.7rem]"
+                    style={{
+                      backgroundImage: cardTitleGradient,
+                      WebkitBackgroundClip: 'text',
+                      color: 'transparent',
+                    }}
+                  >
+                    {context.awardType.name}
+                  </h2>
+
+                  <p className="mt-3 text-sm font-medium text-slate-100 sm:text-base">
+                    {context.squad.name} v {context.matchup.opponentName}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-400">
+                    {context.matchup.sourceType === 'tracked_game' ? 'Tracked game card' : 'Manual vote card'} • Card #{context.card.cardIndex}
+                  </p>
+                </div>
+
+                <div className="flex shrink-0 items-center pl-2">
+                  <LogoMark src={context.matchup.opponentLogoUrl} label={context.matchup.opponentName} className="translate-x-3" />
+                  <LogoMark src={context.squad.logoUrl} label={context.squad.name} className="-ml-3 border-white/20" />
+                </div>
               </div>
             </div>
-          </PortalCard>
 
-          <PortalCard
-            title="Submitted By"
-            subtitle="Optional. This helps confirm who entered the votes."
-            className="rounded-[28px] border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(7,16,31,0.94))]"
-          >
+            {context.matchup.sourceType === 'tracked_game' && recommendations.length > 0 ? (
+              <div className="relative px-5 pb-3 sm:px-6">
+                <div className="rounded-[22px] border border-white/10 bg-white/[0.05] p-4">
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="mt-0.5 h-4 w-4 text-slate-200" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white">Recommended votes</p>
+                      <p className="text-sm text-slate-400">Based off player game rating</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {recommendations.map((recommendation) => (
+                      <div key={`${recommendation.subjectKey}-${recommendation.pointsValue ?? recommendation.slotIndex ?? 'rec'}`} className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs text-slate-100">
+                        <span className="font-semibold">{recommendation.pointsValue ?? recommendation.slotIndex ?? '•'}</span> {recommendation.subjectName}
+                        <span className="text-slate-400"> • {getRecommendationMeta(recommendation)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="relative border-t border-white/10">
+              {committedSelections.map((selection) => (
+                <VoteRow
+                  key={selection.slotIndex}
+                  selection={selection}
+                  sourceType={context.matchup.sourceType}
+                  isEditable
+                  isBestAndFairest={Boolean(isBestAndFairest)}
+                  onOpen={() => openSelectionDialog(selection.slotIndex)}
+                  onClear={() => clearCommittedSelection(selection.slotIndex)}
+                  error={slotErrors[selection.slotIndex]}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className={`${surfaceClassName} px-5 py-5 sm:px-6`}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Voter details</p>
+          <h2 className="mt-1 text-xl font-semibold text-white">Voter details</h2>
+          <p className="mt-1 text-sm text-slate-400">This name is saved with the submitted card.</p>
+          <div className="mt-4">
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-200">Name</span>
+              <span className="mb-2 block text-sm font-medium text-slate-200">Entered by</span>
               <input
                 value={enteredByName}
                 onChange={(event) => setEnteredByName(event.target.value)}
                 placeholder="Enter your name"
-                className={fieldClassName}
+                className="w-full rounded-[16px] border border-white/10 bg-[#081121] px-4 py-3.5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-white/20 focus:bg-[#0A1528]"
                 autoComplete="name"
               />
             </label>
             {context.card.assignedVoterEmail ? (
               <p className="mt-3 text-xs text-slate-500">Assigned voter: {context.card.assignedVoterEmail}</p>
             ) : null}
-          </PortalCard>
+          </div>
         </section>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <PortalCard
-            title="Votes"
-            subtitle="Select one eligible player for each point slot. Search is available on every slot."
-            className="rounded-[28px] border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(7,16,31,0.94))]"
-          >
-            <div className="space-y-3">
-              {selections.map((selection) => (
-                <div
-                  key={selection.slotIndex}
-                  className={clsx(
-                    'rounded-[24px] border p-4 transition sm:p-5',
-                    slotErrors[selection.slotIndex]
-                      ? 'border-[#7F1D1D] bg-[rgba(69,10,10,0.38)]'
-                      : 'border-white/8 bg-white/[0.03]'
-                  )}
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border border-white/10 bg-[#091423] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                          Slot {selection.slotIndex}
-                        </span>
-                        <span className="rounded-full border border-[#2C6BFF]/40 bg-[#1A4DFF]/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-100">
-                          {selection.pointsValue} vote{selection.pointsValue === 1 ? '' : 's'}
-                        </span>
-                      </div>
-                      <div className="mt-3">
-                        {selection.candidate ? (
-                          <>
-                            <p className="text-base font-semibold text-white">{selection.candidate.subjectName}</p>
-                            <p className="mt-1 text-sm text-slate-400">
-                              {selection.candidate.jerseyNumber != null ? `#${selection.candidate.jerseyNumber}` : 'No jersey number'}
-                              {selection.candidate.isGuest ? ' • Guest player' : ''}
-                            </p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-base font-semibold text-white">No player selected</p>
-                            <p className="mt-1 text-sm text-slate-400">Choose the player who should receive this vote value.</p>
-                          </>
-                        )}
-                      </div>
-                      {slotErrors[selection.slotIndex] ? (
-                        <p className="mt-3 text-sm text-red-200">{slotErrors[selection.slotIndex]}</p>
-                      ) : null}
-                    </div>
-
-                    <div className="flex gap-2 sm:flex-col sm:items-end">
-                      <button type="button" onClick={() => setActiveSlotIndex(selection.slotIndex)} className={primaryButtonClassName}>
-                        {selection.candidate ? 'Change player' : 'Select player'}
-                      </button>
-                      {selection.candidate ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSelections((current) =>
-                              current.map((item) => (item.slotIndex === selection.slotIndex ? { ...item, candidate: null } : item))
-                            )
-                          }
-                          className={secondaryButtonClassName}
-                        >
-                          Clear
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </PortalCard>
-
-          {(formError || submitError) ? (
-            <div className="rounded-2xl border border-[#7F1D1D] bg-[rgba(69,10,10,0.32)] px-4 py-3 text-sm text-red-100">
-              {submitError || formError}
-            </div>
-          ) : null}
-
-          <div className={`${surfaceClassName} flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5`}>
-            <div>
-              <p className="text-sm font-semibold text-white">Ready to submit?</p>
-              <p className="mt-1 text-sm text-slate-400">Review every slot carefully. This secure card can only be submitted once.</p>
-            </div>
-            <button type="submit" disabled={submitDisabled} className={primaryButtonClassName}>
-              {submitting ? 'Submitting votes…' : 'Submit vote card'}
-            </button>
+        {(formError || submitError) ? (
+          <div className="rounded-2xl border border-[#7F1D1D] bg-[rgba(69,10,10,0.32)] px-4 py-3 text-sm text-red-100">
+            {submitError || formError}
           </div>
-        </form>
-      </div>
+        ) : null}
 
-      <SlotPickerModal
-        open={activeSlotIndex != null}
+        <section className={`${surfaceClassName} flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6`}>
+          <div>
+            <p className="text-sm font-semibold text-white">
+              {allCommittedFilled ? 'Ready to submit?' : 'Complete the order to submit'}
+            </p>
+            <p className="mt-1 text-sm text-slate-400">
+              {allCommittedFilled
+                ? 'Review the final order carefully. This secure card can only be submitted once.'
+                : 'Use Assign votes to finish the full vote order before submitting.'}
+            </p>
+          </div>
+          <button type="submit" disabled={submitDisabled} className={primaryButtonClassName}>
+            {submitting ? 'Submitting votes…' : 'Submit vote card'}
+          </button>
+        </section>
+      </form>
+
+      <SelectionDialog
+        open={selectionDialogOpen}
         context={context}
-        activeSlot={activeSlot}
-        selections={selections}
-        onClose={() => setActiveSlotIndex(null)}
-        onSelect={handleSelection}
-        onClear={clearSelection}
+        selections={draftSelections}
+        activeSlotIndex={activeSlotIndex}
+        onClose={closeSelectionDialog}
+        onActivateSlot={setActiveSlotIndex}
+        onSelectCandidate={handleDraftSelection}
+        onClearSlot={clearDraftSelection}
+        onConfirm={confirmDraftSelections}
       />
     </main>
   )
