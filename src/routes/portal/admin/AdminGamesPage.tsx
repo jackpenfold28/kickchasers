@@ -93,7 +93,7 @@ export default function AdminGamesPage() {
           description="Platform-wide tracked and manual games, using the same KickChasers match-card presentation rather than admin tables."
           actions={<Link to="/admin" className="text-sm font-medium text-[#9CE8BE]">Back to overview</Link>}
         />
-        <div className="mt-6 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_auto]">
+        <div className="mt-6 grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_auto]">
           <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
             <Search className="h-4 w-4 text-slate-500" />
             <input
@@ -136,7 +136,7 @@ export default function AdminGamesPage() {
                 </div>
                 <p className="text-sm text-slate-500">{section.rows.length} game{section.rows.length === 1 ? '' : 's'}</p>
               </div>
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {section.rows.map((row) => (
                   <GameLogCard key={`${row.id}:${row.manualId || 'tracked'}`} row={row} />
                 ))}

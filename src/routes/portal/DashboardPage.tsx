@@ -295,8 +295,8 @@ export default function DashboardPage() {
   return (
     <section className="grid gap-6">
       <div className="pb-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
-          <div className="flex items-center gap-4 lg:flex-1">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between xl:gap-8">
+          <div className="flex items-center gap-4 xl:flex-1">
             <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#101A2D] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
               {data.profile.avatarUrl ? (
                 <img src={data.profile.avatarUrl} alt={data.profile.name || 'User'} className="h-full w-full object-cover object-center" />
@@ -314,8 +314,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="w-full lg:max-w-[720px] lg:flex-[1.1]">
-            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(150px,0.9fr)_repeat(3,minmax(0,1fr))]">
+          <div className="w-full xl:max-w-[720px] xl:flex-[1.1]">
+            <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-[minmax(150px,0.9fr)_repeat(3,minmax(0,1fr))]">
               {headerStats.map((stat) => (
                 <div
                   key={stat.key}

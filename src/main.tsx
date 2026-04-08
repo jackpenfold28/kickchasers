@@ -45,9 +45,11 @@ import LegalDocumentPage from './routes/LegalDocumentPage'
 import RequestLeague from './routes/RequestLeague'
 import RequestClub from './routes/RequestClub'
 import PublicVoteCardPage from './routes/PublicVoteCardPage'
+import PublicVoteCardDevPage from './routes/PublicVoteCardDevPage'
 import { legalDocuments } from './content/legalDocuments'
 
 const router = createBrowserRouter([
+  { path: 'vote-card/dev', element: <PublicVoteCardDevPage /> },
   { path: 'vote-card/:token', element: <PublicVoteCardPage /> },
   {
     path: '/',

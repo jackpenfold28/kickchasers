@@ -120,8 +120,8 @@ export default function GameLogCard({ row }: { row: GameLogRow }) {
         </span>
       </div>
 
-      <div className="relative px-3.5 pb-3.5 pt-4">
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(108px,1.18fr)_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[1fr_minmax(128px,1.2fr)_1fr]">
+      <div className="relative px-3 pb-3.5 pt-4 sm:px-3.5">
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(92px,1.05fr)_minmax(0,1fr)] items-center gap-1.5 sm:grid-cols-[1fr_minmax(128px,1.2fr)_1fr] sm:gap-2">
           <div className="flex min-w-0 flex-col items-center gap-2 text-center">
             <TeamLogo src={row.squadLogoUrl} label={homeName} />
             <div className="min-w-0">
@@ -130,7 +130,7 @@ export default function GameLogCard({ row }: { row: GameLogRow }) {
           </div>
 
           <div className="flex min-w-0 flex-col items-center gap-1 text-center">
-            <p className="whitespace-nowrap text-[1.72rem] font-black italic leading-none tracking-[-0.06em] text-white sm:text-[1.92rem] lg:text-[2.02rem]">
+            <p className="whitespace-nowrap text-[1.45rem] font-black italic leading-none tracking-[-0.06em] text-white sm:text-[1.92rem] lg:text-[2.02rem]">
               {scorePrimary}
             </p>
             <p className="text-[11px] font-black italic text-white/84 sm:text-[12px]">{scoreSecondary}</p>

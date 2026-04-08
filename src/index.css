@@ -266,7 +266,7 @@
   }
 
   .teams-action-chip {
-    @apply inline-flex min-h-[42px] items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-slate-200 transition whitespace-nowrap;
+    @apply inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full px-3 py-2 text-center text-sm font-medium text-slate-200 transition;
     background: rgba(255,255,255,0.06);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
   }
@@ -311,7 +311,7 @@
   }
 
   .admin-users-control {
-    @apply flex min-h-[76px] flex-col justify-center gap-2 rounded-[24px] border border-white/10 px-4 py-3 text-left;
+    @apply flex min-h-[68px] flex-col justify-center gap-2 rounded-[24px] border border-white/10 px-4 py-3 text-left;
     background:
       linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.012)),
       rgba(12,20,33,0.88);
@@ -346,7 +346,7 @@
   }
 
   .admin-user-row {
-    @apply flex flex-col gap-5 rounded-[28px] px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between;
+    @apply flex flex-col gap-5 rounded-[28px] px-4 py-4 sm:px-5 xl:flex-row xl:items-center xl:justify-between;
     background:
       radial-gradient(circle at top left, rgba(57,255,136,0.08), transparent 34%),
       linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.012)),
@@ -386,11 +386,11 @@
   }
 
   .admin-user-side {
-    @apply flex w-full flex-col gap-3 border-t border-white/10 pt-4 lg:w-auto lg:min-w-[230px] lg:items-end lg:border-t-0 lg:border-l lg:border-white/10 lg:pl-5 lg:pt-0;
+    @apply flex w-full flex-col gap-3 border-t border-white/10 pt-4 xl:w-auto xl:min-w-[230px] xl:items-end xl:border-t-0 xl:border-l xl:border-white/10 xl:pl-5 xl:pt-0;
   }
 
   .admin-user-side-summary {
-    @apply flex w-full items-center justify-between gap-3 lg:flex-col lg:items-end;
+    @apply flex w-full items-center justify-between gap-3 xl:flex-col xl:items-end;
   }
 
   .admin-user-badge-stack {
@@ -444,6 +444,64 @@
     box-shadow:
       inset 0 0 0 1px rgba(57,255,136,.10),
       0 14px 28px rgba(2,8,20,.26);
+  }
+
+  @media (max-width: 1279px) {
+    .team-selection-workspace {
+      padding-inline: 0;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .teams-header-shell {
+      @apply rounded-[28px] px-4 py-5;
+    }
+
+    .teams-detail-cover {
+      height: 184px;
+    }
+
+    .teams-detail-logo {
+      @apply h-20 w-20 rounded-[24px];
+    }
+
+    .teams-hero-actions {
+      @apply gap-2;
+    }
+
+    .teams-hero-action {
+      min-width: 72px;
+    }
+
+    .teams-hero-action-icon {
+      @apply h-12 w-12;
+    }
+
+    .teams-section-card {
+      @apply rounded-[26px] p-4;
+    }
+
+    .team-selection-preview-shell {
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.05),
+        0 22px 46px rgba(1,7,18,.42);
+    }
+
+    .admin-users-control {
+      @apply min-h-[62px] rounded-[20px] px-3.5 py-3;
+    }
+
+    .admin-user-row {
+      @apply rounded-[24px] px-3.5 py-3.5;
+    }
+
+    .admin-user-action-row {
+      @apply justify-stretch;
+    }
+
+    .admin-user-action-row button {
+      @apply w-full;
+    }
   }
 
   .teams-soft-divider {

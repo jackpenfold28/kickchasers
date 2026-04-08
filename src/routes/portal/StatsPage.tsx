@@ -191,17 +191,19 @@ function LeaderboardListRow({
     <div
       className={clsx(
         'grid items-center gap-3 border-b border-white/[0.03] px-4',
-        isLeader ? 'grid-cols-[46px_76px_minmax(0,1fr)_112px]' : 'grid-cols-[42px_46px_minmax(0,1fr)_72px]',
+        isLeader
+          ? 'grid-cols-[40px_56px_minmax(0,1fr)_76px] sm:grid-cols-[46px_76px_minmax(0,1fr)_112px]'
+          : 'grid-cols-[34px_40px_minmax(0,1fr)_56px] sm:grid-cols-[42px_46px_minmax(0,1fr)_72px]',
         compact ? 'py-3' : 'py-3.5',
         isLeader && 'bg-[linear-gradient(90deg,rgba(242,213,140,0.08),transparent_42%)]'
       )}
     >
       <div
-        className={clsx(
-          'text-center text-[30px] font-black italic leading-none tracking-[-0.06em] text-white',
-          compact && 'text-[26px]',
-          isLeader && 'text-[#F2D58C]'
-        )}
+          className={clsx(
+            'text-center text-[24px] font-black italic leading-none tracking-[-0.06em] text-white sm:text-[30px]',
+            compact && 'text-[22px] sm:text-[26px]',
+            isLeader && 'text-[#F2D58C]'
+          )}
       >
         {index + 1}
       </div>
@@ -209,7 +211,7 @@ function LeaderboardListRow({
       <div
         className={clsx(
           'flex h-11 w-11 items-center justify-center overflow-hidden rounded-[12px] bg-[#0D1526]',
-          isLeader && 'h-[72px] w-[72px] rounded-[20px]'
+          isLeader && 'h-[56px] w-[56px] rounded-[18px] sm:h-[72px] sm:w-[72px] sm:rounded-[20px]'
         )}
       >
         {row.player.avatarUrl ? (
@@ -227,7 +229,7 @@ function LeaderboardListRow({
             'truncate text-sm font-black uppercase italic tracking-[0.03em] text-white',
             compact && 'text-[13px]',
             isLeader &&
-              'bg-[linear-gradient(180deg,#FFF6D2_0%,#F2D58C_42%,#C79A32_100%)] bg-clip-text text-[20px] text-transparent'
+              'bg-[linear-gradient(180deg,#FFF6D2_0%,#F2D58C_42%,#C79A32_100%)] bg-clip-text text-[16px] text-transparent sm:text-[20px]'
           )}
         >
           {row.player.playerName}
@@ -245,10 +247,10 @@ function LeaderboardListRow({
       <div className={clsx('text-right', isLeader && 'pr-5')}>
         <p
           className={clsx(
-            'text-[32px] font-black italic leading-none tracking-[-0.06em] text-white',
-            compact && 'text-[26px]',
+            'text-[24px] font-black italic leading-none tracking-[-0.06em] text-white sm:text-[32px]',
+            compact && 'text-[22px] sm:text-[26px]',
             isLeader &&
-              'bg-[linear-gradient(180deg,#FFF6D2_0%,#F2D58C_42%,#C79A32_100%)] bg-clip-text pr-1 text-[40px] text-transparent'
+              'bg-[linear-gradient(180deg,#FFF6D2_0%,#F2D58C_42%,#C79A32_100%)] bg-clip-text pr-1 text-[30px] text-transparent sm:text-[40px]'
           )}
         >
           {row.total}
@@ -602,7 +604,7 @@ export default function StatsPage() {
               <p className="mt-2 text-sm text-slate-400">Track games this week to unlock featured leader cards.</p>
             </div>
           ) : (
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-4 2xl:grid-cols-2">
               {FEATURED_CARDS.map((card) => {
                 const topClubId = featuredRowsByKey[card.key]?.[0]?.player.homeClubId ?? null
                 return (

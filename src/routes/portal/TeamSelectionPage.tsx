@@ -911,8 +911,12 @@ export default function TeamSelectionPage() {
   const [clubPickerOpen, setClubPickerOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
-  const [previewViewport, setPreviewViewport] = useState({ width: 420, height: 525 })
-  const previewHostRef = useRef<HTMLDivElement | null>(null)
+  const [previewStageWidth, setPreviewStageWidth] = useState(420)
+  const [windowSize, setWindowSize] = useState(() => ({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1280,
+    height: typeof window !== 'undefined' ? window.innerHeight : 900,
+  }))
+  const previewStageRef = useRef<HTMLDivElement | null>(null)
   const exportSurfaceRef = useRef<HTMLDivElement | null>(null)
   const posterFrameRef = useRef<HTMLDivElement | null>(null)
 
@@ -1084,14 +1088,18 @@ export default function TeamSelectionPage() {
   }, [detail?.id, sponsorEnabled, sponsorSlots])
 
   useEffect(() => {
-    const element = previewHostRef.current
+    const element = previewStageRef.current
     if (!element) return
 
     const updateViewport = () => {
       const rect = element.getBoundingClientRect()
-      if (rect.width > 0 && rect.height > 0) {
-        setPreviewViewport({ width: rect.width, height: rect.height })
+      if (rect.width > 0) {
+        setPreviewStageWidth(rect.width)
       }
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      })
     }
 
     updateViewport()
@@ -1102,8 +1110,8 @@ export default function TeamSelectionPage() {
     if (typeof ResizeObserver !== 'undefined') {
       observer = new ResizeObserver((entries) => {
         const rect = entries[0]?.contentRect
-        if (rect && rect.width > 0 && rect.height > 0) {
-          setPreviewViewport({ width: rect.width, height: rect.height })
+        if (rect && rect.width > 0) {
+          setPreviewStageWidth(rect.width)
         }
       })
       observer.observe(element)
@@ -1253,9 +1261,18 @@ export default function TeamSelectionPage() {
       venueText,
     ]
   )
+  const isPhonePreview = windowSize.width < 640
+  const phonePreviewMaxHeight = Math.min(Math.max(windowSize.height * 0.56, 360), 520)
+  const phonePreviewMaxWidth = Math.min(360, (phonePreviewMaxHeight * POSTER_WIDTH) / POSTER_HEIGHT)
+  const previewFrameWidth = Math.max(
+    0,
+    isPhonePreview ? Math.min(previewStageWidth, phonePreviewMaxWidth) : previewStageWidth
+  )
+  const previewFrameHeight = (previewFrameWidth * POSTER_HEIGHT) / POSTER_WIDTH
+  const previewFrameInset = isPhonePreview ? 16 : 0
   const visiblePreviewScale = Math.min(
-    previewViewport.width / POSTER_WIDTH,
-    previewViewport.height / POSTER_HEIGHT
+    Math.max(0, (previewFrameWidth - previewFrameInset * 2) / POSTER_WIDTH),
+    Math.max(0, (previewFrameHeight - previewFrameInset * 2) / POSTER_HEIGHT)
   )
 
   async function handlePickOpponentLogo() {
@@ -1384,11 +1401,11 @@ export default function TeamSelectionPage() {
                 </span>
               </div>
               <div className="mt-3 flex flex-wrap items-end gap-3">
-                <h2 className="teams-title-display text-3xl font-black text-white sm:text-[2.6rem]">{detail.name || 'Team'}</h2>
+                <h2 className="teams-title-display text-[2rem] font-black text-white sm:text-[2.35rem] xl:text-[2.6rem]">{detail.name || 'Team'}</h2>
                 <span className="pb-1 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Workspace</span>
               </div>
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-300">
+            <div className="flex w-full items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-300 sm:w-auto sm:justify-start">
               <span className="inline-flex h-2 w-2 rounded-full bg-[#39FF88] shadow-[0_0_12px_rgba(57,255,136,0.5)]" />
               Poster sync
             </div>
@@ -1396,7 +1413,7 @@ export default function TeamSelectionPage() {
         </section>
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.16fr)_minmax(320px,0.8fr)] 2xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.84fr)] 2xl:gap-6">
-          <div className="grid gap-4 xl:gap-5">
+          <div className="order-2 grid gap-4 xl:order-1 xl:gap-5">
             <PortalCard title="Match Details" subtitle="Round, venue, opponent, sponsors" className="teams-section-card team-selection-editor-card !rounded-[32px] !p-5 sm:!p-6">
               <div className="grid gap-5">
                 <div className="grid gap-4 rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_16px_30px_rgba(2,8,20,0.2)]">
@@ -1716,18 +1733,18 @@ export default function TeamSelectionPage() {
             </PortalCard>
           </div>
 
-          <div className="min-w-0 xl:sticky xl:top-6 xl:self-start">
-            <div className="team-selection-preview-shell relative overflow-hidden rounded-[36px] p-3.5 xl:p-4">
+          <div className="order-1 min-w-0 xl:order-2 xl:sticky xl:top-6 xl:self-start">
+            <div className="team-selection-preview-shell relative overflow-hidden rounded-[30px] p-3 sm:rounded-[36px] sm:p-3.5 xl:p-4">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(57,255,136,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_30%)]" />
-              <div className="relative grid gap-4 rounded-[30px] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.012))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_18px_40px_rgba(2,8,20,0.3)]">
-                <div className="grid gap-3">
-                  <div className="flex items-start justify-between gap-4">
+              <div className="relative mx-auto grid max-w-[720px] gap-4 rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.012))] p-3.5 sm:rounded-[30px] sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_18px_40px_rgba(2,8,20,0.3)] xl:max-w-none">
+                <div className="grid gap-3.5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                     <div className="min-w-0">
                       <div className="text-[11px] font-black uppercase tracking-[0.24em] text-[#9CE8BE]">Output Workspace</div>
-                      <h3 className="mt-1.5 text-[1.85rem] font-black uppercase tracking-[-0.04em] text-white">Preview</h3>
+                      <h3 className="mt-1.5 text-[1.45rem] font-black uppercase tracking-[-0.04em] text-white sm:text-[1.7rem]">Preview</h3>
                       <p className="mt-1.5 max-w-[30ch] text-sm leading-6 text-slate-400">Live poster preview with export-ready proportions.</p>
                     </div>
-                    <span className="inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">
+                    <span className="inline-flex shrink-0 self-start items-center rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">
                       {assignedCount}/23 selected
                     </span>
                   </div>
@@ -1743,24 +1760,30 @@ export default function TeamSelectionPage() {
                     </button>
                 </div>
 
-                <div
-                  ref={previewHostRef}
-                  className="relative aspect-[1080/1350] w-full overflow-hidden rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_34%),linear-gradient(180deg,#132135,#0A111D)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_26px_54px_rgba(1,7,18,0.42)]"
-                >
+                <div ref={previewStageRef} className="grid w-full place-items-center">
                   <div
+                    className="relative overflow-hidden rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_34%),linear-gradient(180deg,#132135,#0A111D)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_26px_54px_rgba(1,7,18,0.42)] sm:rounded-[28px]"
                     style={{
-                      width: POSTER_WIDTH,
-                      height: POSTER_HEIGHT,
-                      transformOrigin: 'top left',
-                      transform: `scale(${visiblePreviewScale})`,
-                      position: 'absolute',
-                      left: '50%',
-                      top: '50%',
-                      marginLeft: `${-(POSTER_WIDTH * visiblePreviewScale) / 2}px`,
-                      marginTop: `${-(POSTER_HEIGHT * visiblePreviewScale) / 2}px`,
+                      width: '100%',
+                      maxWidth: previewFrameWidth || '100%',
+                      height: previewFrameHeight || (420 * POSTER_HEIGHT) / POSTER_WIDTH,
                     }}
                   >
-                    <TeamSelectionPosterFrame posterProps={posterProps} />
+                    <div
+                      style={{
+                        width: POSTER_WIDTH,
+                        height: POSTER_HEIGHT,
+                        transformOrigin: 'top left',
+                        transform: `scale(${visiblePreviewScale})`,
+                        position: 'absolute',
+                        left: '50%',
+                        top: '50%',
+                        marginLeft: `${-(POSTER_WIDTH * visiblePreviewScale) / 2}px`,
+                        marginTop: `${-(POSTER_HEIGHT * visiblePreviewScale) / 2}px`,
+                      }}
+                    >
+                      <TeamSelectionPosterFrame posterProps={posterProps} />
+                    </div>
                   </div>
                 </div>
 

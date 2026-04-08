@@ -1944,8 +1944,8 @@ export default function SquadDetailPage() {
                 : undefined
             }
           />
-          <div className="-mt-16 px-5 pb-6 sm:px-7 sm:pb-7">
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+          <div className="-mt-16 px-4 pb-5 sm:px-7 sm:pb-7">
+            <div className="flex flex-col gap-5 2xl:flex-row 2xl:items-end 2xl:justify-between">
               <div className="flex min-w-0 items-start gap-4">
                 <div className="teams-detail-logo">
                   {squad.logoUrl ? (
@@ -1955,7 +1955,7 @@ export default function SquadDetailPage() {
                   )}
                 </div>
 
-                <div className="min-w-0 pt-10">
+                <div className="min-w-0 pt-8 sm:pt-10">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="teams-kicker">Teams</p>
                     {squad.isOfficial && (
@@ -1965,7 +1965,7 @@ export default function SquadDetailPage() {
                       </span>
                     )}
                   </div>
-                  <h2 className="teams-title-display mt-2 text-[2.1rem] font-black leading-none text-white sm:text-[2.9rem]">
+                  <h2 className="teams-title-display mt-2 text-[1.9rem] font-black leading-none text-white sm:text-[2.5rem] xl:text-[2.9rem]">
                     {squad.name || 'Team'}
                   </h2>
                   <p className="mt-2 text-sm font-medium uppercase tracking-[0.18em] text-slate-300">{leagueLabel}</p>
@@ -2320,7 +2320,7 @@ export default function SquadDetailPage() {
                 <div className="rounded-[24px] bg-white/[0.03] p-5 text-sm text-slate-400">No team stats yet. Team averages unlock from tracked games tied to this team.</div>
               ) : (
                 <>
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
                     {teamStatCards.map((card, index) => (
                       <div
                         key={card.key}
@@ -2402,7 +2402,7 @@ export default function SquadDetailPage() {
                     <p className="mt-2 text-sm text-slate-400">Members can view the manage structure, but only admins and trackers get operational tools. Trackers are limited to guest workflows.</p>
                   </div>
                 ) : (
-                  <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-5">
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
                     {canManageGuests ? (
                       <button className="teams-operational-card text-left" onClick={() => setAddPlayerOpen(true)}>
                         <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.06] text-[#9CE8BE] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
