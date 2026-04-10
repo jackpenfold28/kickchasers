@@ -1,11 +1,75 @@
 import { supabase } from '@/lib/supabase'
 
+export type PortalNotificationType =
+  | 'squad_invite'
+  | 'squad_invite_accepted'
+  | 'squad_invite_declined'
+  | 'squad_admin_promoted'
+  | 'squad_role_changed'
+  | 'club_role_changed'
+  | 'post_liked'
+  | 'post_commented'
+  | 'squad_join_request_created'
+  | 'squad_join_request_decided'
+  | 'guest_merge_request_created'
+  | 'guest_merge_request_decided'
+  | 'official_directory_request_created'
+  | 'official_directory_request_decided'
+  | 'official_squad_admin_request_created'
+  | 'official_squad_admin_request_decided'
+  | 'user_followed'
+  | 'official_game_live_started'
+  | 'track_request'
+  | 'track_request_accepted'
+  | 'track_request_declined'
+  | 'vote_card_assigned'
+  | 'vote_card_reminder'
+
+export type PortalNotificationPayload = {
+  request_id?: string | null
+  squad_id?: string | null
+  request_kind?: string | null
+  requested_label?: string | null
+  requested_role?: string | null
+  approved_role?: string | null
+  status?: string | null
+  club_id?: string | null
+  club_name?: string | null
+  league_id?: string | null
+  short_name?: string | null
+  official_squad_id?: string | null
+  decided_by?: string | null
+  decided_at?: string | null
+  admin_notes?: string | null
+  follower_user_id?: string | null
+  follower_name?: string | null
+  follower_handle?: string | null
+  squad_name?: string | null
+  squad_logo_url?: string | null
+  gameId?: string | null
+  game_id?: string | null
+  manual_game_id?: string | null
+  old_role?: string | null
+  new_role?: string | null
+  action?: string | null
+  post_id?: string | null
+  comment_id?: string | null
+  comment_preview?: string | null
+  card_id?: string | null
+  award_type_name?: string | null
+  vote_group_name?: string | null
+  home_team_name?: string | null
+  away_team_name?: string | null
+  guest_name?: string | null
+  [key: string]: unknown
+}
+
 export type PortalNotification = {
   id: string
-  type: string
+  type: PortalNotificationType
   refId: string | null
   squadId: string | null
-  payload: Record<string, unknown> | null
+  payload: PortalNotificationPayload | null
   actorId: string | null
   readAt: string | null
   createdAt: string
@@ -14,6 +78,38 @@ export type PortalNotification = {
   actorAvatarUrl: string | null
   squadName: string | null
   squadLogoUrl: string | null
+}
+
+function normalizeNotificationType(input: string | null | undefined): PortalNotificationType {
+  if (
+    input === 'squad_invite' ||
+    input === 'squad_invite_accepted' ||
+    input === 'squad_invite_declined' ||
+    input === 'squad_admin_promoted' ||
+    input === 'squad_role_changed' ||
+    input === 'club_role_changed' ||
+    input === 'post_liked' ||
+    input === 'post_commented' ||
+    input === 'squad_join_request_created' ||
+    input === 'squad_join_request_decided' ||
+    input === 'guest_merge_request_created' ||
+    input === 'guest_merge_request_decided' ||
+    input === 'official_directory_request_created' ||
+    input === 'official_directory_request_decided' ||
+    input === 'official_squad_admin_request_created' ||
+    input === 'official_squad_admin_request_decided' ||
+    input === 'user_followed' ||
+    input === 'official_game_live_started' ||
+    input === 'track_request' ||
+    input === 'track_request_accepted' ||
+    input === 'track_request_declined' ||
+    input === 'vote_card_assigned' ||
+    input === 'vote_card_reminder'
+  ) {
+    return input
+  }
+
+  return 'squad_invite'
 }
 
 function resolveStorageUrl(input: string | null | undefined, defaultBucket = 'profile-avatars') {
@@ -90,10 +186,10 @@ export async function listNotifications(userId: string, limit = 80): Promise<Por
       const squad = row.squad_id ? squadMap.get(row.squad_id) : null
       return {
         id: row.id,
-        type: row.type ?? 'unknown',
+        type: normalizeNotificationType(row.type),
         refId: row.ref_id ?? null,
         squadId: row.squad_id ?? null,
-        payload: (row.payload as Record<string, unknown> | null) ?? null,
+        payload: (row.payload as PortalNotificationPayload | null) ?? null,
         actorId: row.actor_id ?? null,
         readAt: row.read_at ?? null,
         createdAt: row.created_at,
@@ -140,6 +236,14 @@ export async function decideGuestMerge(requestId: string, decision: 'approve' | 
     _request_id: requestId,
     _decision: decision,
     _reason: null,
+  })
+  if (error) throw error
+}
+
+export async function respondTrackRequest(gameId: string, decision: 'accepted' | 'declined') {
+  const { error } = await supabase.rpc('respond_track_game_request', {
+    game_id: gameId,
+    decision,
   })
   if (error) throw error
 }

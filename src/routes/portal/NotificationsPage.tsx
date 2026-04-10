@@ -1,18 +1,63 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import PortalCard from '@/components/cards/PortalCard'
-import DataTable from '@/components/portal/DataTable'
+import { useNavigate } from 'react-router-dom'
+import NotificationRow from '@/components/portal/NotificationRow'
+import { resolvePortalNotificationHref } from '@/lib/portal-notification-routing'
 import {
-  decideGuestMerge,
   decideJoinRequest,
   listNotifications,
   markNotificationsRead,
   respondInvite,
+  respondTrackRequest,
   type PortalNotification,
 } from '@/lib/portal-notifications'
 import { supabase } from '@/lib/supabase'
 
+type NotificationSection = {
+  label: string
+  items: PortalNotification[]
+}
+
+function formatDayLabel(iso: string | null) {
+  if (!iso) return 'Earlier'
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return 'Earlier'
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const target = new Date(date)
+  target.setHours(0, 0, 0, 0)
+
+  const diffDays = Math.round((today.getTime() - target.getTime()) / (1000 * 60 * 60 * 24))
+  if (diffDays === 0) return 'Today'
+  if (diffDays === 1) return 'Yesterday'
+
+  return new Intl.DateTimeFormat('en-AU', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  }).format(date)
+}
+
+function buildSections(rows: PortalNotification[]): NotificationSection[] {
+  const sections: NotificationSection[] = []
+  let currentLabel: string | null = null
+
+  rows.forEach((notification) => {
+    const label = formatDayLabel(notification.createdAt)
+    if (label !== currentLabel) {
+      sections.push({ label, items: [notification] })
+      currentLabel = label
+      return
+    }
+
+    sections[sections.length - 1]?.items.push(notification)
+  })
+
+  return sections
+}
+
 export default function NotificationsPage() {
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [workingId, setWorkingId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -23,7 +68,7 @@ export default function NotificationsPage() {
     const uid = userIdValue ?? userId
     if (!uid) return
 
-    const list = await listNotifications(uid)
+    const list = await listNotifications(uid, 100)
     setRows(list)
   }
 
@@ -35,17 +80,22 @@ export default function NotificationsPage() {
         const { data } = await supabase.auth.getUser()
         const user = data.user
         if (!user) {
-          setError('Not authenticated.')
+          navigate('/sign-in', { replace: true })
           return
         }
 
         if (cancelled) return
         setUserId(user.id)
 
-        const list = await listNotifications(user.id)
-        if (!cancelled) setRows(list)
+        const list = await listNotifications(user.id, 100)
+        if (!cancelled) {
+          setRows(list)
+          setError(null)
+        }
       } catch (loadError) {
-        if (!cancelled) setError(loadError instanceof Error ? loadError.message : 'Unable to load notifications.')
+        if (!cancelled) {
+          setError(loadError instanceof Error ? loadError.message : 'Unable to load notifications.')
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -54,20 +104,34 @@ export default function NotificationsPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [navigate])
+
+  useEffect(() => {
+    if (!userId) return
+
+    const channel = supabase
+      .channel(`portal_notifications_${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `recipient_id=eq.${userId}`,
+        },
+        () => {
+          void load(userId)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [userId])
 
   const unreadCount = useMemo(() => rows.filter((row) => !row.readAt).length, [rows])
-
-  function notificationHref(notification: PortalNotification) {
-    if (!notification.squadId) return '/notifications'
-    if (notification.type === 'squad_join_request_created' || notification.type === 'guest_merge_request_created') {
-      return `/teams/${notification.squadId}?tab=manage`
-    }
-    if (notification.type === 'squad_invite') {
-      return `/teams/${notification.squadId}`
-    }
-    return `/teams/${notification.squadId}`
-  }
+  const sections = useMemo(() => buildSections(rows), [rows])
 
   async function withAction(id: string, action: () => Promise<void>) {
     try {
@@ -82,11 +146,30 @@ export default function NotificationsPage() {
     }
   }
 
-  async function onMarkRead(id: string) {
+  async function markReadOptimistic(notificationId: string) {
     if (!userId) return
-    await withAction(id, async () => {
-      await markNotificationsRead(userId, [id])
-    })
+
+    setRows((current) =>
+      current.map((item) =>
+        item.id === notificationId && !item.readAt ? { ...item, readAt: new Date().toISOString() } : item
+      )
+    )
+    await markNotificationsRead(userId, [notificationId])
+  }
+
+  async function handleOpen(notification: PortalNotification) {
+    const href = resolvePortalNotificationHref(notification)
+    if (!href) return
+
+    if (!notification.readAt && userId) {
+      try {
+        await markReadOptimistic(notification.id)
+      } catch {
+        // Ignore read failures on navigation; destination matters more than badge freshness.
+      }
+    }
+
+    navigate(href)
   }
 
   async function onAcceptInvite(notification: PortalNotification) {
@@ -133,210 +216,105 @@ export default function NotificationsPage() {
     })
   }
 
-  async function onApproveGuestMerge(notification: PortalNotification) {
+  async function onAcceptTrackRequest(notification: PortalNotification) {
     if (!userId) return
-    const requestId = (notification.payload?.request_id as string | undefined) ?? notification.refId
-    if (!requestId) throw new Error('Guest merge request id missing.')
+    const gameId =
+      (notification.payload?.gameId as string | undefined) ??
+      (notification.payload?.game_id as string | undefined) ??
+      notification.refId
+
+    if (!gameId) throw new Error('Track request reference missing.')
 
     await withAction(notification.id, async () => {
-      await decideGuestMerge(requestId, 'approve')
+      await respondTrackRequest(gameId, 'accepted')
       await markNotificationsRead(userId, [notification.id])
     })
   }
 
-  async function onDeclineGuestMerge(notification: PortalNotification) {
+  async function onDeclineTrackRequest(notification: PortalNotification) {
     if (!userId) return
-    const requestId = (notification.payload?.request_id as string | undefined) ?? notification.refId
-    if (!requestId) throw new Error('Guest merge request id missing.')
+    const gameId =
+      (notification.payload?.gameId as string | undefined) ??
+      (notification.payload?.game_id as string | undefined) ??
+      notification.refId
+
+    if (!gameId) throw new Error('Track request reference missing.')
 
     await withAction(notification.id, async () => {
-      await decideGuestMerge(requestId, 'decline')
+      await respondTrackRequest(gameId, 'declined')
       await markNotificationsRead(userId, [notification.id])
     })
   }
 
   if (loading) {
-    return <main className="min-h-screen p-6 app-bg">Loading notifications…</main>
+    return (
+      <section className="mx-auto flex min-h-[60vh] w-full max-w-[840px] items-center justify-center px-4">
+        <div className="flex items-center gap-3 text-sm text-slate-400">
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-[#39FF88]" />
+          Loading notifications
+        </div>
+      </section>
+    )
   }
 
   return (
-    <section className="grid gap-6">
-      <PortalCard>
-        <h2 className="text-2xl font-semibold text-white">Notifications Inbox</h2>
-        <p className="mt-1 text-sm text-slate-400">
-          Action-driven inbox for invites, requests, and account/squad updates.
-        </p>
-      </PortalCard>
-
-      <PortalCard title="Overview">
-        <div className="flex flex-wrap gap-3 text-sm">
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-300">Total: {rows.length}</span>
-          <span className="rounded-full border border-amber-400/30 bg-amber-300/10 px-3 py-1 text-amber-200">Unread: {unreadCount}</span>
+    <section className="mx-auto w-full max-w-[840px]">
+      <header className="border-b border-white/8 pb-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#8BE3B3]">Inbox</p>
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-black tracking-[-0.03em] text-white sm:text-[34px]">Notifications</h1>
+            <p className="mt-2 max-w-[36rem] text-sm leading-6 text-slate-400">
+              A single feed for squad operations, admin decisions, tracked games, and social activity.
+            </p>
+          </div>
+          <p className="text-sm text-slate-500">
+            {unreadCount > 0 ? `${unreadCount} unread` : 'Caught up'}
+          </p>
         </div>
-      </PortalCard>
+      </header>
 
-      {error && (
-        <PortalCard>
-          <p className="text-sm text-red-300">{error}</p>
-        </PortalCard>
-      )}
+      {error ? (
+        <div className="mt-5 rounded-[18px] border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {error}
+        </div>
+      ) : null}
 
-      <PortalCard title="Inbox" subtitle="Supported actions are enabled where payload contracts are clear">
-        <DataTable
-          rows={rows}
-          getRowKey={(row) => row.id}
-          emptyLabel="No notifications yet."
-          mobileCardRender={(notification) => {
-            const busy = workingId === notification.id
-            const actor = notification.actorHandle || notification.actorName || 'Someone'
-            const squad = notification.squadName || ((notification.payload?.squad_name as string | undefined) ?? 'this squad')
-            return (
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{notification.type.replaceAll('_', ' ')}</p>
-                    <p className="mt-1 font-medium text-white">{actor}</p>
-                    <p className="text-sm text-slate-400">{squad}</p>
-                  </div>
-                  <span className={`rounded-full px-2.5 py-1 text-xs ${notification.readAt ? 'bg-emerald-500/10 text-emerald-300' : 'bg-amber-500/10 text-amber-200'}`}>
-                    {notification.readAt ? 'Read' : 'Unread'}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500">{new Date(notification.createdAt).toLocaleString()}</p>
-                <div className="flex flex-wrap gap-2">
-                  {notification.squadId && (
-                    <Link className="btn btn-secondary flex-1 sm:flex-none" to={notificationHref(notification)}>
-                      View team
-                    </Link>
-                  )}
-                  {!notification.readAt && (
-                    <button className="btn btn-secondary flex-1 sm:flex-none" disabled={busy} onClick={() => onMarkRead(notification.id)}>
-                      Mark read
-                    </button>
-                  )}
-                  {notification.type === 'squad_invite' && (
-                    <>
-                      <button className="btn btn-secondary flex-1 sm:flex-none" disabled={busy} onClick={() => onAcceptInvite(notification)}>
-                        Accept
-                      </button>
-                      <button className="btn flex-1 border-red-500/60 text-red-300 sm:flex-none" disabled={busy} onClick={() => onDeclineInvite(notification)}>
-                        Decline
-                      </button>
-                    </>
-                  )}
-                  {notification.type === 'squad_join_request_created' && (
-                    <>
-                      <button className="btn btn-secondary flex-1 sm:flex-none" disabled={busy} onClick={() => onApproveJoinRequest(notification)}>
-                        Approve
-                      </button>
-                      <button className="btn flex-1 border-red-500/60 text-red-300 sm:flex-none" disabled={busy} onClick={() => onDeclineJoinRequest(notification)}>
-                        Reject
-                      </button>
-                    </>
-                  )}
-                  {notification.type === 'guest_merge_request_created' && (
-                    <>
-                      <button className="btn btn-secondary flex-1 sm:flex-none" disabled={busy} onClick={() => onApproveGuestMerge(notification)}>
-                        Approve
-                      </button>
-                      <button className="btn flex-1 border-red-500/60 text-red-300 sm:flex-none" disabled={busy} onClick={() => onDeclineGuestMerge(notification)}>
-                        Reject
-                      </button>
-                    </>
-                  )}
-                </div>
+      {rows.length ? (
+        <div className="mt-6 space-y-7">
+          {sections.map((section) => (
+            <section key={section.label} className="space-y-3">
+              <div className="px-1">
+                <h2 className="text-lg font-extrabold tracking-[-0.02em] text-white">{section.label}</h2>
               </div>
-            )
-          }}
-          columns={[
-            {
-              key: 'type',
-              label: 'Type',
-              render: (notification) => (
-                <span className="text-xs text-slate-400">{notification.type.replaceAll('_', ' ')}</span>
-              ),
-            },
-            {
-              key: 'context',
-              label: 'Context',
-              render: (notification) => {
-                const actor = notification.actorHandle || notification.actorName || 'Someone'
-                const squad = notification.squadName || ((notification.payload?.squad_name as string | undefined) ?? 'this squad')
-                return (
-                  <>
-                    <p className="font-medium text-white">{actor}</p>
-                    <p className="text-xs text-slate-400">{squad}</p>
-                  </>
-                )
-              },
-            },
-            {
-              key: 'time',
-              label: 'Time',
-              render: (notification) => (
-                <span className="text-xs text-slate-400">{new Date(notification.createdAt).toLocaleString()}</span>
-              ),
-            },
-            {
-              key: 'status',
-              label: 'Status',
-              render: (notification) =>
-                notification.readAt ? <span className="text-emerald-300">Read</span> : <span className="text-amber-300">Unread</span>,
-            },
-            {
-              key: 'actions',
-              label: 'Actions',
-              render: (notification) => {
-                const busy = workingId === notification.id
-                return (
-                  <div className="flex flex-wrap gap-2">
-                    {notification.squadId && (
-                      <Link className="btn btn-secondary px-2 py-1 text-xs" to={notificationHref(notification)}>
-                        View team
-                      </Link>
-                    )}
-                    {!notification.readAt && (
-                      <button className="btn btn-secondary px-2 py-1 text-xs" disabled={busy} onClick={() => onMarkRead(notification.id)}>
-                        Mark read
-                      </button>
-                    )}
-                    {notification.type === 'squad_invite' && (
-                      <>
-                        <button className="btn btn-secondary px-2 py-1 text-xs" disabled={busy} onClick={() => onAcceptInvite(notification)}>
-                          Accept
-                        </button>
-                        <button className="btn border-red-500/60 px-2 py-1 text-xs text-red-300" disabled={busy} onClick={() => onDeclineInvite(notification)}>
-                          Decline
-                        </button>
-                      </>
-                    )}
-                    {notification.type === 'squad_join_request_created' && (
-                      <>
-                        <button className="btn btn-secondary px-2 py-1 text-xs" disabled={busy} onClick={() => onApproveJoinRequest(notification)}>
-                          Approve
-                        </button>
-                        <button className="btn border-red-500/60 px-2 py-1 text-xs text-red-300" disabled={busy} onClick={() => onDeclineJoinRequest(notification)}>
-                          Reject
-                        </button>
-                      </>
-                    )}
-                    {notification.type === 'guest_merge_request_created' && (
-                      <>
-                        <button className="btn btn-secondary px-2 py-1 text-xs" disabled={busy} onClick={() => onApproveGuestMerge(notification)}>
-                          Approve
-                        </button>
-                        <button className="btn border-red-500/60 px-2 py-1 text-xs text-red-300" disabled={busy} onClick={() => onDeclineGuestMerge(notification)}>
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )
-              },
-            },
-          ]}
-        />
-      </PortalCard>
+
+              <div className="overflow-hidden rounded-[20px] border border-white/8 bg-[#08111F]">
+                {section.items.map((notification) => (
+                  <NotificationRow
+                    key={notification.id}
+                    notification={notification}
+                    busy={workingId === notification.id}
+                    onOpen={resolvePortalNotificationHref(notification) ? handleOpen : undefined}
+                    onAcceptInvite={onAcceptInvite}
+                    onDeclineInvite={onDeclineInvite}
+                    onApproveJoinRequest={onApproveJoinRequest}
+                    onDeclineJoinRequest={onDeclineJoinRequest}
+                    onAcceptTrackRequest={onAcceptTrackRequest}
+                    onDeclineTrackRequest={onDeclineTrackRequest}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-10 rounded-[22px] border border-white/8 bg-[#091321] px-6 py-14 text-center">
+          <h2 className="text-xl font-semibold text-white">You&apos;re caught up</h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-400">
+            New squad activity, admin requests, and game updates will land here.
+          </p>
+        </div>
+      )}
     </section>
   )
 }
