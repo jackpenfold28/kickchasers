@@ -1,8 +1,61 @@
 import { ImageResponse } from '@vercel/og'
-import { getGamePreviewData, type GamePreviewData } from './_lib/game-share'
+import { getGamePreviewData, type GamePreviewData } from './_lib/game-share.js'
 
 export const config = {
   runtime: 'edge',
+}
+
+function FallbackOgCard({ label }: { label: string }) {
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background:
+          'radial-gradient(circle at top left, rgba(28,80,150,0.3), transparent 32%), linear-gradient(135deg, #07101B 0%, #0A1424 55%, #08101A 100%)',
+        color: '#F8FAFC',
+        fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          fontSize: 24,
+          letterSpacing: '0.24em',
+          textTransform: 'uppercase',
+          color: '#7DD3FC',
+          fontWeight: 700,
+        }}
+      >
+        KickChasers
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          marginTop: 20,
+          fontSize: 62,
+          fontWeight: 900,
+          letterSpacing: '-0.05em',
+        }}
+      >
+        Game Preview
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          marginTop: 14,
+          fontSize: 24,
+          color: '#CBD5E1',
+        }}
+      >
+        {label}
+      </div>
+    </div>
+  )
 }
 
 function monogram(name: string) {
@@ -323,26 +376,53 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
 }
 
 export default async function handler(request: Request) {
-  const url = new URL(request.url)
-  const gameId = url.searchParams.get('gameId')?.trim()
+  try {
+    const url = new URL(request.url)
+    const gameId = url.searchParams.get('gameId')?.trim()
 
-  if (!gameId) {
-    return new Response('Missing gameId', { status: 400 })
+    if (!gameId) {
+      return new ImageResponse(<FallbackOgCard label="Missing game" />, {
+        width: 1200,
+        height: 630,
+        status: 400,
+        headers: {
+          'cache-control': 'public, max-age=60, s-maxage=60',
+        },
+      })
+    }
+
+    const preview = await getGamePreviewData(gameId, request)
+    if (!preview) {
+      return new ImageResponse(<FallbackOgCard label="Game not found" />, {
+        width: 1200,
+        height: 630,
+        status: 404,
+        headers: {
+          'cache-control': 'public, max-age=60, s-maxage=60',
+        },
+      })
+    }
+
+    return new ImageResponse(<OgCard preview={preview} />, {
+      width: 1200,
+      height: 630,
+      headers: {
+        'cache-control':
+          preview.status === 'Live'
+            ? 'public, max-age=60, s-maxage=60, stale-while-revalidate=600'
+            : 'public, max-age=300, s-maxage=300, stale-while-revalidate=86400',
+      },
+    })
+  } catch (error) {
+    console.error('game-og handler failed', error)
+
+    return new ImageResponse(<FallbackOgCard label="Preview unavailable" />, {
+      width: 1200,
+      height: 630,
+      status: 500,
+      headers: {
+        'cache-control': 'public, max-age=60, s-maxage=60',
+      },
+    })
   }
-
-  const preview = await getGamePreviewData(gameId, request)
-  if (!preview) {
-    return new Response('Game not found', { status: 404 })
-  }
-
-  return new ImageResponse(<OgCard preview={preview} />, {
-    width: 1200,
-    height: 630,
-    headers: {
-      'cache-control':
-        preview.status === 'Live'
-          ? 'public, max-age=60, s-maxage=60, stale-while-revalidate=600'
-          : 'public, max-age=300, s-maxage=300, stale-while-revalidate=86400',
-    },
-  })
 }
