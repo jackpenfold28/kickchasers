@@ -76,7 +76,26 @@ function createServerSupabaseClient() {
   )
 }
 
-function resolveSiteUrl(request?: Request) {
+type RequestLike = {
+  url: string
+  headers?: Headers | Record<string, string | string[] | undefined>
+}
+
+function readHeader(request: RequestLike | undefined, key: string) {
+  if (!request?.headers) return null
+
+  const headers = request.headers
+  if (typeof (headers as Headers).get === 'function') {
+    return (headers as Headers).get(key)
+  }
+
+  const record = headers as Record<string, string | string[] | undefined>
+  const direct = record[key] ?? record[key.toLowerCase()] ?? record[key.toUpperCase()]
+  if (Array.isArray(direct)) return direct[0] ?? null
+  return direct ?? null
+}
+
+function resolveSiteUrl(request?: RequestLike) {
   const explicit = readEnv('PUBLIC_SITE_URL', 'VITE_PUBLIC_SITE_URL')
   if (explicit) return explicit.replace(/\/+$/, '')
 
@@ -87,8 +106,8 @@ function resolveSiteUrl(request?: Request) {
     return parsed.origin.replace(/\/+$/, '')
   }
 
-  const forwardedProto = request.headers.get('x-forwarded-proto')
-  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
+  const forwardedProto = readHeader(request, 'x-forwarded-proto')
+  const host = readHeader(request, 'x-forwarded-host') ?? readHeader(request, 'host')
   if (host) {
     return `${forwardedProto ?? 'https'}://${host}`.replace(/\/+$/, '')
   }
@@ -96,7 +115,7 @@ function resolveSiteUrl(request?: Request) {
   return 'https://kickchasers.com'
 }
 
-export function parseRequestUrl(request: Request) {
+export function parseRequestUrl(request: RequestLike) {
   try {
     return new URL(request.url, 'https://kickchasers.com')
   } catch {
@@ -533,7 +552,7 @@ export function buildGamePageHtml({
 </html>`
 }
 
-export async function getGamePreviewData(gameId: string, request?: Request): Promise<GamePreviewData | null> {
+export async function getGamePreviewData(gameId: string, request?: RequestLike): Promise<GamePreviewData | null> {
   const supabase = createServerSupabaseClient()
   const { data: game, error } = await supabase
     .from('games')

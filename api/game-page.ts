@@ -1,12 +1,48 @@
-import { buildGamePageHtml, getGamePreviewData, parseRequestUrl } from './_lib/game-share.js'
+import { buildGamePageHtml, getGamePreviewData } from './_lib/game-share.js'
+
+type RequestLike = {
+  url?: string
+  headers?: Headers | Record<string, string | string[] | undefined>
+}
+
+function readHeader(request: RequestLike, key: string) {
+  if (!request.headers) return null
+  const headers = request.headers
+  if (typeof (headers as Headers).get === 'function') {
+    return (headers as Headers).get(key)
+  }
+  const record = headers as Record<string, string | string[] | undefined>
+  const value = record[key] ?? record[key.toLowerCase()] ?? record[key.toUpperCase()]
+  if (Array.isArray(value)) return value[0] ?? null
+  return value ?? null
+}
+
+function parsePageRequest(request: RequestLike) {
+  const rawUrl = typeof request.url === 'string' ? request.url : ''
+  const host = readHeader(request, 'x-forwarded-host') ?? readHeader(request, 'host') ?? 'kickchasers.com'
+  const proto = readHeader(request, 'x-forwarded-proto') ?? 'https'
+  const base = `${proto}://${host}`
+
+  let parsed: URL
+  try {
+    parsed = rawUrl.startsWith('http://') || rawUrl.startsWith('https://') ? new URL(rawUrl) : new URL(rawUrl || '/', base)
+  } catch {
+    parsed = new URL('/', base)
+  }
+
+  const queryGameId = parsed.searchParams.get('gameId')?.trim()
+  const pathMatch = parsed.pathname.match(/^\/game\/([^/?#]+)/i)
+  const pathGameId = pathMatch?.[1] ? decodeURIComponent(pathMatch[1]).trim() : null
+
+  return {
+    url: parsed,
+    gameId: queryGameId || pathGameId || null,
+  }
+}
 
 export default async function handler(request: Request) {
   try {
-    const url = parseRequestUrl(request)
-    if (!url) {
-      throw new TypeError(`Invalid request URL: ${request.url}`)
-    }
-    const gameId = url.searchParams.get('gameId')?.trim()
+    const { gameId } = parsePageRequest(request)
 
     if (!gameId) {
       return new Response(buildGamePageHtml({ preview: null, notFound: true }), {
