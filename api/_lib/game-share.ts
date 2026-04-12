@@ -53,9 +53,24 @@ function requireEnv(...keys: string[]) {
 }
 
 function createServerSupabaseClient() {
+  const supabaseUrl = requireEnv('SUPABASE_URL', 'VITE_SUPABASE_URL')
+  const supabaseKey =
+    readEnv(
+      'SUPABASE_SERVICE_ROLE_KEY',
+      'SUPABASE_SERVICE_KEY',
+      'SUPABASE_SECRET_KEY',
+      'SUPABASE_SERVER_KEY'
+    ) ?? requireEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY')
+
   return createClient(
-    requireEnv('SUPABASE_URL', 'VITE_SUPABASE_URL'),
-    requireEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY')
+    supabaseUrl,
+    supabaseKey,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    }
   )
 }
 
