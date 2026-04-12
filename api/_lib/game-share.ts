@@ -80,6 +80,11 @@ function resolveSiteUrl(request?: Request) {
 
   if (!request) return 'https://kickchasers.com'
 
+  const parsed = parseRequestUrl(request)
+  if (parsed) {
+    return parsed.origin.replace(/\/+$/, '')
+  }
+
   const forwardedProto = request.headers.get('x-forwarded-proto')
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
   if (host) {
@@ -87,6 +92,14 @@ function resolveSiteUrl(request?: Request) {
   }
 
   return 'https://kickchasers.com'
+}
+
+export function parseRequestUrl(request: Request) {
+  try {
+    return new URL(request.url, 'https://kickchasers.com')
+  } catch {
+    return null
+  }
 }
 
 function normalizeHexColor(input: string | null | undefined) {

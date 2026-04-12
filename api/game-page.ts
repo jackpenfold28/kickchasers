@@ -1,8 +1,11 @@
-import { buildGamePageHtml, getGamePreviewData } from './_lib/game-share.js'
+import { buildGamePageHtml, getGamePreviewData, parseRequestUrl } from './_lib/game-share.js'
 
 export default async function handler(request: Request) {
   try {
-    const url = new URL(request.url)
+    const url = parseRequestUrl(request)
+    if (!url) {
+      throw new TypeError(`Invalid request URL: ${request.url}`)
+    }
     const gameId = url.searchParams.get('gameId')?.trim()
 
     if (!gameId) {

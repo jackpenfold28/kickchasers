@@ -1,5 +1,5 @@
 import { ImageResponse } from '@vercel/og'
-import { getGamePreviewData, type GamePreviewData } from './_lib/game-share.js'
+import { getGamePreviewData, parseRequestUrl, type GamePreviewData } from './_lib/game-share.js'
 
 export const config = {
   runtime: 'edge',
@@ -113,8 +113,8 @@ function ScoreBlock({
           {team.logoUrl ? (
             <img
               src={team.logoUrl}
-              width="92"
-              height="92"
+              width={92}
+              height={92}
               style={{ borderRadius: 999, objectFit: 'cover', display: 'flex' }}
             />
           ) : (
@@ -236,6 +236,7 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: 26,
+            width: '100%',
           }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -251,7 +252,15 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
             >
               KickChasers
             </div>
-            <div style={{ display: 'flex', color: '#CBD5E1', fontSize: 26, fontWeight: 600 }}>
+            <div
+              style={{
+                display: 'flex',
+                color: '#CBD5E1',
+                fontSize: 26,
+                fontWeight: 600,
+                maxWidth: 600,
+              }}
+            >
               {[preview.competitionLabel, preview.roundLabel, preview.venueLabel].filter(Boolean).join(' • ')}
             </div>
           </div>
@@ -287,6 +296,7 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 20,
+            width: '100%',
           }}
         >
           <ScoreBlock team={preview.homeTeam} score={preview.homeScore} align="flex-start" />
@@ -317,6 +327,7 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexDirection: 'row',
                 width: 170,
                 height: 170,
                 borderRadius: 999,
@@ -327,11 +338,16 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
                 fontSize: 42,
                 fontWeight: 800,
                 textAlign: 'center',
+                gap: 8,
               }}
             >
-              {preview.homeScore.goals}.{preview.homeScore.behinds}
+              <span style={{ display: 'flex' }}>
+                {preview.homeScore.goals}.{preview.homeScore.behinds}
+              </span>
               <span style={{ color: '#64748B', margin: '0 8px' }}>:</span>
-              {preview.awayScore.goals}.{preview.awayScore.behinds}
+              <span style={{ display: 'flex' }}>
+                {preview.awayScore.goals}.{preview.awayScore.behinds}
+              </span>
             </div>
           </div>
 
@@ -344,6 +360,7 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
             justifyContent: 'space-between',
             alignItems: 'flex-end',
             marginTop: 12,
+            width: '100%',
           }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -377,7 +394,10 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
 
 export default async function handler(request: Request) {
   try {
-    const url = new URL(request.url)
+    const url = parseRequestUrl(request)
+    if (!url) {
+      throw new TypeError(`Invalid request URL: ${request.url}`)
+    }
     const gameId = url.searchParams.get('gameId')?.trim()
 
     if (!gameId) {
