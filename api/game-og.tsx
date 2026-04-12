@@ -71,35 +71,36 @@ function teamTint(primary: string | null, fallback: string) {
 
 function ScoreBlock({
   team,
-  score,
   align,
 }: {
   team: GamePreviewData['homeTeam']
-  score: GamePreviewData['homeScore']
   align: 'flex-start' | 'flex-end'
 }) {
   return (
     <div
       style={{
-        width: 390,
+        width: 250,
         display: 'flex',
         flexDirection: 'column',
         alignItems: align,
         justifyContent: 'center',
+        gap: 16,
       }}
     >
       <div
         style={{
           display: 'flex',
-          alignItems: 'center',
-          gap: 20,
-          flexDirection: align === 'flex-end' ? 'row-reverse' : 'row',
+          width: '100%',
+          flexDirection: 'column',
+          alignItems: align,
+          justifyContent: 'center',
+          gap: 14,
         }}
       >
         <div
           style={{
-            width: 110,
-            height: 110,
+            width: 92,
+            height: 92,
             borderRadius: 999,
             background: 'rgba(255,255,255,0.06)',
             border: '2px solid rgba(255,255,255,0.12)',
@@ -113,15 +114,15 @@ function ScoreBlock({
           {team.logoUrl ? (
             <img
               src={team.logoUrl}
-              width={92}
-              height={92}
+              width={78}
+              height={78}
               style={{ borderRadius: 999, objectFit: 'cover', display: 'flex' }}
             />
           ) : (
             <div
               style={{
-                width: 92,
-                height: 92,
+                width: 78,
+                height: 78,
                 borderRadius: 999,
                 background: '#0C1628',
                 color: '#E2E8F0',
@@ -140,18 +141,16 @@ function ScoreBlock({
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
             alignItems: align,
             justifyContent: 'center',
-            gap: 8,
-            maxWidth: 250,
+            width: '100%',
           }}
         >
           <div
             style={{
               display: 'flex',
               color: '#F8FAFC',
-              fontSize: 34,
+              fontSize: 28,
               fontWeight: 800,
               letterSpacing: '-0.03em',
               lineHeight: 1,
@@ -160,32 +159,7 @@ function ScoreBlock({
           >
             {team.name}
           </div>
-          <div
-            style={{
-              display: 'flex',
-              color: '#94A3B8',
-              fontSize: 18,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-            }}
-          >
-            {score.display}
-          </div>
         </div>
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          marginTop: 14,
-          color: '#FFFFFF',
-          fontSize: 140,
-          fontWeight: 900,
-          fontStyle: 'italic',
-          lineHeight: 0.88,
-          letterSpacing: '-0.08em',
-        }}
-      >
-        {score.points}
       </div>
     </div>
   )
@@ -300,11 +274,11 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
             flex: 1,
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 20,
+            gap: 12,
             width: '100%',
           }}
         >
-          <ScoreBlock team={preview.homeTeam} score={preview.homeScore} align="flex-start" />
+          <ScoreBlock team={preview.homeTeam} align="flex-start" />
 
           <div
             style={{
@@ -312,51 +286,53 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 18,
+              gap: 10,
+              minWidth: 0,
+              flex: 1,
             }}
           >
             <div
               style={{
                 display: 'flex',
-                color: '#64748B',
-                fontSize: 24,
-                letterSpacing: '0.32em',
-                textTransform: 'uppercase',
-                fontWeight: 700,
+                alignItems: 'center',
+                justifyContent: 'center',
+                whiteSpace: 'nowrap',
+                color: '#FFFFFF',
+                fontSize: 92,
+                fontWeight: 900,
+                fontStyle: 'italic',
+                lineHeight: 0.9,
+                letterSpacing: '-0.08em',
               }}
             >
-              versus
+              {preview.scorePrimary}
             </div>
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                width: 170,
-                height: 170,
-                borderRadius: 999,
-                border: '2px solid rgba(255,255,255,0.08)',
-                background: 'rgba(255,255,255,0.04)',
-                boxShadow: '0 18px 44px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.04)',
-                color: '#E2E8F0',
-                fontSize: 42,
+                color: 'rgba(255,255,255,0.84)',
+                fontSize: 24,
                 fontWeight: 800,
-                textAlign: 'center',
-                gap: 8,
+                fontStyle: 'italic',
               }}
             >
-              <span style={{ display: 'flex' }}>
-                {preview.homeScore.goals}.{preview.homeScore.behinds}
-              </span>
-              <span style={{ display: 'flex', color: '#64748B', margin: '0 8px' }}>:</span>
-              <span style={{ display: 'flex' }}>
-                {preview.awayScore.goals}.{preview.awayScore.behinds}
-              </span>
+              {preview.scoreSecondary}
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                color: '#94A3B8',
+                fontSize: 18,
+                fontWeight: 600,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {preview.roundLabel}
             </div>
           </div>
 
-          <ScoreBlock team={preview.awayTeam} score={preview.awayScore} align="flex-end" />
+          <ScoreBlock team={preview.awayTeam} align="flex-end" />
         </div>
 
         <div

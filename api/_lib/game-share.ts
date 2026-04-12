@@ -32,6 +32,8 @@ export type GamePreviewData = {
     points: number
     display: string
   }
+  scorePrimary: string
+  scoreSecondary: string
 }
 
 type SupabaseLike = SupabaseClient<any, any, any>
@@ -118,27 +120,64 @@ function normalizeHexColor(input: string | null | undefined) {
 }
 
 function toPublicLogo(supabase: SupabaseLike, urlOrPath: string | null | undefined) {
-  if (!urlOrPath) return null
-  if (/^https?:\/\//i.test(urlOrPath)) return urlOrPath
+  const sanitized = typeof urlOrPath === 'string' && urlOrPath.trim().length > 0 ? urlOrPath.trim() : null
+  if (!sanitized) return null
 
-  const clean = urlOrPath.replace(/^\/+/, '')
-  const explicit = clean.match(/^([^:]+)::(.+)$/)
+  const OPPONENT_BUCKET = 'opponents'
+  const TEAM_LOGO_BUCKET = 'team-logos'
 
-  if (explicit) {
-    const { data } = supabase.storage.from(explicit[1]).getPublicUrl(explicit[2])
-    return data.publicUrl || urlOrPath
-  }
-
-  if (clean.includes('/')) {
-    const [bucket, ...rest] = clean.split('/')
-    if (bucket && rest.length > 0) {
-      const { data } = supabase.storage.from(bucket).getPublicUrl(rest.join('/'))
-      return data.publicUrl || urlOrPath
+  const dedupeOpponentPublicUrl = (input: string) => {
+    const duplicatePattern = /(\/storage\/v1\/object\/public\/opponents\/)opponents\//i
+    if (duplicatePattern.test(input)) {
+      return input.replace(duplicatePattern, '$1')
     }
+    return input
   }
 
-  const { data } = supabase.storage.from('team-logos').getPublicUrl(clean)
-  return data.publicUrl || urlOrPath
+  const dedupeOpponentPath = (input: string) => input.replace(/^(opponents\/)opponents\//i, '$1')
+
+  const buildPublicUrl = (bucket: string, objectKey: string | null | undefined) => {
+    if (!objectKey) return null
+    const { data } = supabase.storage.from(bucket).getPublicUrl(objectKey)
+    return data?.publicUrl ?? null
+  }
+
+  if (/^https?:\/\//i.test(sanitized)) {
+    return dedupeOpponentPublicUrl(sanitized)
+  }
+
+  const cleaned = dedupeOpponentPath(sanitized.replace(/^\/+/, ''))
+  const explicitBucketMatch = cleaned.match(/^([^:]+)::(.+)$/)
+
+  if (explicitBucketMatch) {
+    const bucket = explicitBucketMatch[1] ?? TEAM_LOGO_BUCKET
+    const objectKey = dedupeOpponentPath(explicitBucketMatch[2] ?? '')
+    return buildPublicUrl(bucket, objectKey) ?? sanitized
+  }
+
+  const opponentSegment = 'opponents/'
+  const isOpponentPath =
+    cleaned.startsWith(opponentSegment) || cleaned.includes(`/${opponentSegment}`) || cleaned === 'opponents'
+
+  if (isOpponentPath) {
+    const normalizedKey = dedupeOpponentPath(cleaned).replace(/^opponents\//i, '')
+    const opponentBucketUrl = buildPublicUrl(OPPONENT_BUCKET, normalizedKey)
+    const teamLogoUrl = buildPublicUrl(TEAM_LOGO_BUCKET, cleaned)
+    return teamLogoUrl ?? opponentBucketUrl ?? sanitized
+  }
+
+  const segments = cleaned.split('/')
+  let bucket: string | null = null
+  let objectKey: string | null = null
+
+  if (segments.length > 1) {
+    bucket = segments.shift() ?? TEAM_LOGO_BUCKET
+    objectKey = segments.join('/')
+  }
+
+  const resolvedBucket = bucket ?? TEAM_LOGO_BUCKET
+  const resolvedPath = objectKey ?? cleaned
+  return buildPublicUrl(resolvedBucket, resolvedPath) ?? sanitized
 }
 
 function parseTeamSide(value: string | null | undefined): 'home' | 'away' {
@@ -183,6 +222,11 @@ function buildScore(goals: number, behinds: number) {
   }
 }
 
+function formatTeamName(value: string | null | undefined) {
+  if (!value) return ''
+  return value.replace(/\bfootball club\b/gi, 'FC').trim()
+}
+
 function escapeHtml(value: string) {
   return value
     .replaceAll('&', '&amp;')
@@ -218,6 +262,28 @@ export function buildGamePageHtml({
             <span>${escapeHtml(preview.roundLabel)}</span>
             <span>${escapeHtml(preview.dateLabel)}</span>
             <span>${escapeHtml(preview.venueLabel)}</span>
+          </div>
+          <div class="score-card">
+            <div class="status-rail"></div>
+            <div class="score-grid">
+              <div class="team-side">
+                <div class="logo-shell">
+                  ${preview.homeTeam.logoUrl ? `<img class="logo" src="${escapeHtml(preview.homeTeam.logoUrl)}" alt="${escapeHtml(preview.homeTeam.name)}" />` : `<span class="mono">${escapeHtml(preview.homeTeam.name.slice(0, 2).toUpperCase())}</span>`}
+                </div>
+                <p class="team-name">${escapeHtml(preview.homeTeam.name)}</p>
+              </div>
+              <div class="score-stack">
+                <p class="score-primary">${escapeHtml(preview.scorePrimary)}</p>
+                <p class="score-secondary">${escapeHtml(preview.scoreSecondary)}</p>
+                <p class="score-round">${escapeHtml(preview.roundLabel)}</p>
+              </div>
+              <div class="team-side">
+                <div class="logo-shell">
+                  ${preview.awayTeam.logoUrl ? `<img class="logo" src="${escapeHtml(preview.awayTeam.logoUrl)}" alt="${escapeHtml(preview.awayTeam.name)}" />` : `<span class="mono">${escapeHtml(preview.awayTeam.name.slice(0, 2).toUpperCase())}</span>`}
+                </div>
+                <p class="team-name">${escapeHtml(preview.awayTeam.name)}</p>
+              </div>
+            </div>
           </div>
           <div class="card">
             <img src="${escapeHtml(preview.ogImageUrl)}" alt="${escapeHtml(preview.title)}" />
@@ -345,6 +411,102 @@ export function buildGamePageHtml({
         border: 1px solid rgba(255, 255, 255, 0.08);
         background: rgba(255, 255, 255, 0.04);
       }
+      .score-card {
+        position: relative;
+        margin-top: 24px;
+        overflow: hidden;
+        border-radius: 24px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background:
+          linear-gradient(135deg, rgba(33,72,107,0.32) 0%, rgba(0,0,0,0.22) 52%, rgba(29,79,79,0.24) 100%),
+          linear-gradient(180deg, rgba(8,12,18,0.08) 0%, rgba(8,12,18,0.24) 44%, rgba(8,12,18,0.46) 100%);
+        padding: 26px 20px 20px;
+      }
+      .status-rail {
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(57,255,136,0) 0%, rgba(57,255,136,0.6) 35%, rgba(57,255,136,0.6) 65%, rgba(57,255,136,0) 100%);
+      }
+      .score-grid {
+        display: grid;
+        grid-template-columns: 1fr minmax(150px, 1.2fr) 1fr;
+        align-items: center;
+        gap: 12px;
+      }
+      .team-side {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        text-align: center;
+      }
+      .logo-shell {
+        display: flex;
+        width: 56px;
+        height: 56px;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.18);
+        background: rgba(255,255,255,0.08);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+      }
+      .logo {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
+      .mono {
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        color: #f8fafc;
+      }
+      .team-name {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.25;
+        color: #fff;
+      }
+      .score-stack {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        text-align: center;
+      }
+      .score-primary {
+        margin: 0;
+        white-space: nowrap;
+        font-size: clamp(2rem, 5vw, 2.8rem);
+        font-style: italic;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.06em;
+        color: #fff;
+      }
+      .score-secondary {
+        margin: 0;
+        font-size: 12px;
+        font-style: italic;
+        font-weight: 800;
+        color: rgba(255,255,255,0.84);
+      }
+      .score-round {
+        margin: 0;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #94a3b8;
+      }
       .card img {
         display: block;
         width: 100%;
@@ -421,10 +583,12 @@ export async function getGamePreviewData(gameId: string, request?: Request): Pro
   const awaySquad = squads.find((row) => row.team_side === 'away') ?? null
   const gradeRow = gradeRes.data as { name?: string | null; code?: string | null; grade_catalog?: { label?: string | null } | null } | null
   const competitionLabel = gradeRow?.grade_catalog?.label ?? gradeRow?.name ?? gradeRow?.code ?? null
-  const homeTeamName = homeSquad?.squads?.name ?? 'Home'
-  const awayTeamName = awaySquad?.squads?.name ?? game.opponent ?? 'Away'
+  const homeTeamName = formatTeamName(homeSquad?.squads?.name) || 'Home'
+  const awayTeamName = formatTeamName(awaySquad?.squads?.name ?? game.opponent) || 'Away'
   const homeScore = buildScore(homeGoals, homeBehinds)
   const awayScore = buildScore(awayGoals, awayBehinds)
+  const scorePrimary = `${homeScore.points} - ${awayScore.points}`
+  const scoreSecondary = `${homeScore.goals}.${homeScore.behinds} | ${awayScore.goals}.${awayScore.behinds}`
   const roundLabel = formatRoundLabel(game.round ?? null)
   const dateLabel = formatDateLabel(game.date ?? null)
   const venueLabel = game.venue?.trim() || 'Venue TBC'
@@ -466,5 +630,7 @@ export async function getGamePreviewData(gameId: string, request?: Request): Pro
     },
     homeScore,
     awayScore,
+    scorePrimary,
+    scoreSecondary,
   }
 }
