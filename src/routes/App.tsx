@@ -23,7 +23,7 @@ const PUBLIC_ROUTES = new Set([
 ])
 
 function isPublicRoute(pathname: string) {
-  return PUBLIC_ROUTES.has(pathname)
+  return PUBLIC_ROUTES.has(pathname) || pathname.startsWith('/game/')
 }
 
 function isOnboardingAllowedRoute(pathname: string) {

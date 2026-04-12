@@ -46,6 +46,7 @@ import RequestLeague from './routes/RequestLeague'
 import RequestClub from './routes/RequestClub'
 import PublicVoteCardPage from './routes/PublicVoteCardPage'
 import PublicVoteCardDevPage from './routes/PublicVoteCardDevPage'
+import PublicGamePage from './routes/PublicGamePage'
 import { legalDocuments } from './content/legalDocuments'
 
 const router = createBrowserRouter([
@@ -76,6 +77,7 @@ const router = createBrowserRouter([
       { path: 'onboarding', element: <Onboarding /> },
       { path: 'request-league', element: <RequestLeague /> },
       { path: 'request-club', element: <RequestClub /> },
+      { path: 'game/:gameId', element: <PublicGamePage /> },
       { path: 'hub', element: <Navigate to="/dashboard" replace /> },
       { path: 'account/update-email', element: <Navigate to="/settings/update-email" replace /> },
       { path: 'squad', element: <Squad /> },
@@ -119,7 +121,6 @@ const router = createBrowserRouter([
       { path: 'new', element: <DisabledRoute /> },
       { path: 'newgame/:gameId', element: <DisabledRoute /> },
       { path: 'setup/:gameId', element: <DisabledRoute /> },
-      { path: 'game/:gameId', element: <DisabledRoute /> },
       { path: 'summary/:gameId', element: <DisabledRoute /> },
       { path: 'viewer/:gameId', element: <DisabledRoute /> },
       { path: 'player/:gameId/:playerId', element: <DisabledRoute /> },

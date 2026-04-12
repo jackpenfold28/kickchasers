@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/game/:gameId/og-image.png",
+      "destination": "/api/game-og?gameId=:gameId"
+    },
+    {
+      "source": "/game/:gameId",
+      "destination": "/api/game-page?gameId=:gameId"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }
