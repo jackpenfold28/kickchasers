@@ -149,6 +149,7 @@ function ScoreBlock({
         >
           <div
             style={{
+              display: 'flex',
               color: '#F8FAFC',
               fontSize: 34,
               fontWeight: 800,
@@ -161,6 +162,7 @@ function ScoreBlock({
           </div>
           <div
             style={{
+              display: 'flex',
               color: '#94A3B8',
               fontSize: 18,
               letterSpacing: '0.12em',
@@ -173,6 +175,7 @@ function ScoreBlock({
       </div>
       <div
         style={{
+          display: 'flex',
           marginTop: 14,
           color: '#FFFFFF',
           fontSize: 140,
@@ -208,6 +211,7 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
     >
       <div
         style={{
+          display: 'flex',
           position: 'absolute',
           inset: 0,
           border: '1px solid rgba(255,255,255,0.08)',
@@ -217,6 +221,7 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
       />
       <div
         style={{
+          display: 'flex',
           position: 'absolute',
           inset: '22px 22px auto 22px',
           height: 4,
@@ -344,7 +349,7 @@ function OgCard({ preview }: { preview: GamePreviewData }) {
               <span style={{ display: 'flex' }}>
                 {preview.homeScore.goals}.{preview.homeScore.behinds}
               </span>
-              <span style={{ color: '#64748B', margin: '0 8px' }}>:</span>
+              <span style={{ display: 'flex', color: '#64748B', margin: '0 8px' }}>:</span>
               <span style={{ display: 'flex' }}>
                 {preview.awayScore.goals}.{preview.awayScore.behinds}
               </span>
