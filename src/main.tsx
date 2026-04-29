@@ -100,6 +100,7 @@ const router = createBrowserRouter([
           { path: 'stats', element: <StatsPage /> },
           { path: 'notifications', element: <NotificationsPage /> },
           { path: 'profile', element: <ProfilePage /> },
+          { path: 'users/:id', element: <ProfilePage /> },
           { path: 'settings', element: <SettingsPage /> },
           { path: 'settings/update-email', element: <UpdateEmailPage /> },
           { path: 'settings/roles', element: <RolesPage /> },

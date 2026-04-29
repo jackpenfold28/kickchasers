@@ -15,6 +15,7 @@ import {
 import PortalCard from '@/components/cards/PortalCard'
 import MatchScoreCard from '@/components/dashboard/MatchScoreCard'
 import Quick6SummaryCard from '@/components/dashboard/Quick6SummaryCard'
+import GameLogCard from '@/components/portal/games/GameLogCard'
 import { loadDashboardData, type DashboardActionItem, type DashboardData } from '@/lib/portal-dashboard'
 import type { Quick6Scope } from '@/lib/portal-quick6'
 import { formatRoundLabel } from '@/lib/round-label'
@@ -23,6 +24,11 @@ import { supabase } from '@/lib/supabase'
 function formatHandle(handle: string | null) {
   if (!handle) return null
   return handle.startsWith('@') ? handle : `@${handle}`
+}
+
+function formatSquadDisplayName(value: string | null | undefined) {
+  if (!value) return 'Unnamed squad'
+  return value.replace(/\bfootball club\b/gi, 'FC').trim()
 }
 
 function formatStatus(status: string | null) {
@@ -79,20 +85,6 @@ function scoreText(goals: number | null, behinds: number | null) {
 function totalScore(goals: number | null, behinds: number | null) {
   if (goals == null || behinds == null) return null
   return goals * 6 + behinds
-}
-
-function recentGameResult(
-  homeGoals: number | null,
-  homeBehinds: number | null,
-  awayGoals: number | null,
-  awayBehinds: number | null
-) {
-  const home = totalScore(homeGoals, homeBehinds)
-  const away = totalScore(awayGoals, awayBehinds)
-  if (home == null || away == null) return null
-  if (home > away) return { label: 'Win', className: 'text-[#B8FFD5]' }
-  if (home < away) return { label: 'Loss', className: 'text-red-200' }
-  return { label: 'Draw', className: 'text-sky-200' }
 }
 
 function actionTypeLabel(action: DashboardActionItem) {
@@ -259,12 +251,6 @@ export default function DashboardPage() {
       return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     })
     .slice(0, 3)
-  const recentMatchCards = data.recentGames
-    .filter((game) => {
-      if (!data.matchFocus) return true
-      return `${game.id}:${game.manualId ?? 'tracked'}` !== `${data.matchFocus.id}:${data.matchFocus.manualId ?? 'tracked'}`
-    })
-    .slice(0, 2)
   const activeSeasonIndex = data.availableSeasonYears.findIndex((year) => year === data.selectedSeasonYear)
   const canGoToNewerSeason = activeSeasonIndex > 0
   const canGoToOlderSeason = activeSeasonIndex >= 0 && activeSeasonIndex < data.availableSeasonYears.length - 1
@@ -491,65 +477,14 @@ export default function DashboardPage() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.95fr)_minmax(280px,0.9fr)]">
         <PortalCard
           title="Recent Games"
-          subtitle="Compact match history snapshot"
-          className="p-4"
+          subtitle="Match-card view from your game log"
+          className="overflow-hidden bg-[linear-gradient(180deg,rgba(16,26,42,0.96)_0%,rgba(9,16,28,0.98)_100%)]"
         >
-          <div className="space-y-2.5">
+          <div className="grid gap-3">
             {data.recentGames.length ? (
-              data.recentGames.slice(0, 4).map((game) => {
-                const result = recentGameResult(
-                  game.scoreHomeGoals,
-                  game.scoreHomeBehinds,
-                  game.scoreAwayGoals,
-                  game.scoreAwayBehinds
-                )
-                const homeScore = totalScore(game.scoreHomeGoals, game.scoreHomeBehinds)
-                const awayScore = totalScore(game.scoreAwayGoals, game.scoreAwayBehinds)
-
-                return (
-                  <Link
-                    key={`${game.id}:${game.manualId || 'tracked'}`}
-                    to={game.isManual && game.manualId ? `/games/manual/${game.manualId}` : `/games/${game.id}`}
-                    className="block rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045)_0%,rgba(255,255,255,0.025)_100%)] px-3.5 py-3 transition hover:border-[#39FF88]/25 hover:bg-white/[0.06]"
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                            {formatShortDate(game.date)}
-                          </span>
-                          <span className="text-slate-600">•</span>
-                          <span className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                            {formatRoundLabel(game.round ?? null) || (game.isManual ? 'Manual Summary' : 'Tracked Game')}
-                          </span>
-                        </div>
-
-                        <div className="mt-2 space-y-2">
-                          <div className="flex items-center gap-2.5">
-                            <LogoBadge src={game.squadLogoUrl} label={game.squadName || 'My Squad'} className="h-8 w-8 shrink-0 rounded-full" />
-                            <p className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{game.squadName || 'My Squad'}</p>
-                            <p className="text-lg font-black italic leading-none tracking-[-0.04em] text-white">{homeScore ?? '-'}</p>
-                          </div>
-
-                          <div className="flex items-center gap-2.5">
-                            <LogoBadge src={game.opponentLogoUrl} label={game.opponent || 'Opponent'} className="h-8 w-8 shrink-0 rounded-full" />
-                            <p className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{game.opponent || 'Opponent'}</p>
-                            <p className="text-lg font-black italic leading-none tracking-[-0.04em] text-white">{awayScore ?? '-'}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="shrink-0 text-right">
-                        <span className="inline-flex rounded-full border border-white/10 bg-white/[0.05] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
-                          {formatStatus(game.status)}
-                        </span>
-                        {result ? <p className={`mt-2 text-xs font-semibold uppercase tracking-[0.18em] ${result.className}`}>{result.label}</p> : null}
-                        <p className="mt-2 max-w-[118px] text-xs text-slate-500">{game.venue || 'Venue TBC'}</p>
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })
+              data.recentGames.slice(0, 4).map((game) => (
+                <GameLogCard key={`${game.id}:${game.manualId || 'tracked'}`} row={game} />
+              ))
             ) : (
               <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.03] p-4 text-sm text-slate-400">
                 Recent tracked and manual games will appear here when match summaries are available.
@@ -566,40 +501,63 @@ export default function DashboardPage() {
           </Link>
         </PortalCard>
 
-        <PortalCard title="My Squads" subtitle="Owner and admin squads are prioritised first">
+        <PortalCard
+          title="My Squads"
+          subtitle="Teams you manage or play in"
+          className="overflow-hidden bg-[linear-gradient(180deg,rgba(16,26,42,0.96)_0%,rgba(9,16,28,0.98)_100%)]"
+        >
           <div className="space-y-3">
             {data.squads.length ? (
               data.squads.map((squad) => (
                 <Link
                   key={squad.id}
                   to={`/teams/${squad.id}`}
-                  className="block rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition hover:border-[#39FF88]/30 hover:bg-white/[0.06]"
+                  className="group relative block overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(135deg,rgba(21,54,120,0.44)_0%,rgba(5,10,18,0.82)_50%,rgba(0,120,96,0.22)_100%)] pt-5 shadow-[0_14px_30px_rgba(2,6,18,0.22),inset_0_1px_0_rgba(255,255,255,0.05)] transition duration-200 hover:-translate-y-[1px] hover:border-white/14"
                 >
-                  <div className="flex items-start gap-3">
-                    <LogoBadge src={squad.logoUrl} label={squad.name || 'Squad'} className="h-12 w-12 rounded-xl" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate text-sm font-semibold text-white">{squad.name || 'Unnamed squad'}</p>
-                        {squad.isOfficial && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-[#39FF88]/30 bg-[#39FF88]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#B8FFD5]">
-                            <ShieldCheck className="h-3 w-3" />
-                            Official
-                          </span>
-                        )}
+                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(4,8,14,0.08)_0%,rgba(4,8,14,0.2)_42%,rgba(4,8,14,0.38)_100%)]" />
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(57,255,136,0)_0%,rgba(57,255,136,0.62)_35%,rgba(57,255,136,0.62)_65%,rgba(57,255,136,0)_100%)]" />
+                  <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2">
+                    <span className="inline-flex min-h-7 items-center rounded-b-[10px] bg-[#39FF88] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#07101D] shadow-[0_6px_16px_rgba(0,0,0,0.2)]">
+                      {squad.isOfficial ? 'Official' : squad.role || 'Squad'}
+                    </span>
+                  </div>
+
+                  <div className="relative px-4 pb-4 pt-5">
+                    <div className="grid grid-cols-[minmax(0,1fr)_minmax(82px,0.72fr)] items-center gap-4">
+                      <div className="flex min-w-0 flex-col items-center gap-2 text-center">
+                        <LogoBadge src={squad.logoUrl} label={squad.name || 'Squad'} className="h-[4.35rem] w-[4.35rem] rounded-full border-white/18 bg-white/[0.08]" />
+                        <p className="line-clamp-2 max-w-[10rem] text-[14px] font-black leading-tight text-white">{formatSquadDisplayName(squad.name)}</p>
                       </div>
-                      <p className="mt-1 text-xs text-slate-400">{squad.competitionLabel} • {squad.memberCount} members</p>
-                      <div className="mt-3 flex items-center justify-between gap-3">
-                        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-300">
-                          {squad.role || 'member'}
-                        </span>
+
+                      <div className="flex min-w-0 flex-col items-center gap-1 text-center">
+                        <p className="whitespace-nowrap text-[1.7rem] font-black italic leading-none tracking-[-0.06em] text-white">
+                          {squad.memberCount}
+                        </p>
+                        <p className="text-[11px] font-black italic text-white/84">Members</p>
+                        <p className="max-w-[8.5rem] truncate text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                          {squad.competitionLabel}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-3">
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${squad.attentionCount > 0 ? 'text-amber-100' : 'text-[#B8FFD5]'}`}>
                         {squad.attentionCount > 0 ? (
-                          <span className="rounded-full border border-amber-400/30 bg-amber-300/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-100">
+                          <>
+                            <Star className="h-3.5 w-3.5 shrink-0" />
                             {squad.attentionCount} pending
-                          </span>
+                          </>
                         ) : (
-                          <span className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Manage</span>
+                          <>
+                            <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+                            Team workspace
+                          </>
                         )}
-                      </div>
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#9CE8BE]">
+                        Open
+                        <ChevronRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+                      </span>
                     </div>
                   </div>
                 </Link>
@@ -617,51 +575,68 @@ export default function DashboardPage() {
           </Link>
         </PortalCard>
 
-        <PortalCard title="Profile Snapshot" subtitle="Identity first, then recent form">
-          <div className="flex items-center gap-4">
-            <LogoBadge src={data.profile.avatarUrl} label={data.profile.name || 'User'} className="h-16 w-16 rounded-full" />
-            <div>
-              <p className="text-lg font-semibold text-white">{data.profile.name || 'KickChasers Player'}</p>
-              <p className="text-sm text-slate-400">{formatHandle(data.profile.handle) || 'Handle pending'}</p>
-              <p className="mt-1 text-xs text-slate-500">
-                {[data.profile.clubName, data.profile.squadName, data.profile.position ? `${data.profile.position}${data.profile.playerNumber ? ` • #${data.profile.playerNumber}` : ''}` : data.profile.playerNumber ? `#${data.profile.playerNumber}` : null]
-                  .filter(Boolean)
-                  .join(' • ') || 'Profile identity will expand as squad data lands'}
-              </p>
+        <PortalCard
+          title="Profile Snapshot"
+          subtitle="Season identity and recent form"
+          className="overflow-hidden bg-[linear-gradient(180deg,rgba(16,26,42,0.96)_0%,rgba(9,16,28,0.98)_100%)]"
+        >
+          <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.07)_0%,rgba(255,255,255,0.025)_58%,rgba(57,255,136,0.05)_100%)] p-4 shadow-[0_14px_30px_rgba(2,6,18,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(57,255,136,0)_0%,rgba(57,255,136,0.56)_50%,rgba(57,255,136,0)_100%)] opacity-80" />
+            <div className="flex items-center gap-4">
+              <LogoBadge src={data.profile.avatarUrl} label={data.profile.name || 'User'} className="h-16 w-16 shrink-0 rounded-full" />
+              <div className="min-w-0">
+                <p className="truncate text-lg font-black italic leading-tight tracking-[-0.03em] text-white">{data.profile.name || 'KickChasers Player'}</p>
+                <p className="mt-1 text-sm text-slate-400">{formatHandle(data.profile.handle) || 'Handle pending'}</p>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                  {[data.profile.clubName, data.profile.squadName, data.profile.position ? `${data.profile.position}${data.profile.playerNumber ? ` • #${data.profile.playerNumber}` : ''}` : data.profile.playerNumber ? `#${data.profile.playerNumber}` : null]
+                    .filter(Boolean)
+                    .join(' • ') || 'Profile identity will expand as squad data lands'}
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Season Games</p>
-              <p className="mt-2 text-3xl font-semibold text-white">{data.profile.seasonGames}</p>
+          <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Season Games</p>
+              <p className="mt-2 text-[2rem] font-black italic leading-none tracking-[-0.04em] text-white">{data.profile.seasonGames}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Roles</p>
-              <p className="mt-2 text-sm font-semibold text-white">{data.profile.roles.length ? data.profile.roles.join(', ') : 'Pending'}</p>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Recent Disposals</p>
+              <p className="mt-2 text-[2rem] font-black italic leading-none tracking-[-0.04em] text-white">{data.profile.formAverages ? data.profile.formAverages.disposals : '-'}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Recent Disposals</p>
-              <p className="mt-2 text-2xl font-semibold text-white">{data.profile.formAverages ? data.profile.formAverages.disposals : '-'}</p>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Roles</p>
+              <p className="mt-2 truncate text-sm font-semibold text-white">{data.profile.roles.length ? data.profile.roles.join(', ') : 'Pending'}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Goals / Tackles</p>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Goals / Tackles</p>
               <p className="mt-2 text-sm font-semibold text-white">
                 {data.profile.formAverages ? `${data.profile.formAverages.goals} G • ${data.profile.formAverages.tackles} T` : 'Latest 3 pending'}
               </p>
             </div>
           </div>
 
-          <div className="mt-5 space-y-2">
+          <div className="mt-4 space-y-2.5">
             {data.profile.recentGames.length ? (
               data.profile.recentGames.map((game) => (
-                <div key={`profile:${game.id}:${game.manualId || 'tracked'}`} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-                  <div>
-                    <p className="text-sm font-medium text-white">{game.opponent || 'Opponent'}</p>
-                    <p className="text-xs text-slate-500">{formatShortDate(game.date)} • {formatStatus(game.status)}</p>
+                <Link
+                  key={`profile:${game.id}:${game.manualId || 'tracked'}`}
+                  to={game.isManual && game.manualId ? `/games/manual/${game.manualId}` : `/games/${game.id}`}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.035] px-3 py-3 transition hover:border-[#39FF88]/24 hover:bg-white/[0.055]"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <LogoBadge src={game.opponentLogoUrl} label={game.opponent || 'Opponent'} className="h-9 w-9 shrink-0 rounded-full" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-white">{game.opponent || 'Opponent'}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">{formatShortDate(game.date)} • {formatStatus(game.status)}</p>
+                    </div>
                   </div>
-                  <span className="text-xs font-medium text-slate-300">{game.venue || 'Venue TBC'}</span>
-                </div>
+                  <div className="min-w-[72px] text-right">
+                    <p className="truncate text-xs font-semibold text-slate-300">{game.venue || 'Venue TBC'}</p>
+                    <p className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-slate-600">{formatRoundLabel(game.round ?? null) || 'Game'}</p>
+                  </div>
+                </Link>
               ))
             ) : (
               <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.03] p-4 text-sm text-slate-400">
@@ -669,6 +644,14 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+
+          <Link
+            to="/profile"
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-[#9CE8BE] hover:bg-white/[0.05]"
+          >
+            Open profile
+            <ChevronRight className="h-4 w-4" />
+          </Link>
         </PortalCard>
       </div>
 
