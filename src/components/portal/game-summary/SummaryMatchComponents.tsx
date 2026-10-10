@@ -63,6 +63,7 @@ type SummaryControlsProps = {
   availableScopes: SummaryScope[]
   advanced: boolean
   onToggleAdvanced: () => void
+  showPlayers?: boolean
 }
 
 type PlayersTableProps = {
@@ -324,16 +325,17 @@ export function SummaryControls({
   availableScopes,
   advanced,
   onToggleAdvanced,
+  showPlayers = true,
 }: SummaryControlsProps) {
   const segments = [
     { key: 'players' as const, label: 'Players', icon: <Users className="h-4 w-4" /> },
     { key: 'team' as const, label: 'Team', icon: <BarChart3 className="h-4 w-4" /> },
-  ]
+  ].filter((segment) => showPlayers || segment.key !== 'players')
 
   return (
     <section className="space-y-2.5 rounded-[1.45rem] bg-[#0a1424]/78 px-3 py-3 backdrop-blur-sm">
       <div className="grid gap-2.5 lg:grid-cols-[minmax(0,318px)_1fr] lg:items-center">
-        <div className="grid grid-cols-2 gap-1 rounded-[1rem] bg-white/[0.045] p-1">
+        <div className={clsx('grid gap-1 rounded-[1rem] bg-white/[0.045] p-1', showPlayers ? 'grid-cols-2' : 'grid-cols-1')}>
           {segments.map((segment) => {
             const active = activeTab === segment.key
             return (
@@ -404,10 +406,10 @@ export function SummaryPlayersTable({
 }: PlayersTableProps) {
   const navigate = useNavigate()
   const highlightSet = new Set(advancedOnlyKeys)
+  const customLabels = Array.from(new Set(rows.flatMap((row) => Object.keys(row.customStats)))).sort()
 
   const openPlayerSummary = (row: PlayerSummaryRow) => {
-    const query = row.profileUserId ? `?profileUserId=${encodeURIComponent(row.profileUserId)}` : ''
-    navigate(`/player/${gameId}/${row.playerId}${query}`)
+    navigate(`/player/${gameId}/${row.playerId}`)
   }
 
   return (
@@ -424,6 +426,12 @@ export function SummaryPlayersTable({
                   Player{sortKey === 'name' ? sortDirection === 'asc' ? ' ▲' : ' ▼' : ''}
                 </button>
               </th>
+              <th className="px-3 py-3 text-center">POS</th>
+              <th className="px-3 py-3 text-center">
+                <button type="button" className="font-semibold" onClick={() => onSort('impact7')}>
+                  I7{sortKey === 'impact7' ? sortDirection === 'asc' ? ' ▲' : ' ▼' : ''}
+                </button>
+              </th>
               {columns.map((column) => (
                 <th
                   key={column.key}
@@ -435,6 +443,7 @@ export function SummaryPlayersTable({
                   </button>
                 </th>
               ))}
+              {customLabels.map((label) => <th key={`custom-${label}`} className="px-3 py-3 text-center">{label}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -462,6 +471,8 @@ export function SummaryPlayersTable({
                         <p className="min-w-0 truncate font-semibold leading-none text-white">{formatPlayerName(row.name)}</p>
                       </div>
                     </td>
+                    <td className="px-3 py-2.5 text-center text-xs font-semibold text-slate-400">{row.position || '—'}</td>
+                    <td className="px-3 py-2.5 text-center font-semibold tabular-nums" title={row.impactBand}>{row.impact7.toFixed(1)}</td>
                     {columns.map((column) => {
                       const value =
                         column.key === 'GB'
@@ -481,12 +492,17 @@ export function SummaryPlayersTable({
                         </td>
                       )
                     })}
+                    {customLabels.map((label) => (
+                      <td key={`custom-${label}`} className="px-3 py-2.5 text-center font-semibold tabular-nums">
+                        {row.customStats[label] ?? 0}
+                      </td>
+                    ))}
                   </tr>
                 )
               })
             ) : (
               <tr>
-                <td colSpan={columns.length + 1} className="px-4 py-10 text-center text-slate-400">
+                <td colSpan={columns.length + customLabels.length + 3} className="px-4 py-10 text-center text-slate-400">
                   No player rows available for this scope.
                 </td>
               </tr>

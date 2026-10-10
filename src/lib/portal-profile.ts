@@ -1,6 +1,10 @@
 import { supabase } from '@/lib/supabase'
 import { resolveLogoPublicUrl } from '@/lib/logo-storage'
 import { formatRoundLabel } from '@/lib/round-label'
+import { aggregatePlayerEvents as aggregateCanonicalPlayerEvents } from '@/lib/canonical/player-event-aggregate'
+import { currentSeason, type StatKey } from '@/lib/canonical/benchmarks'
+import { resolveBenchmarkGroup, resolveThresholdBenchmarkGroup } from '@/lib/canonical/position-benchmark'
+import { computeGameRatingImpact7, evaluate } from '@/lib/canonical/stats-eval'
 
 export const TRIAL_ROUND_CODE = 106
 export const ACCENT = '#39FF88'
@@ -201,38 +205,6 @@ export const STAT_GROUPS: { key: string; label: string; stats: { key: keyof Tota
   },
 ]
 
-const EVENT_CODES = new Set([
-  'K',
-  'K_EF',
-  'K_IF',
-  'HB',
-  'HB_EF',
-  'HB_IF',
-  'M',
-  'MC',
-  'MUC',
-  'T',
-  'G',
-  'GOAL',
-  'B',
-  'BEHIND',
-  'FF',
-  'FA',
-  'CL',
-  'I50',
-  'R50',
-  'HO',
-  'GBG',
-  'HR',
-  'TO',
-  'INT',
-  'ONE_PERCENT',
-  'GA',
-  'CON',
-  'UC',
-  'D',
-])
-
 function storageUrl(bucket: string, value: string | null | undefined) {
   const trimmed = value?.trim()
   if (!trimmed) return null
@@ -335,155 +307,19 @@ function finalizeTotals(totals: TotalsWithDerived) {
   return totals
 }
 
-function applyEvent(totals: TotalsWithDerived, code: string) {
-  switch (code) {
-    case 'K':
-      totals.kicks += 1
-      totals.disposals += 1
-      break
-    case 'K_EF':
-      if (totals.kicks === totals.effectiveKicks + totals.ineffectiveKicks) {
-        totals.kicks += 1
-        totals.disposals += 1
-      }
-      totals.effectiveKicks += 1
-      break
-    case 'K_IF':
-      if (totals.kicks === totals.effectiveKicks + totals.ineffectiveKicks) {
-        totals.kicks += 1
-        totals.disposals += 1
-      }
-      totals.ineffectiveKicks += 1
-      break
-    case 'HB':
-      totals.handballs += 1
-      totals.disposals += 1
-      break
-    case 'HB_EF':
-      if (totals.handballs === totals.effectiveHandballs + totals.ineffectiveHandballs) {
-        totals.handballs += 1
-        totals.disposals += 1
-      }
-      totals.effectiveHandballs += 1
-      break
-    case 'HB_IF':
-      if (totals.handballs === totals.effectiveHandballs + totals.ineffectiveHandballs) {
-        totals.handballs += 1
-        totals.disposals += 1
-      }
-      totals.ineffectiveHandballs += 1
-      break
-    case 'D':
-      totals.disposals += 1
-      totals.otherDisposals += 1
-      break
-    case 'M':
-      totals.marks += 1
-      break
-    case 'MC':
-      totals.contestedMarks += 1
-      break
-    case 'MUC':
-      totals.uncontestedMarks += 1
-      break
-    case 'T':
-      totals.tackles += 1
-      break
-    case 'G':
-    case 'GOAL':
-      totals.goals += 1
-      break
-    case 'B':
-    case 'BEHIND':
-      totals.behinds += 1
-      break
-    case 'FF':
-      totals.freesFor += 1
-      break
-    case 'FA':
-      totals.freesAgainst += 1
-      break
-    case 'CL':
-      totals.clearances += 1
-      break
-    case 'I50':
-      totals.inside50s += 1
-      break
-    case 'R50':
-      totals.rebound50s += 1
-      break
-    case 'HO':
-      totals.hitouts += 1
-      break
-    case 'GBG':
-      totals.groundBallGets += 1
-      break
-    case 'HR':
-      totals.handballReceives += 1
-      break
-    case 'TO':
-      totals.turnovers += 1
-      break
-    case 'INT':
-      totals.intercepts += 1
-      break
-    case 'ONE_PERCENT':
-      totals.onePercenters += 1
-      break
-    case 'GA':
-      totals.goalAssists += 1
-      break
-    case 'CON':
-      totals.contestedPossessions += 1
-      break
-    case 'UC':
-      totals.uncontestedPossessions += 1
-      break
-    default:
-      break
-  }
-}
-
 function aggregatePlayerEvents(
   events: Array<{ stat_key?: string | null; player_number?: number | null; team_side?: string | null }>,
   preferredPlayerNumber: number | null
 ) {
-  const normalized = events
-    .map((event) => ({ ...event, stat_key: String(event.stat_key ?? '').toUpperCase() }))
-    .filter((event) => EVENT_CODES.has(event.stat_key))
-
-  const countsByNumber = new Map<number, number>()
-  normalized.forEach((event) => {
-    if (typeof event.player_number === 'number') {
-      countsByNumber.set(event.player_number, (countsByNumber.get(event.player_number) ?? 0) + 1)
-    }
-  })
-
-  let resolvedPlayerNumber: number | null = null
-  if (preferredPlayerNumber != null && countsByNumber.has(preferredPlayerNumber)) {
-    resolvedPlayerNumber = preferredPlayerNumber
-  } else {
-    countsByNumber.forEach((count, number) => {
-      if (resolvedPlayerNumber == null || count > (countsByNumber.get(resolvedPlayerNumber) ?? 0)) resolvedPlayerNumber = number
-    })
-  }
-
-  const byPlayer = resolvedPlayerNumber != null ? normalized.filter((event) => event.player_number === resolvedPlayerNumber) : normalized
-  const countsBySide = new Map<'home' | 'away', number>()
-  byPlayer.forEach((event) => {
-    if (event.team_side === 'home' || event.team_side === 'away') {
-      countsBySide.set(event.team_side, (countsBySide.get(event.team_side) ?? 0) + 1)
-    }
-  })
-  let side: 'home' | 'away' | null = null
-  countsBySide.forEach((count, teamSide) => {
-    if (side == null || count > (countsBySide.get(side) ?? 0)) side = teamSide
-  })
-
-  const filtered = side ? byPlayer.filter((event) => event.team_side === side) : byPlayer
-  const totals = emptyTotals()
-  filtered.forEach((event) => applyEvent(totals, event.stat_key ?? ''))
-  return finalizeTotals(totals)
+  return aggregateCanonicalPlayerEvents(
+    events.map((event) => ({
+      stat_key: event.stat_key ?? null,
+      quarter: null,
+      team_side: event.team_side ?? null,
+      player_number: event.player_number ?? null,
+    })),
+    preferredPlayerNumber
+  ).totals.all as TotalsWithDerived
 }
 
 function numberOrNull(value: unknown) {
@@ -600,37 +436,68 @@ export function computeScopeStats(games: ProfileGame[], minGames = 1): ScopeSumm
   }
 }
 
-export function gameRatingScore(game: ProfileGame) {
-  if (game.manualRating != null && Number.isFinite(game.manualRating)) return Number(game.manualRating)
-  if (!game.totals) return 0
-  const value =
-    game.totals.disposals * 0.12 +
-    game.totals.tackles * 0.28 +
-    game.totals.goals * 0.55 +
-    game.totals.marks * 0.18 +
-    game.totals.fantasy * 0.035 -
-    game.totals.freesAgainst * 0.08
-  return Math.max(0, Math.min(10, Math.round(value * 10) / 10))
+function toImpact7Stats(totals: TotalsWithDerived): Partial<Record<StatKey, number>> {
+  return {
+    disposals: totals.disposals,
+    tackles: totals.tackles,
+    goals: totals.goals,
+    behinds: totals.behinds,
+    marks: totals.marks,
+    hitouts: totals.hitouts,
+    fantasy_points: totals.fantasy,
+    frees_for: totals.freesFor,
+    frees_against: totals.freesAgainst,
+  }
 }
 
-export function benchmarkBand(statKey: keyof TotalsWithDerived, value: number | null | undefined) {
+const PROFILE_STAT_TO_BENCHMARK: Partial<Record<keyof TotalsWithDerived, StatKey>> = {
+  disposals: 'disposals',
+  kicks: 'kicks',
+  handballs: 'handballs',
+  marks: 'marks',
+  tackles: 'tackles',
+  goals: 'goals',
+  behinds: 'behinds',
+  freesFor: 'frees_for',
+  freesAgainst: 'frees_against',
+  clearances: 'clearances',
+  inside50s: 'inside_50s',
+  rebound50s: 'rebound_50s',
+  hitouts: 'hitouts',
+  groundBallGets: 'ground_ball_gets',
+  turnovers: 'turnovers',
+  intercepts: 'intercepts',
+  onePercenters: 'one_percenters',
+  goalAssists: 'goal_assists',
+  contestedPossessions: 'contested_possessions',
+  uncontestedPossessions: 'uncontested_possessions',
+  contestedMarks: 'contested_marks',
+  fantasy: 'fantasy_points',
+  disposalEfficiency: 'disposal_efficiency_pct',
+}
+
+export function gameRatingScore(game: ProfileGame, playerPosition?: string | null) {
+  if (game.manualRating != null && Number.isFinite(game.manualRating)) return Number(game.manualRating)
+  if (!game.totals) return 0
+  return computeGameRatingImpact7(
+    toImpact7Stats(game.totals),
+    game.seasonYear ?? currentSeason,
+    resolveBenchmarkGroup(playerPosition),
+    { quarterLengthMinutes: game.quarterLength, gradeId: game.gradeId }
+  )
+}
+
+export function benchmarkBand(
+  statKey: keyof TotalsWithDerived,
+  value: number | null | undefined,
+  playerPosition?: string | null,
+  season = currentSeason
+) {
   if (value == null || !Number.isFinite(value)) return null
-  const normalized = statKey === 'disposalEfficiency' ? value * 100 : value
-  const threshold: Record<string, [number, number, number]> = {
-    disposals: [15, 22, 30],
-    kicks: [8, 13, 19],
-    handballs: [6, 10, 15],
-    marks: [4, 7, 10],
-    tackles: [3, 6, 9],
-    goals: [1, 2, 4],
-    fantasy: [55, 80, 110],
-    disposalEfficiency: [55, 68, 78],
-  }
-  const [avg, above, elite] = threshold[statKey] ?? [3, 6, 10]
-  if (normalized >= elite) return 'Elite'
-  if (normalized >= above) return 'Above Av'
-  if (normalized >= avg) return 'Average'
-  return 'Rookie'
+  const canonicalKey = PROFILE_STAT_TO_BENCHMARK[statKey]
+  if (!canonicalKey) return null
+  const normalized = canonicalKey === 'disposal_efficiency_pct' ? value * 100 : value
+  return evaluate(canonicalKey, normalized, resolveThresholdBenchmarkGroup(playerPosition), 'game', season)
 }
 
 async function loadFollowers(viewedUserId: string, viewerId: string | null, mode: ProfileMode) {

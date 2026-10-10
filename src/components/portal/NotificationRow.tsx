@@ -228,6 +228,12 @@ function buildNotificationCopy(notification: PortalNotification): NotificationCo
         media: { kind: 'logo', src: squadLogo, fallback: getInitial(home) },
       }
     }
+    case 'team_selection_posted':
+      return {
+        title: 'Team selection posted',
+        body: `${squadLabel} published a new team selection.`,
+        media: { kind: 'logo', src: squadLogo, fallback: squadInitial },
+      }
     case 'vote_card_assigned':
     case 'vote_card_reminder': {
       const awardType = typeof payload.award_type_name === 'string' && payload.award_type_name.trim() ? payload.award_type_name.trim() : 'Vote card'
@@ -261,8 +267,8 @@ function buildNotificationCopy(notification: PortalNotification): NotificationCo
       }
     default:
       return {
-        title: squadLabel,
-        body: actorLabel,
+        title: 'Notification update',
+        body: 'This notification type is not supported on web yet.',
         media: { kind: 'logo', src: squadLogo, fallback: squadInitial },
       }
   }

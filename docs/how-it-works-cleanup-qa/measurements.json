@@ -1,0 +1,782 @@
+[
+  {
+    "engineHeight": 64,
+    "height": 1080,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/10-your-complete-player-profile-1280.webp"
+      }
+    ],
+    "mediaWidth": 583.015625,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-profile-onboarding",
+    "sticky": "sticky",
+    "textWidth": 506.96875,
+    "width": 1920
+  },
+  {
+    "engineHeight": 64,
+    "height": 1080,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/team-selection-1280.webp"
+      }
+    ],
+    "mediaWidth": 583.015625,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-squads-teams",
+    "sticky": "sticky",
+    "textWidth": 506.96875,
+    "width": 1920
+  },
+  {
+    "engineHeight": 64,
+    "height": 1080,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/04-two-trackers-one-game-1280.webp"
+      }
+    ],
+    "mediaWidth": 583.015625,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-live-tracking",
+    "sticky": "sticky",
+    "textWidth": 506.96875,
+    "width": 1920
+  },
+  {
+    "engineHeight": 64,
+    "height": 1080,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/09-professional-match-summaries-1280.webp"
+      }
+    ],
+    "mediaWidth": 583.015625,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-game-summaries",
+    "sticky": "sticky",
+    "textWidth": 506.96875,
+    "width": 1920
+  },
+  {
+    "engineHeight": 64,
+    "height": 1080,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/10-your-complete-player-profile-1280.webp"
+      }
+    ],
+    "mediaWidth": 583.015625,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-player-development",
+    "sticky": "sticky",
+    "textWidth": 506.96875,
+    "width": 1920
+  },
+  {
+    "engineHeight": 64,
+    "height": 1080,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/03-climb-the-leaderboards-1087.webp"
+      }
+    ],
+    "mediaWidth": 583.015625,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-leaderboards",
+    "sticky": "sticky",
+    "textWidth": 506.96875,
+    "width": 1920
+  },
+  {
+    "engineHeight": 64,
+    "height": 1080,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/05-follow-local-footy-1087.webp"
+      }
+    ],
+    "mediaWidth": 583.015625,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-feed-sharing",
+    "sticky": "sticky",
+    "textWidth": 506.96875,
+    "width": 1920
+  },
+  {
+    "engineHeight": 64,
+    "height": 1080,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/07-see-whos-dominating-1087.webp"
+      }
+    ],
+    "mediaWidth": 583.015625,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-ratings-benchmarking",
+    "sticky": "sticky",
+    "textWidth": 506.96875,
+    "width": 1920
+  },
+  {
+    "engineHeight": 64,
+    "height": 1080,
+    "images": [],
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-portal-club-management",
+    "sticky": "sticky",
+    "textWidth": 622.890625,
+    "width": 1920
+  },
+  {
+    "engineHeight": 64,
+    "height": 900,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/10-your-complete-player-profile-640.webp"
+      }
+    ],
+    "mediaWidth": 477.59375,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-profile-onboarding",
+    "sticky": "sticky",
+    "textWidth": 415.296875,
+    "width": 1366
+  },
+  {
+    "engineHeight": 64,
+    "height": 900,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/team-selection-640.webp"
+      }
+    ],
+    "mediaWidth": 477.59375,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-squads-teams",
+    "sticky": "sticky",
+    "textWidth": 415.296875,
+    "width": 1366
+  },
+  {
+    "engineHeight": 64,
+    "height": 900,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/04-two-trackers-one-game-640.webp"
+      }
+    ],
+    "mediaWidth": 477.59375,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-live-tracking",
+    "sticky": "sticky",
+    "textWidth": 415.296875,
+    "width": 1366
+  },
+  {
+    "engineHeight": 64,
+    "height": 900,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/09-professional-match-summaries-640.webp"
+      }
+    ],
+    "mediaWidth": 477.59375,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-game-summaries",
+    "sticky": "sticky",
+    "textWidth": 415.296875,
+    "width": 1366
+  },
+  {
+    "engineHeight": 64,
+    "height": 900,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/10-your-complete-player-profile-640.webp"
+      }
+    ],
+    "mediaWidth": 477.59375,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-player-development",
+    "sticky": "sticky",
+    "textWidth": 415.296875,
+    "width": 1366
+  },
+  {
+    "engineHeight": 64,
+    "height": 900,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/03-climb-the-leaderboards-640.webp"
+      }
+    ],
+    "mediaWidth": 477.59375,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-leaderboards",
+    "sticky": "sticky",
+    "textWidth": 415.296875,
+    "width": 1366
+  },
+  {
+    "engineHeight": 64,
+    "height": 900,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/05-follow-local-footy-640.webp"
+      }
+    ],
+    "mediaWidth": 477.59375,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-feed-sharing",
+    "sticky": "sticky",
+    "textWidth": 415.296875,
+    "width": 1366
+  },
+  {
+    "engineHeight": 64,
+    "height": 900,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/07-see-whos-dominating-640.webp"
+      }
+    ],
+    "mediaWidth": 477.59375,
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-ratings-benchmarking",
+    "sticky": "sticky",
+    "textWidth": 415.296875,
+    "width": 1366
+  },
+  {
+    "engineHeight": 64,
+    "height": 900,
+    "images": [],
+    "overflow": -15,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-portal-club-management",
+    "sticky": "sticky",
+    "textWidth": 622.890625,
+    "width": 1366
+  },
+  {
+    "engineHeight": 64,
+    "height": 768,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/10-your-complete-player-profile-1280.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-profile-onboarding",
+    "sticky": "sticky",
+    "textWidth": 622.890625,
+    "width": 1024
+  },
+  {
+    "engineHeight": 64,
+    "height": 768,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/team-selection-1280.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-squads-teams",
+    "sticky": "sticky",
+    "textWidth": 622.890625,
+    "width": 1024
+  },
+  {
+    "engineHeight": 64,
+    "height": 768,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/04-two-trackers-one-game-1280.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-live-tracking",
+    "sticky": "sticky",
+    "textWidth": 622.890625,
+    "width": 1024
+  },
+  {
+    "engineHeight": 64,
+    "height": 768,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/09-professional-match-summaries-1280.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-game-summaries",
+    "sticky": "sticky",
+    "textWidth": 622.890625,
+    "width": 1024
+  },
+  {
+    "engineHeight": 64,
+    "height": 768,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/10-your-complete-player-profile-1280.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-player-development",
+    "sticky": "sticky",
+    "textWidth": 622.890625,
+    "width": 1024
+  },
+  {
+    "engineHeight": 64,
+    "height": 768,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/03-climb-the-leaderboards-1087.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-leaderboards",
+    "sticky": "sticky",
+    "textWidth": 622.890625,
+    "width": 1024
+  },
+  {
+    "engineHeight": 64,
+    "height": 768,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/05-follow-local-footy-1087.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-feed-sharing",
+    "sticky": "sticky",
+    "textWidth": 622.890625,
+    "width": 1024
+  },
+  {
+    "engineHeight": 64,
+    "height": 768,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/07-see-whos-dominating-1087.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-ratings-benchmarking",
+    "sticky": "sticky",
+    "textWidth": 622.890625,
+    "width": 1024
+  },
+  {
+    "engineHeight": 64,
+    "height": 768,
+    "images": [],
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-portal-club-management",
+    "sticky": "sticky",
+    "textWidth": 622.890625,
+    "width": 1024
+  },
+  {
+    "engineHeight": 260,
+    "height": 1024,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/10-your-complete-player-profile-640.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-profile-onboarding",
+    "sticky": "static",
+    "textWidth": 622.890625,
+    "width": 768
+  },
+  {
+    "engineHeight": 260,
+    "height": 1024,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/team-selection-640.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-squads-teams",
+    "sticky": "static",
+    "textWidth": 622.890625,
+    "width": 768
+  },
+  {
+    "engineHeight": 260,
+    "height": 1024,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/04-two-trackers-one-game-640.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-live-tracking",
+    "sticky": "static",
+    "textWidth": 622.890625,
+    "width": 768
+  },
+  {
+    "engineHeight": 260,
+    "height": 1024,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/09-professional-match-summaries-640.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-game-summaries",
+    "sticky": "static",
+    "textWidth": 622.890625,
+    "width": 768
+  },
+  {
+    "engineHeight": 260,
+    "height": 1024,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/10-your-complete-player-profile-640.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-player-development",
+    "sticky": "static",
+    "textWidth": 622.890625,
+    "width": 768
+  },
+  {
+    "engineHeight": 260,
+    "height": 1024,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/03-climb-the-leaderboards-640.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-leaderboards",
+    "sticky": "static",
+    "textWidth": 622.890625,
+    "width": 768
+  },
+  {
+    "engineHeight": 260,
+    "height": 1024,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/05-follow-local-footy-640.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-feed-sharing",
+    "sticky": "static",
+    "textWidth": 622.890625,
+    "width": 768
+  },
+  {
+    "engineHeight": 260,
+    "height": 1024,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/07-see-whos-dominating-640.webp"
+      }
+    ],
+    "mediaWidth": 640,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-ratings-benchmarking",
+    "sticky": "static",
+    "textWidth": 622.890625,
+    "width": 768
+  },
+  {
+    "engineHeight": 260,
+    "height": 1024,
+    "images": [],
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-portal-club-management",
+    "sticky": "static",
+    "textWidth": 622.890625,
+    "width": 768
+  },
+  {
+    "engineHeight": 260,
+    "height": 844,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/10-your-complete-player-profile-640.webp"
+      }
+    ],
+    "mediaWidth": 345,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-profile-onboarding",
+    "sticky": "static",
+    "textWidth": 345,
+    "width": 390
+  },
+  {
+    "engineHeight": 260,
+    "height": 844,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/team-selection-640.webp"
+      }
+    ],
+    "mediaWidth": 345,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-squads-teams",
+    "sticky": "static",
+    "textWidth": 345,
+    "width": 390
+  },
+  {
+    "engineHeight": 260,
+    "height": 844,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/04-two-trackers-one-game-640.webp"
+      }
+    ],
+    "mediaWidth": 345,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-live-tracking",
+    "sticky": "static",
+    "textWidth": 345,
+    "width": 390
+  },
+  {
+    "engineHeight": 260,
+    "height": 844,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/09-professional-match-summaries-640.webp"
+      }
+    ],
+    "mediaWidth": 345,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-game-summaries",
+    "sticky": "static",
+    "textWidth": 345,
+    "width": 390
+  },
+  {
+    "engineHeight": 260,
+    "height": 844,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/10-your-complete-player-profile-640.webp"
+      }
+    ],
+    "mediaWidth": 345,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-player-development",
+    "sticky": "static",
+    "textWidth": 345,
+    "width": 390
+  },
+  {
+    "engineHeight": 260,
+    "height": 844,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/03-climb-the-leaderboards-640.webp"
+      }
+    ],
+    "mediaWidth": 345,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-leaderboards",
+    "sticky": "static",
+    "textWidth": 345,
+    "width": 390
+  },
+  {
+    "engineHeight": 260,
+    "height": 844,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/05-follow-local-footy-640.webp"
+      }
+    ],
+    "mediaWidth": 345,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-feed-sharing",
+    "sticky": "static",
+    "textWidth": 345,
+    "width": 390
+  },
+  {
+    "engineHeight": 260,
+    "height": 844,
+    "images": [
+      {
+        "loaded": true,
+        "src": "http://127.0.0.1:5174/landing/images/07-see-whos-dominating-640.webp"
+      }
+    ],
+    "mediaWidth": 345,
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-ratings-benchmarking",
+    "sticky": "static",
+    "textWidth": 345,
+    "width": 390
+  },
+  {
+    "engineHeight": 260,
+    "height": 844,
+    "images": [],
+    "overflow": 0,
+    "panels": 1,
+    "placeholder": false,
+    "selected": "tab-portal-club-management",
+    "sticky": "static",
+    "textWidth": 345,
+    "width": 390
+  }
+]

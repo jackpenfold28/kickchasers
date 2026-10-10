@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { authCallbackUrl } from '@/lib/siteUrl'
+import { getSafeReturnPath } from '@/lib/canonical/route-safety'
 import {
   AuthShell,
   authFieldClassName,
@@ -12,6 +13,9 @@ import {
 
 export default function Register() {
   const navigate = useNavigate()
+  const [query] = useSearchParams()
+  const redirectTo = getSafeReturnPath(query.get('redirect'))
+  const encodedRedirect = encodeURIComponent(redirectTo)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -36,7 +40,7 @@ export default function Register() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: authCallbackUrl },
+      options: { emailRedirectTo: `${authCallbackUrl}?redirect=${encodedRedirect}` },
     })
     setBusy(false)
 
@@ -46,7 +50,7 @@ export default function Register() {
     }
 
     setInfo('Account created. Check your email and verify the account to continue.')
-    navigate('/check-email?new=1', { replace: true })
+    navigate(`/check-email?new=1&redirect=${encodedRedirect}`, { replace: true })
   }
 
   return (
@@ -57,7 +61,7 @@ export default function Register() {
       footer={
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="text-sm text-slate-500">Already set up?</span>
-          <Link to="/sign-in" className={authLinkClassName}>
+          <Link to={`/sign-in?redirect=${encodedRedirect}`} className={authLinkClassName}>
             Log in instead
           </Link>
         </div>

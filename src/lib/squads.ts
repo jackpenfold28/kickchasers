@@ -1,4 +1,8 @@
 import { supabase } from '@/lib/supabase'
+import {
+  canonicalizeOptionalPlayerPosition,
+  type CanonicalPlayerPosition,
+} from '@/lib/canonical/positions'
 
 export type SquadSummary = {
   id: string
@@ -474,8 +478,9 @@ export async function updateMemberNumber(memberId: string, jersey: number | null
   if (error) throw error
 }
 
-export async function updateMemberPosition(memberId: string, position: string | null) {
-  const { error } = await supabase.from('squad_members').update({ position }).eq('id', memberId)
+export async function updateMemberPosition(memberId: string, position: CanonicalPlayerPosition | null) {
+  const canonicalPosition = canonicalizeOptionalPlayerPosition(position)
+  const { error } = await supabase.from('squad_members').update({ position: canonicalPosition }).eq('id', memberId)
   if (error) throw error
 }
 

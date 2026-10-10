@@ -1,3 +1,4 @@
+import type { DeferredDashboardSection } from '@/lib/canonical/dashboard-loading'
 import { getLeaderboard, type LeaderboardRow } from '@/lib/portal-stats'
 import { listNotifications, type PortalNotification } from '@/lib/portal-notifications'
 import { loadQuick6Dataset, loadQuick6Summary, type Quick6Summary } from '@/lib/portal-quick6'
@@ -64,9 +65,15 @@ export type DashboardActivityItem = {
   subtitle: string
   createdAt: string | null
   href: string
+  imageUrl: string | null
+  imageLabel: string
 }
 
+export type DashboardPalette = { primary: string | null; secondary: string | null }
+
 export type DashboardProfileSnapshot = {
+  homeClubId: string | null
+  palette: DashboardPalette
   name: string | null
   handle: string | null
   avatarUrl: string | null
@@ -89,7 +96,12 @@ export type DashboardProfileSnapshot = {
   } | null
 }
 
+export type DashboardDeferredSection = DeferredDashboardSection
+
 export type DashboardData = {
+  pendingSections?: DashboardDeferredSection[]
+  sectionErrors?: Partial<Record<DashboardDeferredSection, string>>
+  squadPalettes: Record<string, DashboardPalette>
   selectedSeasonYear: number | null
   availableSeasonYears: number[]
   matchFocus: MatchFocusGame | null
@@ -261,6 +273,10 @@ async function resolveLogoPrimaryColor(logoUrl: string | null | undefined, fallb
       }
     }
     image.onerror = () => resolve(fallbackColor)
+    const timer = window.setTimeout(() => { image.onload = null; image.onerror = null; resolve(fallbackColor) }, 1500)
+    const onLoad = image.onload
+    image.onload = (event) => { window.clearTimeout(timer); onLoad?.call(image, event) }
+    image.onerror = () => { window.clearTimeout(timer); resolve(fallbackColor) }
     image.src = logoUrl
   })
 
@@ -446,7 +462,7 @@ async function loadProfileSnapshot(
       .maybeSingle(),
     supabase
       .from('squad_members')
-      .select('jersey_number,position,role,status,squads(name)')
+      .select('jersey_number,position,role,status,squads(name,primary_color_hex,secondary_color_hex)')
       .eq('user_id', userId)
       .eq('status', 'accepted')
       .order('role', { ascending: true })
@@ -467,7 +483,7 @@ async function loadProfileSnapshot(
     jersey_number?: number | null
     position?: string | null
     role?: string | null
-    squads?: { name?: string | null } | null
+    squads?: { name?: string | null; primary_color_hex?: string | null; secondary_color_hex?: string | null } | null
   }>
   const manualRows = ((manualRes.data ?? []) as ManualFormRow[])
     .filter((row) => (selectedSeasonYear == null ? true : parseSeasonYear(row.match_date) === selectedSeasonYear))
@@ -495,6 +511,8 @@ async function loadProfileSnapshot(
     : null
 
   return {
+    homeClubId: profile?.home_club_id ?? null,
+    palette: { primary: primaryMembership?.squads?.primary_color_hex ?? null, secondary: primaryMembership?.squads?.secondary_color_hex ?? null },
     name: profile?.name ?? null,
     handle: profile?.handle ?? null,
     avatarUrl: profile ? resolvePublicUrl(profile.avatar_url ?? profile.avatar_path ?? null, 'profile-avatars') : null,
@@ -615,6 +633,8 @@ async function loadLiveAroundMe(mySquads: SquadSummary[], followedSquads: SquadS
 function buildRecentActivity(notifications: PortalNotification[], games: GameLogRow[]) {
   const notificationItems: DashboardActivityItem[] = notifications.slice(0, 4).map((notification) => ({
     id: `notification:${notification.id}`,
+    imageUrl: notification.type.includes('game') || notification.type === 'team_selection_posted' ? notification.squadLogoUrl : notification.actorAvatarUrl || notification.squadLogoUrl,
+    imageLabel: notification.type.includes('game') || notification.type === 'team_selection_posted' ? notification.squadName || 'Squad' : notification.actorName || 'Player',
     kind: 'notification',
     title: notification.actorName || notification.actorHandle || 'KickChasers update',
     subtitle: notification.squadName
@@ -626,6 +646,8 @@ function buildRecentActivity(notifications: PortalNotification[], games: GameLog
 
   const gameItems: DashboardActivityItem[] = games.slice(0, 4).map((game) => ({
     id: `game:${game.id}:${game.manualId || 'tracked'}`,
+    imageUrl: game.squadLogoUrl || game.opponentLogoUrl,
+    imageLabel: game.squadName || game.opponent || 'Squad',
     kind: 'game',
     title: `${game.squadName || 'Game'} vs ${game.opponent || 'Opponent'}`,
     subtitle: game.isManual ? 'Manual game summary available' : 'Tracked game summary ready',
@@ -638,25 +660,24 @@ function buildRecentActivity(notifications: PortalNotification[], games: GameLog
     .slice(0, 6)
 }
 
-export async function loadDashboardData(userId: string, selectedSeasonYear?: number | null): Promise<DashboardData> {
-  const [games, notifications, mySquads, followedSquads] = await Promise.all([
+export async function loadDashboardData(userId: string, selectedSeasonYear?: number | null, onUpdate?: (patch: Partial<DashboardData>, completed?: DashboardDeferredSection) => void): Promise<DashboardData> {
+  const [games, notifications, mySquads] = await Promise.all([
     listUserGames(userId),
     listNotifications(userId),
     listMySquads(userId),
-    listFollowedClubs(userId),
   ])
+
+  const paletteIds = [...new Set(mySquads.map((squad) => squad.id))]
+  const [quick6Dataset, paletteRes] = await Promise.all([
+    loadQuick6Dataset(userId, games),
+    paletteIds.length ? supabase.from('squads').select('id,primary_color_hex,secondary_color_hex').in('id', paletteIds) : Promise.resolve({ data: [], error: null }),
+  ])
+  if (paletteRes.error) throw paletteRes.error
+  const squadPalettes: Record<string, DashboardPalette> = Object.fromEntries((paletteRes.data ?? []).map((squad) => [squad.id, { primary: squad.primary_color_hex ?? null, secondary: squad.secondary_color_hex ?? null }]))
 
   const matchFocus = chooseMatchFocus(games)
 
   const recentGames = games.slice(0, 5)
-
-  const [quick6Dataset, liveAroundMe, matchFocusTints, recentGameTints, matchFocusLeague] = await Promise.all([
-    loadQuick6Dataset(userId, games),
-    loadLiveAroundMe(mySquads, followedSquads),
-    loadMatchFocusTints(matchFocus),
-    loadRecentGameTints(recentGames),
-    loadMatchFocusLeague(matchFocus),
-  ])
 
   const currentYear = new Date().getFullYear()
   const effectiveSeasonYear =
@@ -667,23 +688,18 @@ export async function loadDashboardData(userId: string, selectedSeasonYear?: num
         : (quick6Dataset.availableSeasonYears[0] ?? null)
   const seasonTotals = sumSeasonTotals(quick6Dataset.loggedGames, effectiveSeasonYear)
 
-  const [profile, quick6, leaderboard] = await Promise.all([
+  const [profile, quick6] = await Promise.all([
     loadProfileSnapshot(
       userId,
       games.filter((game) => parseSeasonYear(game.date) === effectiveSeasonYear),
       effectiveSeasonYear,
       seasonTotals
     ),
-    loadQuick6Summary(userId, games, effectiveSeasonYear),
-    getLeaderboard({
-      seasonYear: effectiveSeasonYear ?? new Date().getFullYear(),
-      stateCode: null,
-      leagueId: null,
-      clubId: null,
-      ageRange: 'Any',
-      statKey: 'disposals',
-    }),
+    loadQuick6Summary(userId, games, effectiveSeasonYear, quick6Dataset),
   ])
+
+  const homeSquad = mySquads.find((squad) => profile.homeClubId && squad.clubId === profile.homeClubId && squadPalettes[squad.id]?.primary)
+  if (homeSquad) profile.palette = squadPalettes[homeSquad.id]
 
   const actionable = notifications
     .filter((notification) => isActionableNotification(notification.type))
@@ -713,20 +729,56 @@ export async function loadDashboardData(userId: string, selectedSeasonYear?: num
       competitionLabel: squad.leagueShortName ?? squad.leagueName ?? 'League TBC',
     }))
 
-  return {
+  let snapshot: DashboardData = {
+    squadPalettes,
     selectedSeasonYear: effectiveSeasonYear,
     availableSeasonYears: quick6.availableSeasonYears,
     matchFocus,
-    matchFocusTints,
-    recentGameTints,
-    matchFocusLeague,
+    matchFocusTints: { home: '#29486B', away: '#21433D' },
+    recentGameTints: {},
+    matchFocusLeague: { name: null, logoPath: null, logoUrl: null },
     actionInbox: actionable,
     recentGames,
     squads,
     profile,
     quick6,
-    liveAroundMe,
-    leaderboard: leaderboard.slice(0, 5),
+    liveAroundMe: [],
+    leaderboard: [],
+    pendingSections: ['liveAroundMe', 'leaderboard'],
+    sectionErrors: {},
     recentActivity: buildRecentActivity(notifications, games),
   }
+
+  onUpdate?.(snapshot)
+  const publish = (patch: Partial<DashboardData>, completed?: DashboardDeferredSection) => {
+    snapshot = { ...snapshot, ...patch, pendingSections: completed ? snapshot.pendingSections?.filter((key) => key !== completed) : snapshot.pendingSections }
+    onUpdate?.(patch, completed)
+  }
+  const section = async (key: DashboardDeferredSection, task: () => Promise<DashboardLiveGame[] | LeaderboardRow[]>) => {
+    try {
+      const rows = await task()
+      publish({ [key]: rows }, key)
+    } catch {
+      publish({ sectionErrors: { ...snapshot.sectionErrors, [key]: 'Could not load this section. Please try again.' } }, key)
+    }
+  }
+  await Promise.all([
+    section('liveAroundMe', async () => loadLiveAroundMe(mySquads, await listFollowedClubs(userId))),
+    section('leaderboard', () => loadDashboardLeaderboard(effectiveSeasonYear)),
+    // Decorative enrichment never blocks the useful Dashboard or turns it into an error page.
+    loadMatchFocusTints(matchFocus).then((matchFocusTints) => publish({ matchFocusTints })).catch(() => {}),
+    loadRecentGameTints(recentGames).then((recentGameTints) => publish({ recentGameTints })).catch(() => {}),
+    loadMatchFocusLeague(matchFocus).then((matchFocusLeague) => publish({ matchFocusLeague })).catch(() => {}),
+  ])
+  return snapshot
+}
+
+function loadDashboardLeaderboard(seasonYear: number | null) {
+  return getLeaderboard({ seasonYear: seasonYear ?? new Date().getFullYear(), stateCode: null, leagueId: null, clubId: null, ageRange: 'Any', statKey: 'disposals' })
+}
+
+export async function retryDashboardSection(section: DashboardDeferredSection, userId: string, seasonYear: number | null) {
+  if (section === 'leaderboard') return { leaderboard: await loadDashboardLeaderboard(seasonYear) }
+  const [squads, followed] = await Promise.all([listMySquads(userId), listFollowedClubs(userId)])
+  return { liveAroundMe: await loadLiveAroundMe(squads, followed) }
 }

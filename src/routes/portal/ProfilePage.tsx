@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   Check,
   Dumbbell,
   Edit,
-  Flashlight,
   MoreVertical,
   Shield,
   Star,
@@ -32,8 +31,12 @@ import {
   type TotalsWithDerived,
 } from '@/lib/portal-profile'
 import { supabase } from '@/lib/supabase'
+import { PostActivityCard } from '@/components/portal/PostActivityCard'
+import { PlayerCardAlbum } from '@/components/portal/PlayerCardAlbum'
+import { useProfilePosts } from '@/hooks/useProfilePosts'
+import { usePlayerCardAlbum } from '@/hooks/usePlayerCardAlbum'
 
-type PerformanceTab = 'allStats' | 'allGames' | 'awards' | 'posts'
+type PerformanceTab = 'allStats' | 'allGames' | 'awards' | 'posts' | 'album'
 type MatchSort = 'round' | 'opponent' | 'disposals' | 'goals' | 'af' | 'rating'
 
 const QUICK_STATS: { key: keyof TotalsWithDerived; label: string }[] = [
@@ -115,6 +118,47 @@ function EmptyPanel({ children }: { children: string }) {
   return (
     <div className="rounded-2xl bg-[#101A2A] px-4 py-8 text-center text-sm font-semibold text-slate-400 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
       {children}
+    </div>
+  )
+}
+
+function ProfilePosts({
+  posts,
+  authorId,
+  authorName,
+  ownProfile,
+}: {
+  posts: ReturnType<typeof useProfilePosts>
+  authorId: string
+  authorName: string
+  ownProfile: boolean
+}) {
+  if (posts.state === 'loading' || posts.state === 'idle') return <EmptyPanel>Loading posts...</EmptyPanel>
+  if (posts.state === 'error') {
+    return (
+      <div className="rounded-2xl border border-red-400/20 bg-red-500/10 p-5 text-sm font-bold text-red-200">
+        <p>Unable to load posts right now.</p>
+        <button onClick={() => void posts.refresh()} className="mt-3 text-xs font-black uppercase tracking-wide text-white hover:text-[#39FF88]">Try again</button>
+      </div>
+    )
+  }
+  if (posts.access === 'blocked') return <EmptyPanel>Posts are unavailable for this profile.</EmptyPanel>
+  if (!posts.items.length) return <EmptyPanel>{ownProfile ? 'You have not posted yet.' : 'No posts yet.'}</EmptyPanel>
+
+  return (
+    <div className="space-y-4">
+      {posts.items.map((post) => (
+        <PostActivityCard key={post.id} post={post} authorId={authorId} authorName={authorName} />
+      ))}
+      {posts.hasMore ? (
+        <button
+          onClick={() => void posts.loadMore()}
+          disabled={posts.loadingMore}
+          className="btn btn-secondary w-full disabled:cursor-wait disabled:opacity-60"
+        >
+          {posts.loadingMore ? 'Loading more posts...' : 'Load more posts'}
+        </button>
+      ) : null}
     </div>
   )
 }
@@ -206,7 +250,7 @@ function ProfileHero({
                 </div>
                 {mode === 'self' ? (
                   <div className="flex flex-wrap gap-2">
-                    <Link to="/onboarding?mode=edit" className="btn btn-secondary inline-flex items-center gap-2">
+                    <Link to="/onboarding?mode=edit&returnTo=%2Fprofile" className="btn btn-secondary inline-flex items-center gap-2">
                       <Edit className="h-4 w-4" />
                       Edit profile
                     </Link>
@@ -315,11 +359,13 @@ function SeasonTotals({ games, seasonYear }: { games: ProfileGame[]; seasonYear:
 
 function Highlights({
   baseGames,
+  playerPosition,
   includeTrials,
   setIncludeTrials,
   onOpenGame,
 }: {
   baseGames: ProfileGame[]
+  playerPosition: string | null
   includeTrials: boolean
   setIncludeTrials: (value: boolean) => void
   onOpenGame: (game: ProfileGame) => void
@@ -327,7 +373,7 @@ function Highlights({
   const configs = [
     { key: 'disposals', title: 'Most Disposals', icon: <Dumbbell className="h-5 w-5" color={ACCENT} />, getValue: (game: ProfileGame) => game.totals?.disposals ?? 0, decimals: 0 },
     { key: 'goals', title: 'Most Goals', icon: <IconAsset src="/assets/icons/afl/posts2.svg" className="h-6 w-6" />, getValue: (game: ProfileGame) => game.totals?.goals ?? 0, decimals: 0 },
-    { key: 'rating', title: 'Best Game Rating', icon: <Star className="h-5 w-5" color={STAR_COLOR} fill={STAR_COLOR} />, getValue: gameRatingScore, decimals: 1 },
+    { key: 'rating', title: 'Best Impact 7', icon: <Star className="h-5 w-5" color={STAR_COLOR} fill={STAR_COLOR} />, getValue: (game: ProfileGame) => gameRatingScore(game, playerPosition), decimals: 1 },
     { key: 'fantasy', title: 'Highest Fantasy', icon: <Zap className="h-5 w-5" color={ACCENT} />, getValue: (game: ProfileGame) => game.totals?.fantasy ?? 0, decimals: 0 },
     { key: 'tackles', title: 'Most Tackles', icon: <Shield className="h-5 w-5 text-white" />, getValue: (game: ProfileGame) => game.totals?.tackles ?? 0, decimals: 0 },
   ]
@@ -438,9 +484,11 @@ function Quick6({ summaries }: { summaries: Record<StatScope, ReturnType<typeof 
 function AllStats({
   summaries,
   seasonYear,
+  playerPosition,
 }: {
   summaries: Record<StatScope, ReturnType<typeof computeScopeStats>>
   seasonYear: number | null
+  playerPosition: string | null
 }) {
   const [scope, setScope] = useState<StatScope>('season')
   const active = summaries[scope]
@@ -464,7 +512,7 @@ function AllStats({
               const ref = reference.averages[stat.key]
               const canCompare = active.available && reference.available && value != null && ref != null
               const delta = canCompare ? value - ref : null
-              const band = benchmarkBand(stat.key, value)
+              const band = benchmarkBand(stat.key, value, playerPosition, seasonYear ?? undefined)
               return (
                 <div key={stat.key} className={`flex items-center justify-between gap-4 px-4 py-3 ${index % 2 ? 'bg-white/[0.025]' : ''}`}>
                   <div className="flex min-w-0 items-center gap-3">
@@ -504,10 +552,12 @@ function AllStats({
 function AllGames({
   games,
   mode,
+  playerPosition,
   onOpenGame,
 }: {
   games: ProfileGame[]
   mode: 'self' | 'public'
+  playerPosition: string | null
   onOpenGame: (game: ProfileGame) => void
 }) {
   const [sort, setSort] = useState<MatchSort>('round')
@@ -519,7 +569,7 @@ function AllGames({
       if (sort === 'disposals') return game.totals?.disposals ?? 0
       if (sort === 'goals') return game.totals?.goals ?? 0
       if (sort === 'af') return game.totals?.fantasy ?? 0
-      return gameRatingScore(game)
+      return gameRatingScore(game, playerPosition)
     }
     return [...games].sort((a, b) => {
       const av = getValue(a)
@@ -529,7 +579,7 @@ function AllGames({
       if (av === bv) return 0
       return (av > bv ? 1 : -1) * direction
     })
-  }, [dir, games, sort])
+  }, [dir, games, playerPosition, sort])
 
   function toggle(next: MatchSort) {
     if (sort === next) setDir((current) => (current === 'asc' ? 'desc' : 'asc'))
@@ -557,7 +607,7 @@ function AllGames({
       </div>
       {sortedGames.length ? (
         sortedGames.map((game) => {
-          const rating = game.isTrackedOnly ? 'T' : game.totals ? gameRatingScore(game).toFixed(1).replace(/\.0$/, '') : '—'
+          const rating = game.isTrackedOnly ? 'T' : game.totals ? gameRatingScore(game, playerPosition).toFixed(1).replace(/\.0$/, '') : '—'
           return (
             <button
               key={`${game.id}:${game.manualId ?? 'tracked'}`}
@@ -600,6 +650,7 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const params = useParams<{ id?: string }>()
   const mode: 'self' | 'public' = params.id ? 'public' : 'self'
+  const [searchParams, setSearchParams] = useSearchParams()
   const [viewerId, setViewerId] = useState<string | null>(null)
   const [dataset, setDataset] = useState<ProfileDataset | null>(null)
   const [loading, setLoading] = useState(true)
@@ -608,9 +659,38 @@ export default function ProfilePage() {
   const [statsUnavailable, setStatsUnavailable] = useState(false)
   const [selectedYear, setSelectedYear] = useState<number | null>(null)
   const [includeTrials, setIncludeTrials] = useState(false)
-  const [activeTab, setActiveTab] = useState<PerformanceTab>('allStats')
+  const [activeTab, setActiveTab] = useState<PerformanceTab>(() => mode === 'self' && searchParams.get('tab') === 'album' ? 'album' : 'allStats')
 
   const viewedUserId = params.id ?? viewerId
+  const profilePosts = useProfilePosts({
+    authorId: viewedUserId,
+    viewerId,
+    mode,
+    enabled: activeTab === 'posts' && Boolean(dataset),
+  })
+  const playerCardAlbum = usePlayerCardAlbum({
+    ownerProfileId: mode === 'self' ? viewedUserId : null,
+    viewerUserId: viewerId,
+    enabled: mode === 'self' && activeTab === 'album' && Boolean(dataset),
+  })
+  const performanceTabs = useMemo<Array<[PerformanceTab, string]>>(() => {
+    const tabs: Array<[PerformanceTab, string]> = [
+      ['allStats', 'All Stats'],
+      ['allGames', 'All Games'],
+      ['awards', 'Awards'],
+      ['posts', 'Posts'],
+    ]
+    if (mode === 'self') tabs.push(['album', 'Album'])
+    return tabs
+  }, [mode])
+
+  const selectPerformanceTab = useCallback((tab: PerformanceTab) => {
+    setActiveTab(tab)
+    const next = new URLSearchParams(searchParams)
+    if (tab === 'album') next.set('tab', 'album')
+    else next.delete('tab')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     let active = true
@@ -628,6 +708,10 @@ export default function ProfilePage() {
       subscription?.subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    if (mode === 'public' && activeTab === 'album') setActiveTab('allStats')
+  }, [activeTab, mode])
 
   useEffect(() => {
     if (!viewedUserId) {
@@ -723,7 +807,7 @@ export default function ProfilePage() {
         identity={dataset.identity}
         mode={mode}
         viewerId={viewerId}
-        onFollowChanged={(next) =>
+        onFollowChanged={(next) => {
           setDataset((current) =>
             current
               ? {
@@ -739,7 +823,8 @@ export default function ProfilePage() {
                 }
               : current
           )
-        }
+          if (activeTab === 'posts') void profilePosts.refresh()
+        }}
       />
 
       <main className="mx-auto max-w-6xl space-y-5 px-4 sm:px-8">
@@ -752,22 +837,17 @@ export default function ProfilePage() {
         ) : (
           <>
             <SeasonTotals games={seasonGames} seasonYear={selectedYear} />
-            <Highlights baseGames={highlightBase} includeTrials={includeTrials} setIncludeTrials={setIncludeTrials} onOpenGame={onOpenGame} />
+            <Highlights baseGames={highlightBase} playerPosition={dataset.identity.playerPosition} includeTrials={includeTrials} setIncludeTrials={setIncludeTrials} onOpenGame={onOpenGame} />
             <Quick6 summaries={summaries} />
 
             <section className="space-y-4">
               <div>
                 <h2 className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-slate-500">Performance</h2>
                 <div className="flex gap-5 overflow-x-auto border-b border-white/10">
-                  {([
-                    ['allStats', 'All Stats'],
-                    ['allGames', 'All Games'],
-                    ['awards', 'Awards'],
-                    ['posts', 'Posts'],
-                  ] as const).map(([key, label]) => (
+                  {performanceTabs.map(([key, label]) => (
                     <button
                       key={key}
-                      onClick={() => setActiveTab(key)}
+                      onClick={() => selectPerformanceTab(key)}
                       className={`relative pb-3 text-sm font-black transition ${
                         activeTab === key ? 'text-[#39FF88]' : 'text-slate-500 hover:text-white'
                       }`}
@@ -782,19 +862,23 @@ export default function ProfilePage() {
               {matchesLoading ? (
                 <EmptyPanel>Loading matches...</EmptyPanel>
               ) : activeTab === 'allStats' ? (
-                <AllStats summaries={summaries} seasonYear={selectedYear} />
+                <AllStats summaries={summaries} seasonYear={selectedYear} playerPosition={dataset.identity.playerPosition} />
               ) : activeTab === 'allGames' ? (
-                <AllGames games={seasonGames} mode={mode} onOpenGame={onOpenGame} />
+                <AllGames games={seasonGames} mode={mode} playerPosition={dataset.identity.playerPosition} onOpenGame={onOpenGame} />
               ) : activeTab === 'awards' ? (
                 <div className="rounded-2xl bg-[#101A2A] p-8 text-center">
                   <Trophy className="mx-auto h-10 w-10 text-slate-500" />
                   <p className="mt-3 text-sm font-bold text-slate-400">No awards yet...</p>
                 </div>
+              ) : activeTab === 'posts' ? (
+                <ProfilePosts
+                  posts={profilePosts}
+                  authorId={dataset.identity.userId}
+                  authorName={dataset.identity.name?.trim() || formatHandle(dataset.identity.handle) || 'Kickchaser'}
+                  ownProfile={mode === 'self'}
+                />
               ) : (
-                <div className="rounded-2xl bg-[#101A2A] p-8 text-center">
-                  <Flashlight className="mx-auto h-10 w-10 text-slate-500" />
-                  <p className="mt-3 text-sm font-bold text-slate-400">No posts yet.</p>
-                </div>
+                <PlayerCardAlbum album={playerCardAlbum} />
               )}
             </section>
           </>

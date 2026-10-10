@@ -1,0 +1,107 @@
+[
+  {
+    "height": 892.47900390625,
+    "id": "panel-profile-onboarding",
+    "image": [
+      {
+        "loaded": true,
+        "src": "/mockups/landing/10-your-complete-player-profile.png",
+        "width": 278.571533203125
+      }
+    ],
+    "placeholder": false,
+    "title": "Create an account and connect it to real football context"
+  },
+  {
+    "height": 906.413330078125,
+    "id": "panel-squads-teams",
+    "image": [
+      {
+        "loaded": true,
+        "src": "/mockups/landing/07-see-whos-dominating.png",
+        "width": 278.551513671875
+      }
+    ],
+    "placeholder": false,
+    "title": "Build the structure that connects clubs, rosters, and match-day ownership"
+  },
+  {
+    "height": 840.5,
+    "id": "panel-live-tracking",
+    "image": [
+      {
+        "loaded": true,
+        "src": "/mockups/landing/02-track-every-afl-stat-live.png",
+        "width": 278.578125
+      }
+    ],
+    "placeholder": false,
+    "title": "Run structured live AFL stat capture from real match-day workflows"
+  },
+  {
+    "height": 906.5,
+    "id": "panel-game-summaries",
+    "image": [
+      {
+        "loaded": true,
+        "src": "/mockups/landing/09-professional-match-summaries.png",
+        "width": 278.578125
+      }
+    ],
+    "placeholder": false,
+    "title": "Turn one tracked game into readable outputs immediately after the siren"
+  },
+  {
+    "height": 866.5,
+    "id": "panel-player-development",
+    "image": [],
+    "placeholder": true,
+    "title": "Extend every game into a long-term performance record"
+  },
+  {
+    "height": 880.5,
+    "id": "panel-leaderboards",
+    "image": [
+      {
+        "loaded": true,
+        "src": "/mockups/landing/03-climb-the-leaderboards.png",
+        "width": 278.578125
+      }
+    ],
+    "placeholder": false,
+    "title": "Make performance visible across leagues, clubs, and stat categories"
+  },
+  {
+    "height": 967.25,
+    "id": "panel-feed-sharing",
+    "image": [
+      {
+        "loaded": true,
+        "src": "/mockups/landing/11-instant-club-content-creation.png",
+        "width": 278.578125
+      }
+    ],
+    "placeholder": false,
+    "title": "Share real stat-backed performances instead of generic social content"
+  },
+  {
+    "height": 958.5,
+    "id": "panel-ratings-benchmarking",
+    "image": [],
+    "placeholder": true,
+    "title": "Interpret output against benchmarks instead of leaving stats as raw totals"
+  },
+  {
+    "height": 889.25,
+    "id": "panel-portal-club-management",
+    "image": [
+      {
+        "loaded": true,
+        "src": "/mockups/landing/10-your-complete-player-profile.png",
+        "width": 278.578125
+      }
+    ],
+    "placeholder": false,
+    "title": "Carry live data into structured desktop workflows for real clubs"
+  }
+]

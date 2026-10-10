@@ -1,6 +1,7 @@
 import { resolveLogoPublicUrl } from '@/lib/logo-storage'
 import { supabase } from '@/lib/supabase'
 import type { GameLogRow } from '@/lib/portal-games'
+import { isEligibleMatchDayGame, resolveMatchDayLeagueId, sortMatchDayGames } from '@/lib/canonical/games-parity-contract'
 
 const LIVE_STATUSES = ['live', 'in_progress'] as const
 const FINAL_STATUSES = ['final', 'complete', 'completed', 'finished'] as const
@@ -50,6 +51,7 @@ type GameCandidate = {
   round: number | null
   status: string | null
   opponent_logo_path: string | null
+  tracker_mode: string | null
 }
 
 function normalizeStatus(status: string | null | undefined) {
@@ -114,17 +116,19 @@ function toLeagueModel(row: LeagueLookupRow, clubCounts: Map<string, number>): M
 async function listGameCandidates(kind: 'live' | 'recent') {
   let query = supabase
     .from('games')
-    .select('id,opponent,date,venue,round,status,opponent_logo_path')
+    .select('id,opponent,date,venue,round,status,opponent_logo_path,tracker_mode')
 
   if (kind === 'live') {
     query = query
-      .in('status', [...LIVE_STATUSES])
+      .eq('status', 'live')
+      .neq('tracker_mode', 'team_stats_game')
       .order('date', { ascending: true })
       .limit(32)
   } else {
     const threshold = new Date(Date.now() - RECENT_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString()
     query = query
-      .in('status', [...FINAL_STATUSES])
+      .in('status', ['final', 'completed'])
+      .neq('tracker_mode', 'team_stats_game')
       .gte('date', threshold)
       .order('date', { ascending: false })
       .limit(64)
@@ -140,24 +144,35 @@ async function loadGameScores(gameIds: string[]) {
     return {
       scoreMap: new Map<string, { hg: number; hb: number; ag: number; ab: number }>(),
       countedEventCountByGameId: new Map<string, number>(),
+      latestEventByGameId: new Map<string, { createdAt: string | null; quarter: number | null; clockLabel: string | null }>(),
     }
   }
 
   const { data, error } = await supabase
     .from('v_counted_events')
-    .select('game_id,team_side,stat_key')
+    .select('game_id,team_side,stat_key,quarter,quarter_clock_label,created_at')
     .in('game_id', gameIds)
 
   if (error) throw error
 
   const scoreMap = new Map<string, { hg: number; hb: number; ag: number; ab: number }>()
   const countedEventCountByGameId = new Map<string, number>()
+  const latestEventByGameId = new Map<string, { createdAt: string | null; quarter: number | null; clockLabel: string | null }>()
 
   ;(data ?? []).forEach((row: any) => {
     const gameId = row.game_id as string | null
     if (!gameId) return
 
     countedEventCountByGameId.set(gameId, (countedEventCountByGameId.get(gameId) ?? 0) + 1)
+    const createdAt = row.created_at as string | null
+    const currentLatest = latestEventByGameId.get(gameId)
+    if (!currentLatest || parseGameTime(createdAt) >= parseGameTime(currentLatest.createdAt)) {
+      latestEventByGameId.set(gameId, {
+        createdAt,
+        quarter: row.quarter ?? null,
+        clockLabel: row.quarter_clock_label ?? null,
+      })
+    }
 
     const statKey = String(row.stat_key || '').toUpperCase()
     if (statKey !== 'G' && statKey !== 'GOAL' && statKey !== 'B' && statKey !== 'BEHIND') return
@@ -175,7 +190,7 @@ async function loadGameScores(gameIds: string[]) {
     scoreMap.set(gameId, current)
   })
 
-  return { scoreMap, countedEventCountByGameId }
+  return { scoreMap, countedEventCountByGameId, latestEventByGameId }
 }
 
 async function listTrackedGamesForFollowedLeagues(leagueIds: string[], kind: 'live' | 'recent'): Promise<MatchDayGame[]> {
@@ -202,18 +217,29 @@ async function listTrackedGamesForFollowedLeagues(leagueIds: string[], kind: 'li
     else rowsByGameId.set(gameId, [row])
   })
 
+  const followedSet = new Set(followedLeagueIds)
   const filteredCandidates = candidates.filter((candidate) => {
     const rows = rowsByGameId.get(candidate.id) ?? []
     const homeRow = rows.find((row) => row.team_side === 'home') ?? rows[0] ?? null
+    const awayRow = rows.find((row) => row.team_side === 'away') ?? null
     const homeSquad = homeRow?.squads ?? null
-    const leagueId = homeSquad?.league_id ?? null
-    return Boolean(homeSquad?.is_official) && Boolean(leagueId && followedLeagueIds.includes(leagueId))
+    const awaySquad = awayRow?.squads ?? null
+    return isEligibleMatchDayGame({
+      trackerMode: candidate.tracker_mode,
+      status: candidate.status,
+      homeLeagueId: homeSquad?.league_id ?? null,
+      awayLeagueId: awaySquad?.league_id ?? null,
+      homeOfficial: Boolean(homeSquad?.is_official),
+      awayOfficial: Boolean(awaySquad?.is_official),
+      // Recent rows are checked against real counted events after the event query.
+      countedEventCount: kind === 'recent' ? 1 : 0,
+    }, followedSet, kind)
   })
 
   if (!filteredCandidates.length) return []
 
   const filteredIds = filteredCandidates.map((game) => game.id)
-  const { scoreMap, countedEventCountByGameId } = await loadGameScores(filteredIds)
+  const { scoreMap, countedEventCountByGameId, latestEventByGameId } = await loadGameScores(filteredIds)
 
   const built = filteredCandidates
     .map((game): MatchDayGame | null => {
@@ -222,12 +248,18 @@ async function listTrackedGamesForFollowedLeagues(leagueIds: string[], kind: 'li
       const awayRow = rows.find((row) => row.team_side === 'away') ?? null
       const homeSquad = homeRow?.squads ?? null
       const awaySquad = awayRow?.squads ?? null
-      const league = homeSquad?.league ?? null
+      const leagueId = resolveMatchDayLeagueId({
+        homeLeagueId: homeSquad?.league_id ?? null,
+        awayLeagueId: awaySquad?.league_id ?? null,
+      }, followedSet)
+      const leagueSquad = homeSquad?.league_id === leagueId ? homeSquad : awaySquad
+      const league = leagueSquad?.league ?? null
       const countedEventCount = countedEventCountByGameId.get(game.id) ?? 0
       const score = scoreMap.get(game.id) ?? { hg: 0, hb: 0, ag: 0, ab: 0 }
+      const latestEvent = latestEventByGameId.get(game.id) ?? null
 
-      if (!homeSquad?.league_id) return null
-      if (!countedEventCount) return null
+      if (!leagueId) return null
+      if (kind === 'recent' && !countedEventCount) return null
 
       return {
         id: game.id,
@@ -236,6 +268,9 @@ async function listTrackedGamesForFollowedLeagues(leagueIds: string[], kind: 'li
         date: game.date ?? null,
         venue: game.venue ?? null,
         status: game.status ?? null,
+        statusDetail: kind === 'live' && latestEvent?.quarter
+          ? `Q${latestEvent.quarter}${latestEvent.clockLabel ? ` • ${latestEvent.clockLabel}` : ''}`
+          : null,
         round: game.round ?? null,
         opponent: awaySquad?.name ?? game.opponent ?? null,
         squadName: homeSquad.name ?? null,
@@ -247,7 +282,7 @@ async function listTrackedGamesForFollowedLeagues(leagueIds: string[], kind: 'li
         scoreHomeBehinds: score.hb,
         scoreAwayGoals: score.ag,
         scoreAwayBehinds: score.ab,
-        leagueId: homeSquad.league_id ?? null,
+        leagueId,
         leagueName: league?.name ?? null,
         leagueShortName: league?.short_name ?? null,
         stateCode: league?.state_code ?? null,
@@ -255,20 +290,26 @@ async function listTrackedGamesForFollowedLeagues(leagueIds: string[], kind: 'li
       }
     })
     .filter((row): row is MatchDayGame => Boolean(row))
-    .filter((row) => (kind === 'live' ? isLiveStatus(row.status) : isFinalStatus(row.status)))
-    .sort((left, right) => {
-      const delta = parseGameTime(right.date) - parseGameTime(left.date)
-      return kind === 'live' ? -delta : delta
-    })
 
-  return kind === 'live' ? built.slice(0, LIVE_LIMIT) : built.slice(0, RECENT_LIMIT)
+  const sorted = sortMatchDayGames(built.map((game) => ({
+    ...game,
+    gameId: game.id,
+    updatedAt: latestEventByGameId.get(game.id)?.createdAt ?? game.date,
+  })), kind)
+
+  return kind === 'live' ? sorted.slice(0, LIVE_LIMIT) : sorted.slice(0, RECENT_LIMIT)
 }
 
 export async function ensureHomeLeagueFollow(userId: string) {
-  const { data, error } = await supabase.from('profiles').select('home_league_id').eq('user_id', userId).maybeSingle()
+  const { data, error } = await supabase.from('profiles').select('home_club_id').eq('user_id', userId).maybeSingle()
   if (error && error.code !== 'PGRST116') throw error
 
-  const homeLeagueId = (data as { home_league_id?: string | null } | null)?.home_league_id ?? null
+  const homeClubId = (data as { home_club_id?: string | null } | null)?.home_club_id ?? null
+  const { data: club, error: clubError } = homeClubId
+    ? await supabase.from('clubs').select('league_id').eq('id', homeClubId).maybeSingle()
+    : { data: null, error: null }
+  if (clubError && clubError.code !== 'PGRST116') throw clubError
+  const homeLeagueId = (club as { league_id?: string | null } | null)?.league_id ?? null
   if (!homeLeagueId) {
     return { homeLeagueId: null, autoFollowed: false }
   }

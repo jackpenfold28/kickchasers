@@ -27,15 +27,20 @@ type PublicSiteShellProps = {
   activeNavId?: string
   useLandingAnchors?: boolean
   children: ReactNode
+  variant?: 'default' | 'editorial'
+  navItems?: PublicNavItem[]
 }
 
 export function PublicSiteShell({
   activeNavId,
   useLandingAnchors = false,
   children,
+  variant = 'default',
+  navItems = publicNavItems,
 }: PublicSiteShellProps) {
   return (
-    <main className="relative overflow-hidden bg-[#02091A] text-white">
+    <main className={`relative overflow-hidden bg-[#02091A] text-white ${variant === 'editorial' ? 'lp-shell' : ''}`}>
+      {variant === 'editorial' && <a className="lp-skip" href="#landing-content">Skip to product</a>}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(1200px_720px_at_8%_-12%,rgba(20,92,255,0.25),transparent_58%),radial-gradient(950px_620px_at_90%_4%,rgba(57,255,20,0.08),transparent_50%),linear-gradient(180deg,#02091A_0%,#040B1C_44%,#030A1A_100%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(1000px_560px_at_50%_114%,rgba(0,0,0,0.5),transparent_68%)]" />
       <div className="pointer-events-none absolute inset-y-0 left-0 w-[16vw] bg-[linear-gradient(90deg,rgba(0,0,0,0.26),transparent)]" />
@@ -48,7 +53,7 @@ export function PublicSiteShell({
           </Link>
 
           <nav className="hidden items-center gap-7 md:flex" aria-label="Landing sections">
-            {publicNavItems.map((item) => {
+            {navItems.map((item) => {
               const isActive = activeNavId === item.id
               const href = resolveNavHref(item, useLandingAnchors)
               const classes = `group relative py-2 text-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]/45 ${
@@ -96,6 +101,9 @@ export function PublicSiteShell({
             </Link>
           </div>
         </div>
+        {variant === 'editorial' && <nav className="lp-mobile-nav" aria-label="Mobile landing sections">{navItems.map(item => item.type === 'route'
+          ? <Link key={item.id} to={item.href}>{item.label}</Link>
+          : <a key={item.id} href={item.href}>{item.label}</a>)}</nav>}
         <div className="mx-auto h-px w-full max-w-7xl bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       </header>
 

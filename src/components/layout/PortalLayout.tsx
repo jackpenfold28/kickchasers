@@ -5,6 +5,9 @@ import clsx from 'clsx'
 import { supabase } from '@/lib/supabase'
 import SidebarNavigation from '@/components/layout/SidebarNavigation'
 import { fetchPlatformAdminStatus } from '@/lib/platform-admin'
+import { isPlatformAdminPath } from '@/lib/canonical/admin-contracts'
+import { resolvePortalAccess } from '@/lib/canonical/portal-access'
+import { NotificationStateProvider, usePortalNotificationState } from '@/components/portal/NotificationStateProvider'
 
 type ProfileSummary = {
   name: string | null
@@ -29,11 +32,14 @@ const SIDEBAR_PREFERENCE_KEY = 'kickchasers.portal.sidebar-collapsed'
 export default function PortalLayout() {
   const location = useLocation()
   const navigate = useNavigate()
+  const isAdminRoute = isPlatformAdminPath(location.pathname)
 
   const [checkingRole, setCheckingRole] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [displayName, setDisplayName] = useState('User')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [accessToken, setAccessToken] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -48,39 +54,57 @@ export default function PortalLayout() {
   useEffect(() => {
     let cancelled = false
 
-    ;(async () => {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const user = sessionData.session?.user
+    const loadIdentityAndRole = async () => {
+      if (isAdminRoute) setCheckingRole(true)
+      try {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const user = sessionData.session?.user
 
-      if (!user) {
+        if (!user) {
+          if (!cancelled) {
+            setIsAdmin(false)
+            setUserId(null)
+            setAccessToken(null)
+            setCheckingRole(false)
+          }
+          return
+        }
+
+        if (!cancelled) {
+          setUserId(user.id)
+          setAccessToken(sessionData.session?.access_token ?? null)
+        }
+
+        const [profileRes, adminStatus] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('name,handle,avatar_url,avatar_path,primary_role,game_day_roles')
+            .eq('user_id', user.id)
+            .maybeSingle(),
+          fetchPlatformAdminStatus(user.id),
+        ])
+
+        if (cancelled) return
+        const profile = (profileRes.data as ProfileSummary | null) ?? null
+        setIsAdmin(adminStatus.isAdmin)
+        setDisplayName(profile?.name || profile?.handle || user.email || 'User')
+        setAvatarUrl(resolveAvatarUrl(profile))
+      } catch {
+        if (!cancelled) setIsAdmin(false)
+      } finally {
         if (!cancelled) setCheckingRole(false)
-        return
       }
+    }
 
-      const [profileRes, adminStatus] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('name,handle,avatar_url,avatar_path,primary_role,game_day_roles')
-          .eq('user_id', user.id)
-          .maybeSingle(),
-        fetchPlatformAdminStatus(user.id),
-      ])
-
-      if (cancelled) return
-
-      const profile = (profileRes.data as ProfileSummary | null) ?? null
-      const canAccessAdmin = adminStatus.isAdmin
-
-      setIsAdmin(canAccessAdmin)
-      setDisplayName(profile?.name || profile?.handle || user.email || 'User')
-      setAvatarUrl(resolveAvatarUrl(profile))
-      setCheckingRole(false)
-    })()
+    void loadIdentityAndRole()
+    const handleFocus = () => void loadIdentityAndRole()
+    window.addEventListener('focus', handleFocus)
 
     return () => {
       cancelled = true
+      window.removeEventListener('focus', handleFocus)
     }
-  }, [])
+  }, [isAdminRoute, location.pathname])
 
   useEffect(() => {
     setMobileOpen(false)
@@ -92,19 +116,62 @@ export default function PortalLayout() {
     }
   }, [checkingRole, isAdmin, isAdminRoute, navigate])
 
-  const openSettings = () => navigate('/settings')
   const logout = async () => {
     await supabase.auth.signOut()
     navigate('/sign-in', { replace: true })
   }
 
-  if (checkingRole) {
+  const access = resolvePortalAccess({ checking: checkingRole, userId, adminRoute: isAdminRoute, isAdmin })
+  if (access === 'loading') {
     return <main className="min-h-screen p-6 app-bg">Loading portal…</main>
   }
 
-  if (isAdminRoute && !isAdmin) {
+  if (access === 'dashboard') {
     return <Navigate to="/dashboard" replace />
   }
+
+  if (access === 'sign-in') return <Navigate to="/sign-in" replace />
+
+  return (
+    <NotificationStateProvider userId={userId} accessToken={accessToken}>
+      <PortalShell
+        isAdmin={isAdmin}
+        displayName={displayName}
+        avatarUrl={avatarUrl}
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+        sidebarCollapsed={sidebarCollapsed}
+        setSidebarCollapsed={setSidebarCollapsed}
+        navigate={navigate}
+        logout={logout}
+      />
+    </NotificationStateProvider>
+  )
+}
+
+function PortalShell({
+  isAdmin,
+  displayName,
+  avatarUrl,
+  mobileOpen,
+  setMobileOpen,
+  sidebarCollapsed,
+  setSidebarCollapsed,
+  navigate,
+  logout,
+}: {
+  isAdmin: boolean
+  displayName: string
+  avatarUrl: string | null
+  mobileOpen: boolean
+  setMobileOpen: (value: boolean | ((current: boolean) => boolean)) => void
+  sidebarCollapsed: boolean
+  setSidebarCollapsed: (value: boolean | ((current: boolean) => boolean)) => void
+  navigate: ReturnType<typeof useNavigate>
+  logout: () => Promise<void>
+}) {
+  const { unreadCount } = usePortalNotificationState()
+  const openSettings = () => navigate('/settings')
 
   return (
     <div
@@ -121,6 +188,7 @@ export default function PortalLayout() {
         mobileOpen={mobileOpen}
         displayName={displayName}
         avatarUrl={avatarUrl}
+        unreadCount={unreadCount}
         onCloseMobile={() => setMobileOpen(false)}
         onToggleCollapsed={() => setSidebarCollapsed((value) => !value)}
         onOpenProfile={() => navigate('/profile')}
@@ -156,4 +224,3 @@ export default function PortalLayout() {
     </div>
   )
 }
-  const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/') || location.pathname.startsWith('/leagues/')

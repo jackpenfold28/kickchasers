@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { EmailOtpType } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { getSafeReturnPath } from '@/lib/canonical/route-safety'
 
 function getParam(name: string) {
   const search = new URLSearchParams(window.location.search)
@@ -50,7 +51,7 @@ export default function AuthCallback() {
           throw new Error('No auth tokens found in callback URL.')
         }
 
-        navigate(isRecovery ? '/reset-password' : '/', { replace: true })
+        navigate(isRecovery ? '/reset-password' : getSafeReturnPath(getParam('redirect')), { replace: true })
       } catch (err) {
         console.error('Auth callback failed:', err)
         setError(err instanceof Error ? err.message : 'Authentication failed.')

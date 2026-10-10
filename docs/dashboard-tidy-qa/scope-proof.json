@@ -1,0 +1,24 @@
+{
+  "comparison": "Task-start working tree, including pre-existing edits; not Git HEAD",
+  "changedBaselineFiles": [
+    "src/components/layout/SidebarNavigation.tsx",
+    "src/components/dashboard/DashboardCommunityActivity.tsx",
+    "src/routes/portal/DashboardPage.tsx",
+    "tests/dashboard-community-activity-contracts.test.ts"
+  ],
+  "unchangedBaselineFiles": 191,
+  "unchangedCardComponentSha256": {
+    "src/components/vote-card/PublicVoteCard.tsx": "1f915175d188e91deb91bcb76285b291a2e3e83e21b6e17cea69dbadd1037946",
+    "src/components/vote-card/publicVoteCard.types.ts": "98f4d6b7baa1c1a55abbfd34104df89fa6712ea47f99ea6b91d54c2887d97d3b",
+    "src/components/portal/TeamStatCards.tsx": "c750a4f3e810a28866af90c39b3b62e3c33e52bb1a72c451c2df44bc86f9e624",
+    "src/components/portal/PlayerCardAlbum.tsx": "15132f68dc86997c3ea273126991b41dc04de6f3daf067f274d8555f62360e16",
+    "src/components/portal/PostActivityCard.tsx": "dad93d1167198a5f51bab2134ee7362fa603b11cab91777594124f47dcca799c",
+    "src/components/cards/PortalCard.tsx": "e95d51196d85cbabeadf61b426d2c2118f304c15314f6175de2a45a9d7d99297",
+    "src/components/dashboard/MatchScoreCard.tsx": "ab9adf1e3c18b4e2eeb02eba0d80952125976fbbf2c320631e1ba7a30f37628d",
+    "src/components/dashboard/Quick6SummaryCard.tsx": "7916e31d438e2ecc426386588840ab2a3a2b9a1add59be888aeae10f3f35b2c8",
+    "src/components/portal/games/GameLogCard.tsx": "cbaa69ef30c3b388e12903f78e2506d3fde7dd7fedc005c534c9be813d195b5f"
+  },
+  "backendAndMigrationFilesChanged": [],
+  "cardInternalsChanged": false,
+  "note": "DashboardPage edits limited to loading presentation, welcome-label contrast and external layout classes. Community edits limited to two outer grid breakpoint classes. Sidebar edit limited to focus-ring opacity."
+}

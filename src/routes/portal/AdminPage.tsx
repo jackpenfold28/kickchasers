@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Minus, Sparkles, Users, Wrench } from 'lucide-react'
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Minus, Sparkles, Users } from 'lucide-react'
 import PortalCard from '@/components/cards/PortalCard'
 import GameLogCard from '@/components/portal/games/GameLogCard'
 import { listPlatformGames, type GameLogRow } from '@/lib/portal-games'
@@ -238,10 +238,6 @@ export default function AdminPage() {
               <Link to="/admin/users" className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-medium text-white hover:bg-white/[0.08]">
                 <Users className="h-4 w-4 text-[#39FF88]" />
                 Users
-              </Link>
-              <Link to="/admin/manual-feed-post" className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-medium text-white hover:bg-white/[0.08]">
-                <Wrench className="h-4 w-4 text-[#39FF88]" />
-                Manual feed tool
               </Link>
             </>
           }

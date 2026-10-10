@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Radio, Search } from 'lucide-react'
 import PortalCard from '@/components/cards/PortalCard'
@@ -12,6 +12,7 @@ import {
   type MatchDayLeague,
 } from '@/lib/portal-match-day'
 import { supabase } from '@/lib/supabase'
+import { matchDayPollInterval } from '@/lib/canonical/games-parity-contract'
 
 function monogram(label: string | null | undefined) {
   const cleaned = String(label || '').trim()
@@ -121,9 +122,14 @@ export default function MatchDayPage() {
   const [searchError, setSearchError] = useState<string | null>(null)
   const [searchResults, setSearchResults] = useState<MatchDayLeague[]>([])
   const [togglingLeagueId, setTogglingLeagueId] = useState<string | null>(null)
+  const refreshInFlight = useRef(false)
 
-  async function refreshMatchDay(uid: string, options?: { preferredLeagueId?: string | null; allowHomeAutoSelect?: boolean }) {
+  const refreshMatchDay = useCallback(async (uid: string, options?: { preferredLeagueId?: string | null; allowHomeAutoSelect?: boolean }) => {
+    if (refreshInFlight.current) return
+    refreshInFlight.current = true
+    try {
     const snapshot = await loadMatchDaySnapshot(uid)
+    setError(null)
 
     setFollowedLeagues(snapshot.followedLeagues)
     setLiveGames(snapshot.liveGames)
@@ -145,7 +151,10 @@ export default function MatchDayPage() {
     }
 
     setSelectedLeagueId(null)
-  }
+    } finally {
+      refreshInFlight.current = false
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -177,7 +186,26 @@ export default function MatchDayPage() {
     return () => {
       cancelled = true
     }
-  }, [navigate])
+  }, [navigate, refreshMatchDay])
+
+  useEffect(() => {
+    if (!userId) return undefined
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return
+      void refreshMatchDay(userId, { preferredLeagueId: selectedLeagueId, allowHomeAutoSelect: false }).catch((loadError) => {
+        setError(loadError instanceof Error ? loadError.message : 'Unable to refresh Match Day.')
+      })
+    }
+    const intervalMs = matchDayPollInterval(document.visibilityState === 'visible')
+    const interval = intervalMs ? window.setInterval(refresh, intervalMs) : null
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refresh)
+    return () => {
+      if (interval) window.clearInterval(interval)
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', refresh)
+    }
+  }, [refreshMatchDay, selectedLeagueId, userId])
 
   useEffect(() => {
     if (!followModalOpen) return
@@ -370,11 +398,10 @@ export default function MatchDayPage() {
 
       {error ? (
         <PortalCard className="border-red-400/25 bg-red-500/10">
-          <p className="text-sm text-red-100">{error}</p>
+          <p className="text-sm font-semibold text-red-100">Unable to load Match Day</p>
+          <p className="mt-1 text-sm text-red-200/80">{error}</p>
         </PortalCard>
-      ) : null}
-
-      {!followedLeagues.length ? (
+      ) : !followedLeagues.length ? (
         <PortalCard className="border-dashed bg-white/[0.03]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>

@@ -1,0 +1,97 @@
+[
+  {
+    "box": {
+      "height": 1191.5625,
+      "left": 232.5,
+      "top": 8699.46875,
+      "width": 1440
+    },
+    "columns": "339px 339px 339px 339px",
+    "height": 1080,
+    "overflow": -15,
+    "prices": [
+      "$0/month",
+      "$5/month",
+      "$15/month",
+      "$99.95/month"
+    ],
+    "uniquePricing": 1,
+    "width": 1920
+  },
+  {
+    "box": {
+      "height": 1176.6875,
+      "left": 54.046875,
+      "top": 8146.140625,
+      "width": 1242.90625
+    },
+    "columns": "289.719px 289.734px 289.719px 289.734px",
+    "height": 900,
+    "overflow": -15,
+    "prices": [
+      "$0/month",
+      "$5/month",
+      "$15/month",
+      "$99.95/month"
+    ],
+    "uniquePricing": 1,
+    "width": 1366
+  },
+  {
+    "box": {
+      "height": 1650.078125,
+      "left": 40.359375,
+      "top": 7291.09375,
+      "width": 928.265625
+    },
+    "columns": "448.125px 448.141px",
+    "height": 768,
+    "overflow": -15,
+    "prices": [
+      "$0/month",
+      "$5/month",
+      "$15/month",
+      "$99.95/month"
+    ],
+    "uniquePricing": 1,
+    "width": 1024
+  },
+  {
+    "box": {
+      "height": 1698.859375,
+      "left": 30.125,
+      "top": 6380.25,
+      "width": 692.75
+    },
+    "columns": "330.375px 330.375px",
+    "height": 1024,
+    "overflow": -15,
+    "prices": [
+      "$0/month",
+      "$5/month",
+      "$15/month",
+      "$99.95/month"
+    ],
+    "uniquePricing": 1,
+    "width": 768
+  },
+  {
+    "box": {
+      "height": 2702.25,
+      "left": 15,
+      "top": 7037.75,
+      "width": 345
+    },
+    "columns": "345px",
+    "height": 844,
+    "overflow": -15,
+    "prices": [
+      "$0/month",
+      "$5/month",
+      "$15/month",
+      "$99.95/month"
+    ],
+    "uniquePricing": 1,
+    "width": 390
+  }
+]

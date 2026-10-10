@@ -1,0 +1,2762 @@
+
+> afl-stats-supabase-v3p-mock@0.7.0 test
+> node --experimental-strip-types --test tests/*.test.ts
+
+TAP version 13
+# Subtest: admin route classification follows current navigation
+ok 1 - admin route classification follows current navigation
+  ---
+  duration_ms: 0.927875
+  type: 'test'
+  ...
+# Subtest: only server-confirmed platform admins enter platform-admin routes
+ok 2 - only server-confirmed platform admins enter platform-admin routes
+  ---
+  duration_ms: 0.163333
+  type: 'test'
+  ...
+# Subtest: league and club decisions use the canonical atomic RPC contract
+ok 3 - league and club decisions use the canonical atomic RPC contract
+  ---
+  duration_ms: 0.712333
+  type: 'test'
+  ...
+# Subtest: web admin repositories are wired to canonical server authorities
+ok 4 - web admin repositories are wired to canonical server authorities
+  ---
+  duration_ms: 21.770292
+  type: 'test'
+  ...
+# Subtest: admin navigation no longer exposes the unsupported manual feed tool
+ok 5 - admin navigation no longer exposes the unsupported manual feed tool
+  ---
+  duration_ms: 21.730541
+  type: 'test'
+  ...
+# Subtest: legacy manual feed URL redirects safely to the admin overview
+ok 6 - legacy manual feed URL redirects safely to the admin overview
+  ---
+  duration_ms: 2.509042
+  type: 'test'
+  ...
+# Subtest: legacy redirect remains behind the canonical portal admin guard
+ok 7 - legacy redirect remains behind the canonical portal admin guard
+  ---
+  duration_ms: 2.501709
+  type: 'test'
+  ...
+# Subtest: placeholder page import and rendering are removed
+ok 8 - placeholder page import and rendering are removed
+  ---
+  duration_ms: 1.267958
+  type: 'test'
+  ...
+# Subtest: admin overview keeps its supported controls
+ok 9 - admin overview keeps its supported controls
+  ---
+  duration_ms: 0.739375
+  type: 'test'
+  ...
+# Subtest: web does not fall back to the legacy manual summary publishing RPC
+ok 10 - web does not fall back to the legacy manual summary publishing RPC
+  ---
+  duration_ms: 2.591667
+  type: 'test'
+  ...
+# Subtest: web does not add a raw post or manual-game insert workaround
+ok 11 - web does not add a raw post or manual-game insert workaround
+  ---
+  duration_ms: 4.127583
+  type: 'test'
+  ...
+# Subtest: custom owner management matches server
+ok 12 - custom owner management matches server
+  ---
+  duration_ms: 2.117083
+  type: 'test'
+  ...
+# Subtest: custom accepted admin management matches server
+ok 13 - custom accepted admin management matches server
+  ---
+  duration_ms: 0.141917
+  type: 'test'
+  ...
+# Subtest: custom coach management matches server
+ok 14 - custom coach management matches server
+  ---
+  duration_ms: 0.086833
+  type: 'test'
+  ...
+# Subtest: custom tracker management matches server
+ok 15 - custom tracker management matches server
+  ---
+  duration_ms: 0.1675
+  type: 'test'
+  ...
+# Subtest: ordinary member management matches server
+ok 16 - ordinary member management matches server
+  ---
+  duration_ms: 0.10225
+  type: 'test'
+  ...
+# Subtest: guest management matches server
+ok 17 - guest management matches server
+  ---
+  duration_ms: 0.093916
+  type: 'test'
+  ...
+# Subtest: unrelated authenticated user management matches server
+ok 18 - unrelated authenticated user management matches server
+  ---
+  duration_ms: 0.079125
+  type: 'test'
+  ...
+# Subtest: official club admin management matches server
+ok 19 - official club admin management matches server
+  ---
+  duration_ms: 0.142
+  type: 'test'
+  ...
+# Subtest: official club coach management matches server
+ok 20 - official club coach management matches server
+  ---
+  duration_ms: 0.537625
+  type: 'test'
+  ...
+# Subtest: official club tracker management matches server
+ok 21 - official club tracker management matches server
+  ---
+  duration_ms: 0.651333
+  type: 'test'
+  ...
+# Subtest: platform admin management matches server
+ok 22 - platform admin management matches server
+  ---
+  duration_ms: 0.268375
+  type: 'test'
+  ...
+# Subtest: pending custom admin is denied by server contract
+ok 23 - pending custom admin is denied by server contract
+  ---
+  duration_ms: 0.095417
+  type: 'test'
+  ...
+# Subtest: group list preserves exact squad identity
+ok 24 - group list preserves exact squad identity
+  ---
+  duration_ms: 0.060375
+  type: 'test'
+  ...
+# Subtest: group list preserves names
+ok 25 - group list preserves names
+  ---
+  duration_ms: 0.052958
+  type: 'test'
+  ...
+# Subtest: active lifecycle is preserved
+ok 26 - active lifecycle is preserved
+  ---
+  duration_ms: 0.051417
+  type: 'test'
+  ...
+# Subtest: archived lifecycle is preserved
+ok 27 - archived lifecycle is preserved
+  ---
+  duration_ms: 0.056833
+  type: 'test'
+  ...
+# Subtest: matchup count is scoped by group
+ok 28 - matchup count is scoped by group
+  ---
+  duration_ms: 0.063709
+  type: 'test'
+  ...
+# Subtest: pending card count excludes submitted cards
+ok 29 - pending card count excludes submitted cards
+  ---
+  duration_ms: 0.048833
+  type: 'test'
+  ...
+# Subtest: award types remain attached to exact group
+ok 30 - award types remain attached to exact group
+  ---
+  duration_ms: 0.052084
+  type: 'test'
+  ...
+# Subtest: award category is preserved
+ok 31 - award category is preserved
+  ---
+  duration_ms: 0.069792
+  type: 'test'
+  ...
+# Subtest: point rules preserve order
+ok 32 - point rules preserve order
+  ---
+  duration_ms: 0.880042
+  type: 'test'
+  ...
+# Subtest: card limit is preserved
+ok 33 - card limit is preserved
+  ---
+  duration_ms: 0.233208
+  type: 'test'
+  ...
+# Subtest: point parser accepts unique positive values
+ok 34 - point parser accepts unique positive values
+  ---
+  duration_ms: 0.093458
+  type: 'test'
+  ...
+# Subtest: point parser rejects blank values
+ok 35 - point parser rejects blank values
+  ---
+  duration_ms: 1.032875
+  type: 'test'
+  ...
+# Subtest: point parser rejects duplicate allocations
+ok 36 - point parser rejects duplicate allocations
+  ---
+  duration_ms: 0.10025
+  type: 'test'
+  ...
+# Subtest: point parser rejects zero and negative-only rules
+ok 37 - point parser rejects zero and negative-only rules
+  ---
+  duration_ms: 0.0535
+  type: 'test'
+  ...
+# Subtest: manual matchup requires round
+ok 38 - manual matchup requires round
+  ---
+  duration_ms: 0.058625
+  type: 'test'
+  ...
+# Subtest: manual matchup requires opponent
+ok 39 - manual matchup requires opponent
+  ---
+  duration_ms: 0.038875
+  type: 'test'
+  ...
+# Subtest: manual matchup requires date
+ok 40 - manual matchup requires date
+  ---
+  duration_ms: 0.034375
+  type: 'test'
+  ...
+# Subtest: complete manual matchup is accepted
+ok 41 - complete manual matchup is accepted
+  ---
+  duration_ms: 0.115125
+  type: 'test'
+  ...
+# Subtest: tracked matchup requires game identity
+ok 42 - tracked matchup requires game identity
+  ---
+  duration_ms: 0.037958
+  type: 'test'
+  ...
+# Subtest: tracked matchup accepts exact game identity
+ok 43 - tracked matchup accepts exact game identity
+  ---
+  duration_ms: 0.030125
+  type: 'test'
+  ...
+# Subtest: authenticated context maps valid access
+ok 44 - authenticated context maps valid access
+  ---
+  duration_ms: 0.023125
+  type: 'test'
+  ...
+# Subtest: authenticated context preserves card identity
+ok 45 - authenticated context preserves card identity
+  ---
+  duration_ms: 0.02275
+  type: 'test'
+  ...
+# Subtest: authenticated context preserves squad identity
+ok 46 - authenticated context preserves squad identity
+  ---
+  duration_ms: 0.021333
+  type: 'test'
+  ...
+# Subtest: authenticated context preserves matchup identity
+ok 47 - authenticated context preserves matchup identity
+  ---
+  duration_ms: 0.023791
+  type: 'test'
+  ...
+# Subtest: authenticated context preserves candidate squad-member IDs
+ok 48 - authenticated context preserves candidate squad-member IDs
+  ---
+  duration_ms: 0.02325
+  type: 'test'
+  ...
+# Subtest: authenticated context preserves guest identity
+ok 49 - authenticated context preserves guest identity
+  ---
+  duration_ms: 0.021625
+  type: 'test'
+  ...
+# Subtest: submitted context maps submitted access
+ok 50 - submitted context maps submitted access
+  ---
+  duration_ms: 0.044916
+  type: 'test'
+  ...
+# Subtest: void context maps invalid access
+ok 51 - void context maps invalid access
+  ---
+  duration_ms: 0.039166
+  type: 'test'
+  ...
+# Subtest: configured points create exact vote slots
+ok 52 - configured points create exact vote slots
+  ---
+  duration_ms: 0.048083
+  type: 'test'
+  ...
+# Subtest: incomplete vote is rejected
+ok 53 - incomplete vote is rejected
+  ---
+  duration_ms: 0.09375
+  type: 'test'
+  ...
+# Subtest: complete unique vote is accepted
+ok 54 - complete unique vote is accepted
+  ---
+  duration_ms: 0.029083
+  type: 'test'
+  ...
+# Subtest: duplicate player allocation is rejected
+ok 55 - duplicate player allocation is rejected
+  ---
+  duration_ms: 0.037375
+  type: 'test'
+  ...
+# Subtest: manual submission uses squad-member identity
+ok 56 - manual submission uses squad-member identity
+  ---
+  duration_ms: 0.088584
+  type: 'test'
+  ...
+# Subtest: manual submission never fabricates game-player identity
+ok 57 - manual submission never fabricates game-player identity
+  ---
+  duration_ms: 0.058041
+  type: 'test'
+  ...
+# Subtest: tracked submission uses game-player identity
+ok 58 - tracked submission uses game-player identity
+  ---
+  duration_ms: 0.140125
+  type: 'test'
+  ...
+# Subtest: tracked submission never fabricates squad-member submission identity
+ok 59 - tracked submission never fabricates squad-member submission identity
+  ---
+  duration_ms: 0.085084
+  type: 'test'
+  ...
+# Subtest: authenticated route safely preserves squad and card ids
+ok 60 - authenticated route safely preserves squad and card ids
+  ---
+  duration_ms: 0.073
+  type: 'test'
+  ...
+# Subtest: group route safely preserves squad id
+ok 61 - group route safely preserves squad id
+  ---
+  duration_ms: 0.060375
+  type: 'test'
+  ...
+# Subtest: repository uses server permission helpers
+ok 62 - repository uses server permission helpers
+  ---
+  duration_ms: 11.679417
+  type: 'test'
+  ...
+# Subtest: group and member writes use guarded RPCs
+ok 63 - group and member writes use guarded RPCs
+  ---
+  duration_ms: 1.553917
+  type: 'test'
+  ...
+# Subtest: award create update and delete use guarded RPCs
+ok 64 - award create update and delete use guarded RPCs
+  ---
+  duration_ms: 0.335042
+  type: 'test'
+  ...
+# Subtest: matchup creation uses guarded RPC and rejects Team Stats games
+ok 65 - matchup creation uses guarded RPC and rejects Team Stats games
+  ---
+  duration_ms: 0.728917
+  type: 'test'
+  ...
+# Subtest: card assignment uses canonical RPC with notifications
+ok 66 - card assignment uses canonical RPC with notifications
+  ---
+  duration_ms: 0.687209
+  type: 'test'
+  ...
+# Subtest: authenticated submission uses guarded RPC
+ok 67 - authenticated submission uses guarded RPC
+  ---
+  duration_ms: 0.573167
+  type: 'test'
+  ...
+# Subtest: tally uses canonical private server output
+ok 68 - tally uses canonical private server output
+  ---
+  duration_ms: 2.371875
+  type: 'test'
+  ...
+# Subtest: breakdown uses canonical private server output
+ok 69 - breakdown uses canonical private server output
+  ---
+  duration_ms: 0.678584
+  type: 'test'
+  ...
+# Subtest: public token page uses only token-scoped RPCs
+ok 70 - public token page uses only token-scoped RPCs
+  ---
+  duration_ms: 1.166458
+  type: 'test'
+  ...
+# Subtest: authenticated page uses only guarded card RPC repository
+ok 71 - authenticated page uses only guarded card RPC repository
+  ---
+  duration_ms: 0.768125
+  type: 'test'
+  ...
+# Subtest: assigned and reminder notifications route to exact guarded card
+ok 72 - assigned and reminder notifications route to exact guarded card
+  ---
+  duration_ms: 1.911875
+  type: 'test'
+  ...
+# Subtest: anonymous vote-card remains outside protected layout
+ok 73 - anonymous vote-card remains outside protected layout
+  ---
+  duration_ms: 0.693
+  type: 'test'
+  ...
+# Subtest: authenticated card remains inside protected layout
+ok 74 - authenticated card remains inside protected layout
+  ---
+  duration_ms: 0.361125
+  type: 'test'
+  ...
+# Subtest: team hub entry uses live server capability
+ok 75 - team hub entry uses live server capability
+  ---
+  duration_ms: 2.306208
+  type: 'test'
+  ...
+# Subtest: voting UI distinguishes loading empty error and unauthorized
+ok 76 - voting UI distinguishes loading empty error and unauthorized
+  ---
+  duration_ms: 1.116459
+  type: 'test'
+  ...
+# Subtest: player groups remain uncoupled from voting repository
+ok 77 - player groups remain uncoupled from voting repository
+  ---
+  duration_ms: 2.223791
+  type: 'test'
+  ...
+# Subtest: Coaches Team Stats module remains uncoupled from voting
+ok 78 - Coaches Team Stats module remains uncoupled from voting
+  ---
+  duration_ms: 0.3025
+  type: 'test'
+  ...
+# Subtest: Team Selection remains uncoupled from voting
+ok 79 - Team Selection remains uncoupled from voting
+  ---
+  duration_ms: 2.985666
+  type: 'test'
+  ...
+# Subtest: voting source adds no migration or raw vote-table writes
+ok 80 - voting source adds no migration or raw vote-table writes
+  ---
+  duration_ms: 0.851291
+  type: 'test'
+  ...
+# Subtest: custom squad owner can access
+ok 81 - custom squad owner can access
+  ---
+  duration_ms: 0.839416
+  type: 'test'
+  ...
+# Subtest: custom accepted admin can access
+ok 82 - custom accepted admin can access
+  ---
+  duration_ms: 0.073833
+  type: 'test'
+  ...
+# Subtest: custom accepted owner role can access
+ok 83 - custom accepted owner role can access
+  ---
+  duration_ms: 0.050792
+  type: 'test'
+  ...
+# Subtest: custom coach is denied
+ok 84 - custom coach is denied
+  ---
+  duration_ms: 0.040917
+  type: 'test'
+  ...
+# Subtest: custom tracker is denied
+ok 85 - custom tracker is denied
+  ---
+  duration_ms: 0.048083
+  type: 'test'
+  ...
+# Subtest: ordinary member is denied
+ok 86 - ordinary member is denied
+  ---
+  duration_ms: 0.037666
+  type: 'test'
+  ...
+# Subtest: pending custom admin is denied
+ok 87 - pending custom admin is denied
+  ---
+  duration_ms: 0.036166
+  type: 'test'
+  ...
+# Subtest: guest without user identity is denied
+ok 88 - guest without user identity is denied
+  ---
+  duration_ms: 0.034459
+  type: 'test'
+  ...
+# Subtest: unrelated authenticated user is denied
+ok 89 - unrelated authenticated user is denied
+  ---
+  duration_ms: 0.255833
+  type: 'test'
+  ...
+# Subtest: official club admin can access
+ok 90 - official club admin can access
+  ---
+  duration_ms: 0.259042
+  type: 'test'
+  ...
+# Subtest: official club coach can access
+ok 91 - official club coach can access
+  ---
+  duration_ms: 0.766667
+  type: 'test'
+  ...
+# Subtest: official club tracker is denied
+ok 92 - official club tracker is denied
+  ---
+  duration_ms: 0.128583
+  type: 'test'
+  ...
+# Subtest: official squad admin alone is denied
+ok 93 - official squad admin alone is denied
+  ---
+  duration_ms: 0.071334
+  type: 'test'
+  ...
+# Subtest: platform admin can access custom team
+ok 94 - platform admin can access custom team
+  ---
+  duration_ms: 0.059041
+  type: 'test'
+  ...
+# Subtest: standalone platform admin can access official team
+ok 95 - standalone platform admin can access official team
+  ---
+  duration_ms: 0.053875
+  type: 'test'
+  ...
+# Subtest: live status normalizes
+ok 96 - live status normalizes
+  ---
+  duration_ms: 0.055958
+  type: 'test'
+  ...
+# Subtest: final status normalizes
+ok 97 - final status normalizes
+  ---
+  duration_ms: 0.05675
+  type: 'test'
+  ...
+# Subtest: locked game normalizes final
+ok 98 - locked game normalizes final
+  ---
+  duration_ms: 0.048375
+  type: 'test'
+  ...
+# Subtest: scheduled status is retained
+ok 99 - scheduled status is retained
+  ---
+  duration_ms: 0.052042
+  type: 'test'
+  ...
+# Subtest: unknown status safely normalizes scheduled
+ok 100 - unknown status safely normalizes scheduled
+  ---
+  duration_ms: 0.048459
+  type: 'test'
+  ...
+# Subtest: list includes exact squad Team Stats Games
+ok 101 - list includes exact squad Team Stats Games
+  ---
+  duration_ms: 0.669792
+  type: 'test'
+  ...
+# Subtest: normal player-attributed team game is excluded
+ok 102 - normal player-attributed team game is excluded
+  ---
+  duration_ms: 0.080166
+  type: 'test'
+  ...
+# Subtest: unrelated squad game is excluded
+ok 103 - unrelated squad game is excluded
+  ---
+  duration_ms: 0.060666
+  type: 'test'
+  ...
+# Subtest: live Team Stats Game is included
+ok 104 - live Team Stats Game is included
+  ---
+  duration_ms: 0.062208
+  type: 'test'
+  ...
+# Subtest: final Team Stats Game is included
+ok 105 - final Team Stats Game is included
+  ---
+  duration_ms: 0.05975
+  type: 'test'
+  ...
+# Subtest: scheduled Team Stats Game is included
+ok 106 - scheduled Team Stats Game is included
+  ---
+  duration_ms: 0.057333
+  type: 'test'
+  ...
+# Subtest: game identity is preserved
+ok 107 - game identity is preserved
+  ---
+  duration_ms: 0.0575
+  type: 'test'
+  ...
+# Subtest: quarter is preserved from canonical game state
+ok 108 - quarter is preserved from canonical game state
+  ---
+  duration_ms: 0.053417
+  type: 'test'
+  ...
+# Subtest: side context is preserved
+ok 109 - side context is preserved
+  ---
+  duration_ms: 0.052792
+  type: 'test'
+  ...
+# Subtest: home score uses goals and behinds
+ok 110 - home score uses goals and behinds
+  ---
+  duration_ms: 0.198667
+  type: 'test'
+  ...
+# Subtest: away score excludes opposition rushed behind
+ok 111 - away score excludes opposition rushed behind
+  ---
+  duration_ms: 0.08575
+  type: 'test'
+  ...
+# Subtest: scheduled score remains absent without events
+ok 112 - scheduled score remains absent without events
+  ---
+  duration_ms: 0.05575
+  type: 'test'
+  ...
+# Subtest: cards sort newest first
+ok 113 - cards sort newest first
+  ---
+  duration_ms: 0.152291
+  type: 'test'
+  ...
+# Subtest: summary route preserves and encodes exact game id
+ok 114 - summary route preserves and encodes exact game id
+  ---
+  duration_ms: 0.052875
+  type: 'test'
+  ...
+# Subtest: summary route never uses player route
+ok 115 - summary route never uses player route
+  ---
+  duration_ms: 0.03075
+  type: 'test'
+  ...
+# Subtest: live list polls at canonical interval
+ok 116 - live list polls at canonical interval
+  ---
+  duration_ms: 0.03875
+  type: 'test'
+  ...
+# Subtest: hidden live list does not poll
+ok 117 - hidden live list does not poll
+  ---
+  duration_ms: 0.02275
+  type: 'test'
+  ...
+# Subtest: final-only list does not poll
+ok 118 - final-only list does not poll
+  ---
+  duration_ms: 0.02775
+  type: 'test'
+  ...
+# Subtest: empty list does not poll
+ok 119 - empty list does not poll
+  ---
+  duration_ms: 0.022125
+  type: 'test'
+  ...
+# Subtest: repository gates before querying exact Team Stats rows
+ok 120 - repository gates before querying exact Team Stats rows
+  ---
+  duration_ms: 19.288875
+  type: 'test'
+  ...
+# Subtest: hook refreshes on focus and only polls live lists
+ok 121 - hook refreshes on focus and only polls live lists
+  ---
+  duration_ms: 1.431625
+  type: 'test'
+  ...
+# Subtest: Coaches states remain distinct
+ok 122 - Coaches states remain distinct
+  ---
+  duration_ms: 6.317375
+  type: 'test'
+  ...
+# Subtest: unsupported creation and tracking controls are absent
+ok 123 - unsupported creation and tracking controls are absent
+  ---
+  duration_ms: 2.131334
+  type: 'test'
+  ...
+# Subtest: squad hub integrates a role-gated Coaches tab
+ok 124 - squad hub integrates a role-gated Coaches tab
+  ---
+  duration_ms: 0.490958
+  type: 'test'
+  ...
+# Subtest: canonical summary defaults playerless games to Team
+ok 125 - canonical summary defaults playerless games to Team
+  ---
+  duration_ms: 1.896709
+  type: 'test'
+  ...
+# Subtest: Team Stats live notification uses canonical summary route
+ok 126 - Team Stats live notification uses canonical summary route
+  ---
+  duration_ms: 4.68125
+  type: 'test'
+  ...
+# Subtest: Match Day, player history and squad activity retain Team Stats exclusions
+ok 127 - Match Day, player history and squad activity retain Team Stats exclusions
+  ---
+  duration_ms: 2.53625
+  type: 'test'
+  ...
+# Subtest: leaderboard retains Team Stats exclusion
+ok 128 - leaderboard retains Team Stats exclusion
+  ---
+  duration_ms: 0.853667
+  type: 'test'
+  ...
+# Subtest: player groups are not coupled to Coaches repository
+ok 129 - player groups are not coupled to Coaches repository
+  ---
+  duration_ms: 0.806292
+  type: 'test'
+  ...
+# Subtest: no Coaches runtime source references migrations
+ok 130 - no Coaches runtime source references migrations
+  ---
+  duration_ms: 1.157792
+  type: 'test'
+  ...
+# Subtest: Dashboard activity limit is exactly six
+ok 131 - Dashboard activity limit is exactly six
+  ---
+  duration_ms: 5.786292
+  type: 'test'
+  ...
+# Subtest: signed-in user posts are eligible
+ok 132 - signed-in user posts are eligible
+  ---
+  duration_ms: 0.425125
+  type: 'test'
+  ...
+# Subtest: followed-author posts are eligible
+ok 133 - followed-author posts are eligible
+  ---
+  duration_ms: 0.0605
+  type: 'test'
+  ...
+# Subtest: arbitrary global posts are excluded
+ok 134 - arbitrary global posts are excluded
+  ---
+  duration_ms: 0.051
+  type: 'test'
+  ...
+# Subtest: result never exceeds six posts
+ok 135 - result never exceeds six posts
+  ---
+  duration_ms: 6.190542
+  type: 'test'
+  ...
+# Subtest: caller cannot raise the bounded limit
+ok 136 - caller cannot raise the bounded limit
+  ---
+  duration_ms: 0.091458
+  type: 'test'
+  ...
+# Subtest: zero limit returns no posts
+ok 137 - zero limit returns no posts
+  ---
+  duration_ms: 0.105417
+  type: 'test'
+  ...
+# Subtest: posts retain stable recent-first ordering
+ok 138 - posts retain stable recent-first ordering
+  ---
+  duration_ms: 0.063042
+  type: 'test'
+  ...
+# Subtest: duplicate post ids are removed
+ok 139 - duplicate post ids are removed
+  ---
+  duration_ms: 0.229917
+  type: 'test'
+  ...
+# Subtest: exact author identity survives selection
+ok 140 - exact author identity survives selection
+  ---
+  duration_ms: 0.302875
+  type: 'test'
+  ...
+# Subtest: blocked author is excluded
+ok 141 - blocked author is excluded
+  ---
+  duration_ms: 0.0965
+  type: 'test'
+  ...
+# Subtest: viewer-reported post is excluded
+ok 142 - viewer-reported post is excluded
+  ---
+  duration_ms: 0.109375
+  type: 'test'
+  ...
+# Subtest: public followed post is visible
+ok 143 - public followed post is visible
+  ---
+  duration_ms: 0.218125
+  type: 'test'
+  ...
+# Subtest: followers-only followed post is visible
+ok 144 - followers-only followed post is visible
+  ---
+  duration_ms: 0.067458
+  type: 'test'
+  ...
+# Subtest: followers-only self post is visible
+ok 145 - followers-only self post is visible
+  ---
+  duration_ms: 0.0575
+  type: 'test'
+  ...
+# Subtest: feed repository relies on security-invoker post RLS for hidden/deleted rows
+ok 146 - feed repository relies on security-invoker post RLS for hidden/deleted rows
+  ---
+  duration_ms: 15.33475
+  type: 'test'
+  ...
+# Subtest: repository applies either-direction block rows and viewer reports
+ok 147 - repository applies either-direction block rows and viewer reports
+  ---
+  duration_ms: 0.908
+  type: 'test'
+  ...
+# Subtest: player recap remains a shared canonical type
+ok 148 - player recap remains a shared canonical type
+  ---
+  duration_ms: 0.079417
+  type: 'test'
+  ...
+# Subtest: manual recap remains a shared canonical type
+ok 149 - manual recap remains a shared canonical type
+  ---
+  duration_ms: 0.032375
+  type: 'test'
+  ...
+# Subtest: tracked team recap remains a shared canonical type
+ok 150 - tracked team recap remains a shared canonical type
+  ---
+  duration_ms: 0.027
+  type: 'test'
+  ...
+# Subtest: Team Selection remains a shared canonical type
+ok 151 - Team Selection remains a shared canonical type
+  ---
+  duration_ms: 0.024667
+  type: 'test'
+  ...
+# Subtest: unknown backend type degrades safely
+ok 152 - unknown backend type degrades safely
+  ---
+  duration_ms: 0.029334
+  type: 'test'
+  ...
+# Subtest: missing media remains a valid selected post
+ok 153 - missing media remains a valid selected post
+  ---
+  duration_ms: 0.032625
+  type: 'test'
+  ...
+# Subtest: social counts survive canonical selection
+ok 154 - social counts survive canonical selection
+  ---
+  duration_ms: 0.042834
+  type: 'test'
+  ...
+# Subtest: own author opens own profile route
+ok 155 - own author opens own profile route
+  ---
+  duration_ms: 0.02825
+  type: 'test'
+  ...
+# Subtest: another author opens exact encoded public profile route
+ok 156 - another author opens exact encoded public profile route
+  ---
+  duration_ms: 0.023666
+  type: 'test'
+  ...
+# Subtest: player recap opens exact player/game summary
+ok 157 - player recap opens exact player/game summary
+  ---
+  duration_ms: 0.047125
+  type: 'test'
+  ...
+# Subtest: tracked recap opens exact game summary
+ok 158 - tracked recap opens exact game summary
+  ---
+  duration_ms: 0.026542
+  type: 'test'
+  ...
+# Subtest: manual recap opens exact manual summary
+ok 159 - manual recap opens exact manual summary
+  ---
+  duration_ms: 0.02275
+  type: 'test'
+  ...
+# Subtest: Team Selection opens exact squad activity
+ok 160 - Team Selection opens exact squad activity
+  ---
+  duration_ms: 0.084916
+  type: 'test'
+  ...
+# Subtest: unsupported content never fabricates a destination
+ok 161 - unsupported content never fabricates a destination
+  ---
+  duration_ms: 0.02425
+  type: 'test'
+  ...
+# Subtest: repository uses one canonical row normalizer for Dashboard and Profile Posts
+ok 162 - repository uses one canonical row normalizer for Dashboard and Profile Posts
+  ---
+  duration_ms: 9.576
+  type: 'test'
+  ...
+# Subtest: repository requests no more than six feed rows
+ok 163 - repository requests no more than six feed rows
+  ---
+  duration_ms: 0.677167
+  type: 'test'
+  ...
+# Subtest: author identity is hydrated with the feed row without N plus one profile reads
+ok 164 - author identity is hydrated with the feed row without N plus one profile reads
+  ---
+  duration_ms: 6.601416
+  type: 'test'
+  ...
+# Subtest: stored media is lazy loaded with accessible alt and failure treatment
+ok 165 - stored media is lazy loaded with accessible alt and failure treatment
+  ---
+  duration_ms: 1.03725
+  type: 'test'
+  ...
+# Subtest: likes and comments remain read-only counts
+ok 166 - likes and comments remain read-only counts
+  ---
+  duration_ms: 1.310542
+  type: 'test'
+  ...
+# Subtest: loading state is local to Community Activity
+ok 167 - loading state is local to Community Activity
+  ---
+  duration_ms: 0.553
+  type: 'test'
+  ...
+# Subtest: empty state explains the bounded stream
+ok 168 - empty state explains the bounded stream
+  ---
+  duration_ms: 0.668958
+  type: 'test'
+  ...
+# Subtest: request error is isolated and announced
+ok 169 - request error is isolated and announced
+  ---
+  duration_ms: 1.700209
+  type: 'test'
+  ...
+# Subtest: retry invokes only the activity refresh function
+ok 170 - retry invokes only the activity refresh function
+  ---
+  duration_ms: 0.825625
+  type: 'test'
+  ...
+# Subtest: activity refreshes on focus without polling
+ok 171 - activity refreshes on focus without polling
+  ---
+  duration_ms: 2.776167
+  type: 'test'
+  ...
+# Subtest: stale responses cannot replace newer activity
+ok 172 - stale responses cannot replace newer activity
+  ---
+  duration_ms: 2.355542
+  type: 'test'
+  ...
+# Subtest: activity cards use a narrow-safe responsive grid
+ok 173 - activity cards use a narrow-safe responsive grid
+  ---
+  duration_ms: 0.709875
+  type: 'test'
+  ...
+# Subtest: Dashboard keeps its core modules and adds Community Activity
+ok 174 - Dashboard keeps its core modules and adds Community Activity
+  ---
+  duration_ms: 1.726167
+  type: 'test'
+  ...
+# Subtest: operational activity stays separate from community posts
+ok 175 - operational activity stays separate from community posts
+  ---
+  duration_ms: 0.583375
+  type: 'test'
+  ...
+# Subtest: Profile Posts continues to use its existing hook and shared card
+ok 176 - Profile Posts continues to use its existing hook and shared card
+  ---
+  duration_ms: 1.184833
+  type: 'test'
+  ...
+# Subtest: Player Card Album remains wired
+ok 177 - Player Card Album remains wired
+  ---
+  duration_ms: 0.695292
+  type: 'test'
+  ...
+# Subtest: Match Day remains wired independently
+ok 178 - Match Day remains wired independently
+  ---
+  duration_ms: 1.329042
+  type: 'test'
+  ...
+# Subtest: Notifications remain wired independently
+ok 179 - Notifications remain wired independently
+  ---
+  duration_ms: 0.748167
+  type: 'test'
+  ...
+# Subtest: Community Activity adds no social mutation or backend definition
+ok 180 - Community Activity adds no social mutation or backend definition
+  ---
+  duration_ms: 0.855542
+  type: 'test'
+  ...
+# Subtest: final single-player summary uses canonical totals and stops polling
+ok 181 - final single-player summary uses canonical totals and stops polling
+  ---
+  duration_ms: 0.659125
+  type: 'test'
+  ...
+# Subtest: live tracked summary polls every ten seconds only while visible
+ok 182 - live tracked summary polls every ten seconds only while visible
+  ---
+  duration_ms: 0.057667
+  type: 'test'
+  ...
+# Subtest: team-tracked player route preserves stable game-player identity
+ok 183 - team-tracked player route preserves stable game-player identity
+  ---
+  duration_ms: 0.073209
+  type: 'test'
+  ...
+# Subtest: Ruck tracked performance uses Ruck Impact 7 and benchmark rules
+ok 184 - Ruck tracked performance uses Ruck Impact 7 and benchmark rules
+  ---
+  duration_ms: 0.60975
+  type: 'test'
+  ...
+# Subtest: custom counters retain definition labels and zero-score games remain genuine zeros
+ok 185 - custom counters retain definition labels and zero-score games remain genuine zeros
+  ---
+  duration_ms: 0.367834
+  type: 'test'
+  ...
+# Subtest: quarter filtering remains deterministic across Q1-Q4 and total
+ok 186 - quarter filtering remains deterministic across Q1-Q4 and total
+  ---
+  duration_ms: 0.197625
+  type: 'test'
+  ...
+# Subtest: normal manual game preserves stored totals and derives fantasy once
+ok 187 - normal manual game preserves stored totals and derives fantasy once
+  ---
+  duration_ms: 0.211209
+  type: 'test'
+  ...
+# Subtest: manual low-stat and Ruck fixtures use canonical fallback and override semantics
+ok 188 - manual low-stat and Ruck fixtures use canonical fallback and override semantics
+  ---
+  duration_ms: 0.193417
+  type: 'test'
+  ...
+# Subtest: manual records do not fabricate missing optional fields and mutations stay owner-only
+ok 189 - manual records do not fabricate missing optional fields and mutations stay owner-only
+  ---
+  duration_ms: 0.270708
+  type: 'test'
+  ...
+# Subtest: Match Day includes eligible official live and recent games only
+ok 190 - Match Day includes eligible official live and recent games only
+  ---
+  duration_ms: 0.309167
+  type: 'test'
+  ...
+# Subtest: Match Day ordering, destination, and lifecycle match mobile
+ok 191 - Match Day ordering, destination, and lifecycle match mobile
+  ---
+  duration_ms: 0.412917
+  type: 'test'
+  ...
+# Subtest: repositories and routes are wired to the P1 contracts
+ok 192 - repositories and routes are wired to the P1 contracts
+  ---
+  duration_ms: 8.149125
+  type: 'test'
+  ...
+# Subtest: tracked summary uses only columns exposed by the deployed counted-events view
+ok 193 - tracked summary uses only columns exposed by the deployed counted-events view
+  ---
+  duration_ms: 4.694167
+  type: 'test'
+  ...
+# Subtest: the opening starts at the final frame and finishes at the first frame
+ok 194 - the opening starts at the final frame and finishes at the first frame
+  ---
+  duration_ms: 0.458542
+  type: 'test'
+  ...
+# Subtest: scrolling down rewinds, scrolling up retraces the same frames
+ok 195 - scrolling down rewinds, scrolling up retraces the same frames
+  ---
+  duration_ms: 0.096292
+  type: 'test'
+  ...
+# Subtest: overscroll, short containers and unavailable duration are safe
+ok 196 - overscroll, short containers and unavailable duration are safe
+  ---
+  duration_ms: 0.062584
+  type: 'test'
+  ...
+# Subtest: the video is muted, inline, paused and uses serial rather than queued seeks
+ok 197 - the video is muted, inline, paused and uses serial rather than queued seeks
+  ---
+  duration_ms: 0.173
+  type: 'test'
+  ...
+# Subtest: scroll handling is passive, bounded to scheduled frames and cleaned up
+ok 198 - scroll handling is passive, bounded to scheduled frames and cleaned up
+  ---
+  duration_ms: 0.112625
+  type: 'test'
+  ...
+# Subtest: reduced motion, narrow screens and failed media retain a poster without a video download
+ok 199 - reduced motion, narrow screens and failed media retain a poster without a video download
+  ---
+  duration_ms: 0.053167
+  type: 'test'
+  ...
+# Subtest: supplied video and extracted poster are real nonempty local assets
+ok 200 - supplied video and extracted poster are real nonempty local assets
+  ---
+  duration_ms: 13.703042
+  type: 'test'
+  ...
+# Subtest: Impact 7 mobile characterization: forward-low
+ok 201 - Impact 7 mobile characterization: forward-low
+  ---
+  duration_ms: 0.756917
+  type: 'test'
+  ...
+# Subtest: Impact 7 mobile characterization: forward-strong
+ok 202 - Impact 7 mobile characterization: forward-strong
+  ---
+  duration_ms: 0.118667
+  type: 'test'
+  ...
+# Subtest: Impact 7 mobile characterization: forward-elite
+ok 203 - Impact 7 mobile characterization: forward-elite
+  ---
+  duration_ms: 0.057958
+  type: 'test'
+  ...
+# Subtest: Impact 7 mobile characterization: mid-average
+ok 204 - Impact 7 mobile characterization: mid-average
+  ---
+  duration_ms: 0.138416
+  type: 'test'
+  ...
+# Subtest: Impact 7 mobile characterization: mid-strong
+ok 205 - Impact 7 mobile characterization: mid-strong
+  ---
+  duration_ms: 0.053708
+  type: 'test'
+  ...
+# Subtest: Impact 7 mobile characterization: defender
+ok 206 - Impact 7 mobile characterization: defender
+  ---
+  duration_ms: 0.042333
+  type: 'test'
+  ...
+# Subtest: Impact 7 mobile characterization: ruck-hitouts
+ok 207 - Impact 7 mobile characterization: ruck-hitouts
+  ---
+  duration_ms: 0.086459
+  type: 'test'
+  ...
+# Subtest: Impact 7 mobile characterization: ruck-complete
+ok 208 - Impact 7 mobile characterization: ruck-complete
+  ---
+  duration_ms: 0.037875
+  type: 'test'
+  ...
+# Subtest: unknown position uses the canonical Default fallback
+ok 209 - unknown position uses the canonical Default fallback
+  ---
+  duration_ms: 0.248792
+  type: 'test'
+  ...
+# Subtest: benchmark groups include Ruck and lower-is-better metrics
+ok 210 - benchmark groups include Ruck and lower-is-better metrics
+  ---
+  duration_ms: 0.318167
+  type: 'test'
+  ...
+# Subtest: both main CTAs share the supported dashboard sign-in destination
+ok 211 - both main CTAs share the supported dashboard sign-in destination
+  ---
+  duration_ms: 0.715084
+  type: 'test'
+  ...
+# Subtest: every old screenshot remains intact and is included in the full page
+ok 212 - every old screenshot remains intact and is included in the full page
+  ---
+  duration_ms: 4.570375
+  type: 'test'
+  ...
+# Subtest: all ten new assets and the existing match summary are rendered
+ok 213 - all ten new assets and the existing match summary are rendered
+  ---
+  duration_ms: 0.106375
+  type: 'test'
+  ...
+# Subtest: every original and every responsive variant resolves to a nonempty public file
+ok 214 - every original and every responsive variant resolves to a nonempty public file
+  ---
+  duration_ms: 7.957167
+  type: 'test'
+  ...
+# Subtest: all local landing navigation anchors resolve, including legacy pricing and portal
+ok 215 - all local landing navigation anchors resolve, including legacy pricing and portal
+  ---
+  duration_ms: 0.523292
+  type: 'test'
+  ...
+# Subtest: later five-step product story retains its static-image fallback alongside the hero video
+ok 216 - later five-step product story retains its static-image fallback alongside the hero video
+  ---
+  duration_ms: 0.25075
+  type: 'test'
+  ...
+# Subtest: sticky behaviour is progressive, optional, and respects reduced motion
+ok 217 - sticky behaviour is progressive, optional, and respects reduced motion
+  ---
+  duration_ms: 0.400042
+  type: 'test'
+  ...
+# Subtest: images retain aspect ratios, lazy loading, responsive sizing and original fallbacks
+ok 218 - images retain aspect ratios, lazy loading, responsive sizing and original fallbacks
+  ---
+  duration_ms: 0.19125
+  type: 'test'
+  ...
+# Subtest: accessibility and narrow layouts preserve content and navigation
+ok 219 - accessibility and narrow layouts preserve content and navigation
+  ---
+  duration_ms: 0.522167
+  type: 'test'
+  ...
+# Subtest: metadata describes the actual football product and avoids unavailable store claims
+ok 220 - metadata describes the actual football product and avoids unavailable store claims
+  ---
+  duration_ms: 9.568709
+  type: 'test'
+  ...
+# Subtest: direct section URLs resolve after the public auth gate mounts the landing page
+ok 221 - direct section URLs resolve after the public auth gate mounts the landing page
+  ---
+  duration_ms: 0.243875
+  type: 'test'
+  ...
+# Subtest: every mobile All Leaders stat maps to a canonical key in mobile order
+ok 222 - every mobile All Leaders stat maps to a canonical key in mobile order
+  ---
+  duration_ms: 9.954792
+  type: 'test'
+  ...
+# Subtest: current leaderboard labels match mobile terminology
+ok 223 - current leaderboard labels match mobile terminology
+  ---
+  duration_ms: 0.131875
+  type: 'test'
+  ...
+# Subtest: unsupported arbitrary stats reject and safely fall back
+ok 224 - unsupported arbitrary stats reject and safely fall back
+  ---
+  duration_ms: 0.059083
+  type: 'test'
+  ...
+# Subtest: derived leaderboard values consume canonical reconciled totals
+ok 225 - derived leaderboard values consume canonical reconciled totals
+  ---
+  duration_ms: 0.21925
+  type: 'test'
+  ...
+# Subtest: leaderboard ordering metadata matches mobile descending totals
+ok 226 - leaderboard ordering metadata matches mobile descending totals
+  ---
+  duration_ms: 0.062708
+  type: 'test'
+  ...
+# Subtest: Fantasy is featured-only while the three featured keys match mobile
+ok 227 - Fantasy is featured-only while the three featured keys match mobile
+  ---
+  duration_ms: 0.049167
+  type: 'test'
+  ...
+# Subtest: current season defaults to the current calendar year
+ok 228 - current season defaults to the current calendar year
+  ---
+  duration_ms: 1.379084
+  type: 'test'
+  ...
+# Subtest: explicit historical season has bounded start and end dates
+ok 229 - explicit historical season has bounded start and end dates
+  ---
+  duration_ms: 0.167792
+  type: 'test'
+  ...
+# Subtest: invalid season input fails safely to the current year
+ok 230 - invalid season input fails safely to the current year
+  ---
+  duration_ms: 0.634916
+  type: 'test'
+  ...
+# Subtest: weekly range is a rolling seven-day window ending now
+ok 231 - weekly range is a rolling seven-day window ending now
+  ---
+  duration_ms: 1.438542
+  type: 'test'
+  ...
+# Subtest: valid state values normalize to canonical codes
+ok 232 - valid state values normalize to canonical codes
+  ---
+  duration_ms: 0.191625
+  type: 'test'
+  ...
+# Subtest: league availability is scoped to the selected state
+ok 233 - league availability is scoped to the selected state
+  ---
+  duration_ms: 0.177291
+  type: 'test'
+  ...
+# Subtest: club availability is scoped to selected state and league
+ok 234 - club availability is scoped to selected state and league
+  ---
+  duration_ms: 0.052625
+  type: 'test'
+  ...
+# Subtest: changing state clears incompatible league and club selections
+ok 235 - changing state clears incompatible league and club selections
+  ---
+  duration_ms: 0.04575
+  type: 'test'
+  ...
+# Subtest: changing league clears an incompatible club selection
+ok 236 - changing league clears an incompatible club selection
+  ---
+  duration_ms: 0.033042
+  type: 'test'
+  ...
+# Subtest: invalid directory filter IDs fail safely against current availability
+ok 237 - invalid directory filter IDs fail safely against current availability
+  ---
+  duration_ms: 0.106208
+  type: 'test'
+  ...
+# Subtest: geography filters match exact canonical player identities
+ok 238 - geography filters match exact canonical player identities
+  ---
+  duration_ms: 0.070875
+  type: 'test'
+  ...
+# Subtest: supported age bands exactly match mobile
+ok 239 - supported age bands exactly match mobile
+  ---
+  duration_ms: 0.06225
+  type: 'test'
+  ...
+# Subtest: age boundaries are inclusive at each lower bound and exclusive at upper bounds
+ok 240 - age boundaries are inclusive at each lower bound and exclusive at upper bounds
+  ---
+  duration_ms: 0.040667
+  type: 'test'
+  ...
+# Subtest: missing or invalid age is excluded from a selected band but included by Any
+ok 241 - missing or invalid age is excluded from a selected band but included by Any
+  ---
+  duration_ms: 0.028333
+  type: 'test'
+  ...
+# Subtest: available age bands are derived only from represented leaderboard players
+ok 242 - available age bands are derived only from represented leaderboard players
+  ---
+  duration_ms: 0.030292
+  type: 'test'
+  ...
+# Subtest: descending values rank in mobile order
+ok 243 - descending values rank in mobile order
+  ---
+  duration_ms: 0.07875
+  type: 'test'
+  ...
+# Subtest: ties retain stable source order and receive ordinal ranks
+ok 244 - ties retain stable source order and receive ordinal ranks
+  ---
+  duration_ms: 0.04275
+  type: 'test'
+  ...
+# Subtest: zero leaderboard values are excluded
+ok 245 - zero leaderboard values are excluded
+  ---
+  duration_ms: 0.032667
+  type: 'test'
+  ...
+# Subtest: null, missing, NaN and infinite values are excluded
+ok 246 - null, missing, NaN and infinite values are excluded
+  ---
+  duration_ms: 0.050041
+  type: 'test'
+  ...
+# Subtest: web selector consumes canonical mobile vocabulary instead of a local list
+ok 247 - web selector consumes canonical mobile vocabulary instead of a local list
+  ---
+  duration_ms: 12.676667
+  type: 'test'
+  ...
+# Subtest: featured leaders aggregate by player game and apply mobile stat caps
+ok 248 - featured leaders aggregate by player game and apply mobile stat caps
+  ---
+  duration_ms: 0.593
+  type: 'test'
+  ...
+# Subtest: All Leaders loads the canonical population before applying dependent client filters
+ok 249 - All Leaders loads the canonical population before applying dependent client filters
+  ---
+  duration_ms: 0.75775
+  type: 'test'
+  ...
+# Subtest: position filtering is not invented because current mobile global leaderboards do not expose it
+ok 250 - position filtering is not invented because current mobile global leaderboards do not expose it
+  ---
+  duration_ms: 0.110292
+  type: 'test'
+  ...
+# Subtest: P0 official countability, Team Stats exclusion and dedup authority remain unchanged
+ok 251 - P0 official countability, Team Stats exclusion and dedup authority remain unchanged
+  ---
+  duration_ms: 1.751708
+  type: 'test'
+  ...
+# Subtest: modifier reconciliation remains the only leaderboard totals path
+ok 252 - modifier reconciliation remains the only leaderboard totals path
+  ---
+  duration_ms: 1.093458
+  type: 'test'
+  ...
+# Subtest: loading, empty and request failure remain distinct page outcomes
+ok 253 - loading, empty and request failure remain distinct page outcomes
+  ---
+  duration_ms: 0.842333
+  type: 'test'
+  ...
+# Subtest: notification page merge preserves canonical backend ordering
+ok 254 - notification page merge preserves canonical backend ordering
+  ---
+  duration_ms: 0.902292
+  type: 'test'
+  ...
+# Subtest: pagination appends and deduplicates notification rows
+ok 255 - pagination appends and deduplicates notification rows
+  ---
+  duration_ms: 0.0745
+  type: 'test'
+  ...
+# Subtest: unread and read rows remain represented independently
+ok 256 - unread and read rows remain represented independently
+  ---
+  duration_ms: 2.563583
+  type: 'test'
+  ...
+# Subtest: optimistic mark read updates rows and computes the canonical count delta
+ok 257 - optimistic mark read updates rows and computes the canonical count delta
+  ---
+  duration_ms: 0.339791
+  type: 'test'
+  ...
+# Subtest: visible auto-read matches mobile exclusions for invites and track requests
+ok 258 - visible auto-read matches mobile exclusions for invites and track requests
+  ---
+  duration_ms: 0.815041
+  type: 'test'
+  ...
+# Subtest: squad_invite resolves to its safe web destination
+ok 259 - squad_invite resolves to its safe web destination
+  ---
+  duration_ms: 0.446167
+  type: 'test'
+  ...
+# Subtest: squad_invite_accepted resolves to its safe web destination
+ok 260 - squad_invite_accepted resolves to its safe web destination
+  ---
+  duration_ms: 0.110333
+  type: 'test'
+  ...
+# Subtest: squad_invite_declined resolves to its safe web destination
+ok 261 - squad_invite_declined resolves to its safe web destination
+  ---
+  duration_ms: 0.038959
+  type: 'test'
+  ...
+# Subtest: squad_admin_promoted resolves to its safe web destination
+ok 262 - squad_admin_promoted resolves to its safe web destination
+  ---
+  duration_ms: 0.232917
+  type: 'test'
+  ...
+# Subtest: squad_role_changed resolves to its safe web destination
+ok 263 - squad_role_changed resolves to its safe web destination
+  ---
+  duration_ms: 0.30825
+  type: 'test'
+  ...
+# Subtest: club_role_changed resolves to its safe web destination
+ok 264 - club_role_changed resolves to its safe web destination
+  ---
+  duration_ms: 0.081083
+  type: 'test'
+  ...
+# Subtest: squad_join_request_created resolves to its safe web destination
+ok 265 - squad_join_request_created resolves to its safe web destination
+  ---
+  duration_ms: 0.030042
+  type: 'test'
+  ...
+# Subtest: squad_join_request_decided resolves to its safe web destination
+ok 266 - squad_join_request_decided resolves to its safe web destination
+  ---
+  duration_ms: 0.026834
+  type: 'test'
+  ...
+# Subtest: guest_merge_request_created resolves to its safe web destination
+ok 267 - guest_merge_request_created resolves to its safe web destination
+  ---
+  duration_ms: 0.021042
+  type: 'test'
+  ...
+# Subtest: guest_merge_request_decided resolves to its safe web destination
+ok 268 - guest_merge_request_decided resolves to its safe web destination
+  ---
+  duration_ms: 0.022291
+  type: 'test'
+  ...
+# Subtest: official_squad_admin_request_created resolves to its safe web destination
+ok 269 - official_squad_admin_request_created resolves to its safe web destination
+  ---
+  duration_ms: 0.019125
+  type: 'test'
+  ...
+# Subtest: official_squad_admin_request_decided resolves to its safe web destination
+ok 270 - official_squad_admin_request_decided resolves to its safe web destination
+  ---
+  duration_ms: 0.019084
+  type: 'test'
+  ...
+# Subtest: official_directory_request_created resolves to its safe web destination
+ok 271 - official_directory_request_created resolves to its safe web destination
+  ---
+  duration_ms: 0.019708
+  type: 'test'
+  ...
+# Subtest: official_directory_request_decided resolves to its safe web destination
+ok 272 - official_directory_request_decided resolves to its safe web destination
+  ---
+  duration_ms: 0.019209
+  type: 'test'
+  ...
+# Subtest: track_request resolves to its safe web destination
+ok 273 - track_request resolves to its safe web destination
+  ---
+  duration_ms: 0.022166
+  type: 'test'
+  ...
+# Subtest: track_request_accepted resolves to its safe web destination
+ok 274 - track_request_accepted resolves to its safe web destination
+  ---
+  duration_ms: 0.019625
+  type: 'test'
+  ...
+# Subtest: track_request_declined resolves to its safe web destination
+ok 275 - track_request_declined resolves to its safe web destination
+  ---
+  duration_ms: 0.085875
+  type: 'test'
+  ...
+# Subtest: user_followed resolves to its safe web destination
+ok 276 - user_followed resolves to its safe web destination
+  ---
+  duration_ms: 0.022458
+  type: 'test'
+  ...
+# Subtest: post_liked resolves to its safe web destination
+ok 277 - post_liked resolves to its safe web destination
+  ---
+  duration_ms: 0.023375
+  type: 'test'
+  ...
+# Subtest: post_commented resolves to its safe web destination
+ok 278 - post_commented resolves to its safe web destination
+  ---
+  duration_ms: 0.0205
+  type: 'test'
+  ...
+# Subtest: official_game_live_started resolves to its safe web destination
+ok 279 - official_game_live_started resolves to its safe web destination
+  ---
+  duration_ms: 0.017917
+  type: 'test'
+  ...
+# Subtest: team_selection_posted resolves to its safe web destination
+ok 280 - team_selection_posted resolves to its safe web destination
+  ---
+  duration_ms: 0.026583
+  type: 'test'
+  ...
+# Subtest: vote_card_assigned resolves to its safe web destination
+ok 281 - vote_card_assigned resolves to its safe web destination
+  ---
+  duration_ms: 0.021709
+  type: 'test'
+  ...
+# Subtest: vote_card_reminder resolves to its safe web destination
+ok 282 - vote_card_reminder resolves to its safe web destination
+  ---
+  duration_ms: 0.01875
+  type: 'test'
+  ...
+# Subtest: team stats live notification uses the supported canonical summary route
+ok 283 - team stats live notification uses the supported canonical summary route
+  ---
+  duration_ms: 0.255042
+  type: 'test'
+  ...
+# Subtest: social post without a web content route remains on notifications safely
+ok 284 - social post without a web content route remains on notifications safely
+  ---
+  duration_ms: 0.041875
+  type: 'test'
+  ...
+# Subtest: malformed entity payload remains on notifications safely
+ok 285 - malformed entity payload remains on notifications safely
+  ---
+  duration_ms: 0.135459
+  type: 'test'
+  ...
+# Subtest: unknown notification types never masquerade as an invite
+ok 286 - unknown notification types never masquerade as an invite
+  ---
+  duration_ms: 3.098417
+  type: 'test'
+  ...
+# Subtest: repository, unread badge, realtime lifecycle, and RPC mutations use one shared contract
+ok 287 - repository, unread badge, realtime lifecycle, and RPC mutations use one shared contract
+  ---
+  duration_ms: 9.8965
+  type: 'test'
+  ...
+# Subtest: Album page size matches the current mobile contract
+ok 288 - Album page size matches the current mobile contract
+  ---
+  duration_ms: 0.566834
+  type: 'test'
+  ...
+# Subtest: Album assets use only the canonical cloud bucket
+ok 289 - Album assets use only the canonical cloud bucket
+  ---
+  duration_ms: 0.623541
+  type: 'test'
+  ...
+# Subtest: never-published card state remains explicit
+ok 290 - never-published card state remains explicit
+  ---
+  duration_ms: 0.077792
+  type: 'test'
+  ...
+# Subtest: live Feed relationship maps to posted state
+ok 291 - live Feed relationship maps to posted state
+  ---
+  duration_ms: 0.045
+  type: 'test'
+  ...
+# Subtest: deleted Feed relationship preserves previously-posted history
+ok 292 - deleted Feed relationship preserves previously-posted history
+  ---
+  duration_ms: 0.044458
+  type: 'test'
+  ...
+# Subtest: cards are ordered newest first
+ok 293 - cards are ordered newest first
+  ---
+  duration_ms: 7.387416
+  type: 'test'
+  ...
+# Subtest: equal timestamps use descending stable card id
+ok 294 - equal timestamps use descending stable card id
+  ---
+  duration_ms: 0.1015
+  type: 'test'
+  ...
+# Subtest: pagination merge removes duplicate card ids
+ok 295 - pagination merge removes duplicate card ids
+  ---
+  duration_ms: 0.053208
+  type: 'test'
+  ...
+# Subtest: compound cursor preserves exact card identity
+ok 296 - compound cursor preserves exact card identity
+  ---
+  duration_ms: 0.311167
+  type: 'test'
+  ...
+# Subtest: template labels are presentation-only and readable
+ok 297 - template labels are presentation-only and readable
+  ---
+  duration_ms: 0.357417
+  type: 'test'
+  ...
+# Subtest: blank template labels fail gracefully
+ok 298 - blank template labels fail gracefully
+  ---
+  duration_ms: 0.088208
+  type: 'test'
+  ...
+# Subtest: ratings retain one useful decimal
+ok 299 - ratings retain one useful decimal
+  ---
+  duration_ms: 0.06
+  type: 'test'
+  ...
+# Subtest: whole-number ratings do not show noise
+ok 300 - whole-number ratings do not show noise
+  ---
+  duration_ms: 0.037625
+  type: 'test'
+  ...
+# Subtest: missing ratings remain unavailable
+ok 301 - missing ratings remain unavailable
+  ---
+  duration_ms: 0.02275
+  type: 'test'
+  ...
+# Subtest: tracked card preserves exact game and player identity
+ok 302 - tracked card preserves exact game and player identity
+  ---
+  duration_ms: 0.048792
+  type: 'test'
+  ...
+# Subtest: tracked card without profile identity routes only to game summary
+ok 303 - tracked card without profile identity routes only to game summary
+  ---
+  duration_ms: 0.031375
+  type: 'test'
+  ...
+# Subtest: manual card opens the canonical manual game route
+ok 304 - manual card opens the canonical manual game route
+  ---
+  duration_ms: 0.064041
+  type: 'test'
+  ...
+# Subtest: manual identity takes priority when both legacy source ids exist
+ok 305 - manual identity takes priority when both legacy source ids exist
+  ---
+  duration_ms: 0.025375
+  type: 'test'
+  ...
+# Subtest: route identifiers are encoded independently
+ok 306 - route identifiers are encoded independently
+  ---
+  duration_ms: 0.024792
+  type: 'test'
+  ...
+# Subtest: missing source identity never fabricates navigation
+ok 307 - missing source identity never fabricates navigation
+  ---
+  duration_ms: 0.025
+  type: 'test'
+  ...
+# Subtest: repository loads the exact owner and never substitutes viewer identity
+ok 308 - repository loads the exact owner and never substitutes viewer identity
+  ---
+  duration_ms: 35.131875
+  type: 'test'
+  ...
+# Subtest: another user cannot request private Album metadata
+ok 309 - another user cannot request private Album metadata
+  ---
+  duration_ms: 2.155917
+  type: 'test'
+  ...
+# Subtest: listing excludes deleted, pending and non-owner cards
+ok 310 - listing excludes deleted, pending and non-owner cards
+  ---
+  duration_ms: 6.031
+  type: 'test'
+  ...
+# Subtest: listing uses mobile stable order and a bounded extra row
+ok 311 - listing uses mobile stable order and a bounded extra row
+  ---
+  duration_ms: 1.555625
+  type: 'test'
+  ...
+# Subtest: repository preserves stable card and source identity fields
+ok 312 - repository preserves stable card and source identity fields
+  ---
+  duration_ms: 0.456791
+  type: 'test'
+  ...
+# Subtest: summary uses the deployed owner-scoped aggregate RPC
+ok 313 - summary uses the deployed owner-scoped aggregate RPC
+  ---
+  duration_ms: 2.894042
+  type: 'test'
+  ...
+# Subtest: valid asset uses the stored bucket and path rather than regeneration
+ok 314 - valid asset uses the stored bucket and path rather than regeneration
+  ---
+  duration_ms: 0.422542
+  type: 'test'
+  ...
+# Subtest: missing and failed assets have explicit UI fallbacks
+ok 315 - missing and failed assets have explicit UI fallbacks
+  ---
+  duration_ms: 0.635792
+  type: 'test'
+  ...
+# Subtest: preview fetches the exact requested card for the signed-in owner
+ok 316 - preview fetches the exact requested card for the signed-in owner
+  ---
+  duration_ms: 0.844959
+  type: 'test'
+  ...
+# Subtest: loading empty request error and pagination end are distinct
+ok 317 - loading empty request error and pagination end are distinct
+  ---
+  duration_ms: 0.530083
+  type: 'test'
+  ...
+# Subtest: Album tab is owner-only while Posts Stats and Games remain wired
+ok 318 - Album tab is owner-only while Posts Stats and Games remain wired
+  ---
+  duration_ms: 0.678041
+  type: 'test'
+  ...
+# Subtest: preview has a stable authenticated route
+ok 319 - preview has a stable authenticated route
+  ---
+  duration_ms: 0.383667
+  type: 'test'
+  ...
+# Subtest: Album consumption does not import or modify generation workflows
+ok 320 - Album consumption does not import or modify generation workflows
+  ---
+  duration_ms: 3.773166
+  type: 'test'
+  ...
+# Subtest: Album repository contains no backend mutation or migration work
+ok 321 - Album repository contains no backend mutation or migration work
+  ---
+  duration_ms: 1.047292
+  type: 'test'
+  ...
+# Subtest: active groups list correctly
+ok 322 - active groups list correctly
+  ---
+  duration_ms: 1.862292
+  type: 'test'
+  ...
+# Subtest: archived groups are excluded from the active list
+ok 323 - archived groups are excluded from the active list
+  ---
+  duration_ms: 0.284166
+  type: 'test'
+  ...
+# Subtest: active groups use server sort order then name
+ok 324 - active groups use server sort order then name
+  ---
+  duration_ms: 0.162959
+  type: 'test'
+  ...
+# Subtest: member counts map to stable group ids
+ok 325 - member counts map to stable group ids
+  ---
+  duration_ms: 0.304042
+  type: 'test'
+  ...
+# Subtest: primary member counts resolve independently
+ok 326 - primary member counts resolve independently
+  ---
+  duration_ms: 0.287666
+  type: 'test'
+  ...
+# Subtest: archived memberships are excluded from active membership state
+ok 327 - archived memberships are excluded from active membership state
+  ---
+  duration_ms: 0.098375
+  type: 'test'
+  ...
+# Subtest: membership lookup uses squad-member identity
+ok 328 - membership lookup uses squad-member identity
+  ---
+  duration_ms: 0.187459
+  type: 'test'
+  ...
+# Subtest: primary membership resolves by explicit flag
+ok 329 - primary membership resolves by explicit flag
+  ---
+  duration_ms: 0.095208
+  type: 'test'
+  ...
+# Subtest: a member may have no primary group
+ok 330 - a member may have no primary group
+  ---
+  duration_ms: 0.441083
+  type: 'test'
+  ...
+# Subtest: create and rename names trim without client slug generation
+ok 331 - create and rename names trim without client slug generation
+  ---
+  duration_ms: 0.59575
+  type: 'test'
+  ...
+# Subtest: blank group names are rejected before mutation
+ok 332 - blank group names are rejected before mutation
+  ---
+  duration_ms: 0.442083
+  type: 'test'
+  ...
+# Subtest: non-string group names are rejected before mutation
+ok 333 - non-string group names are rejected before mutation
+  ---
+  duration_ms: 0.088583
+  type: 'test'
+  ...
+# Subtest: duplicate group ids collapse before assignment
+ok 334 - duplicate group ids collapse before assignment
+  ---
+  duration_ms: 0.089667
+  type: 'test'
+  ...
+# Subtest: empty group ids never reach the assignment RPC
+ok 335 - empty group ids never reach the assignment RPC
+  ---
+  duration_ms: 0.07325
+  type: 'test'
+  ...
+# Subtest: multiple group membership is preserved
+ok 336 - multiple group membership is preserved
+  ---
+  duration_ms: 0.089458
+  type: 'test'
+  ...
+# Subtest: a primary group is always included in the RPC group array
+ok 337 - a primary group is always included in the RPC group array
+  ---
+  duration_ms: 0.065917
+  type: 'test'
+  ...
+# Subtest: assignment may deliberately have no primary
+ok 338 - assignment may deliberately have no primary
+  ---
+  duration_ms: 0.05875
+  type: 'test'
+  ...
+# Subtest: unassigning a non-primary group preserves the primary
+ok 339 - unassigning a non-primary group preserves the primary
+  ---
+  duration_ms: 0.264
+  type: 'test'
+  ...
+# Subtest: unassigning the primary leaves no inferred fallback
+ok 340 - unassigning the primary leaves no inferred fallback
+  ---
+  duration_ms: 0.07725
+  type: 'test'
+  ...
+# Subtest: unassign all preserves the squad member and only clears group ids
+ok 341 - unassign all preserves the squad member and only clears group ids
+  ---
+  duration_ms: 0.066584
+  type: 'test'
+  ...
+# Subtest: custom squad owner is allowed by the deployed contract
+ok 342 - custom squad owner is allowed by the deployed contract
+  ---
+  duration_ms: 0.087792
+  type: 'test'
+  ...
+# Subtest: custom accepted admin is allowed by the deployed contract
+ok 343 - custom accepted admin is allowed by the deployed contract
+  ---
+  duration_ms: 0.060333
+  type: 'test'
+  ...
+# Subtest: custom accepted coach is allowed by the deployed contract
+ok 344 - custom accepted coach is allowed by the deployed contract
+  ---
+  duration_ms: 0.062542
+  type: 'test'
+  ...
+# Subtest: custom tracker is denied by the deployed contract
+ok 345 - custom tracker is denied by the deployed contract
+  ---
+  duration_ms: 0.049875
+  type: 'test'
+  ...
+# Subtest: ordinary member is denied by the deployed contract
+ok 346 - ordinary member is denied by the deployed contract
+  ---
+  duration_ms: 0.0505
+  type: 'test'
+  ...
+# Subtest: pending member is denied by the deployed contract
+ok 347 - pending member is denied by the deployed contract
+  ---
+  duration_ms: 0.049791
+  type: 'test'
+  ...
+# Subtest: guest or unrelated authenticated user is denied by the deployed contract
+ok 348 - guest or unrelated authenticated user is denied by the deployed contract
+  ---
+  duration_ms: 0.052292
+  type: 'test'
+  ...
+# Subtest: platform admin is allowed by the deployed contract
+ok 349 - platform admin is allowed by the deployed contract
+  ---
+  duration_ms: 0.050291
+  type: 'test'
+  ...
+# Subtest: official club admin is allowed by the deployed contract
+ok 350 - official club admin is allowed by the deployed contract
+  ---
+  duration_ms: 0.060125
+  type: 'test'
+  ...
+# Subtest: official club coach is allowed by the deployed contract
+ok 351 - official club coach is allowed by the deployed contract
+  ---
+  duration_ms: 0.130917
+  type: 'test'
+  ...
+# Subtest: official club tracker is denied by the deployed contract
+ok 352 - official club tracker is denied by the deployed contract
+  ---
+  duration_ms: 0.057584
+  type: 'test'
+  ...
+# Subtest: official squad-role admin alone does not replace club-role authority
+ok 353 - official squad-role admin alone does not replace club-role authority
+  ---
+  duration_ms: 0.06875
+  type: 'test'
+  ...
+# Subtest: repository reads capability RPCs and active RLS-protected rows
+ok 354 - repository reads capability RPCs and active RLS-protected rows
+  ---
+  duration_ms: 13.073166
+  type: 'test'
+  ...
+# Subtest: create rename and archive use canonical atomic RPCs
+ok 355 - create rename and archive use canonical atomic RPCs
+  ---
+  duration_ms: 0.819667
+  type: 'test'
+  ...
+# Subtest: membership save is one atomic bulk-assignment RPC using squad-member id
+ok 356 - membership save is one atomic bulk-assignment RPC using squad-member id
+  ---
+  duration_ms: 0.60825
+  type: 'test'
+  ...
+# Subtest: page load never invokes ensure or legacy backfill mutations
+ok 357 - page load never invokes ensure or legacy backfill mutations
+  ---
+  duration_ms: 0.98125
+  type: 'test'
+  ...
+# Subtest: roster UI exposes group badges, primary state, and an explicit edit action
+ok 358 - roster UI exposes group badges, primary state, and an explicit edit action
+  ---
+  duration_ms: 0.874875
+  type: 'test'
+  ...
+# Subtest: successful mutations refresh group state and relevant roster state without reload
+ok 359 - successful mutations refresh group state and relevant roster state without reload
+  ---
+  duration_ms: 3.088417
+  type: 'test'
+  ...
+# Subtest: loading error unauthorized and empty states remain distinct
+ok 360 - loading error unauthorized and empty states remain distinct
+  ---
+  duration_ms: 0.971917
+  type: 'test'
+  ...
+# Subtest: canonical roster position values remain wired unchanged
+ok 361 - canonical roster position values remain wired unchanged
+  ---
+  duration_ms: 1.053333
+  type: 'test'
+  ...
+# Subtest: Team Selection is not coupled to the player-group repository
+ok 362 - Team Selection is not coupled to the player-group repository
+  ---
+  duration_ms: 1.216709
+  type: 'test'
+  ...
+# Subtest: player stats and game history modules are outside this slice
+ok 363 - player stats and game history modules are outside this slice
+  ---
+  duration_ms: 0.949291
+  type: 'test'
+  ...
+# Subtest: every canonical position validates
+ok 364 - every canonical position validates
+  ---
+  duration_ms: 1.440167
+  type: 'test'
+  ...
+# Subtest: RUC is a canonical position
+ok 365 - RUC is a canonical position
+  ---
+  duration_ms: 0.160583
+  type: 'test'
+  ...
+# Subtest: arbitrary values fail canonical validation
+ok 366 - arbitrary values fail canonical validation
+  ---
+  duration_ms: 0.09325
+  type: 'test'
+  ...
+# Subtest: canonical labels match the current mobile wording
+ok 367 - canonical labels match the current mobile wording
+  ---
+  duration_ms: 1.100625
+  type: 'test'
+  ...
+# Subtest: current mobile legacy aliases normalize safely
+ok 368 - current mobile legacy aliases normalize safely
+  ---
+  duration_ms: 1.201958
+  type: 'test'
+  ...
+# Subtest: unknown and ambiguous aliases do not normalize
+ok 369 - unknown and ambiguous aliases do not normalize
+  ---
+  duration_ms: 0.074292
+  type: 'test'
+  ...
+# Subtest: canonical option registry exposes all four positions once in mobile order
+ok 370 - canonical option registry exposes all four positions once in mobile order
+  ---
+  duration_ms: 0.11175
+  type: 'test'
+  ...
+# Subtest: the Ruck option stores RUC
+ok 371 - the Ruck option stores RUC
+  ---
+  duration_ms: 3.713584
+  type: 'test'
+  ...
+# Subtest: existing RUC hydrates to the same canonical value
+ok 372 - existing RUC hydrates to the same canonical value
+  ---
+  duration_ms: 0.26175
+  type: 'test'
+  ...
+# Subtest: all other displayed options submit canonical values
+ok 373 - all other displayed options submit canonical values
+  ---
+  duration_ms: 0.29825
+  type: 'test'
+  ...
+# Subtest: existing RUC displays as Ruck
+ok 374 - existing RUC displays as Ruck
+  ---
+  duration_ms: 0.81075
+  type: 'test'
+  ...
+# Subtest: changing a friendly Ruck value canonicalizes to RUC at a mutation boundary
+ok 375 - changing a friendly Ruck value canonicalizes to RUC at a mutation boundary
+  ---
+  duration_ms: 0.104875
+  type: 'test'
+  ...
+# Subtest: changing away from Ruck submits the selected canonical value
+ok 376 - changing away from Ruck submits the selected canonical value
+  ---
+  duration_ms: 0.037709
+  type: 'test'
+  ...
+# Subtest: optional and empty positions preserve null semantics
+ok 377 - optional and empty positions preserve null semantics
+  ---
+  duration_ms: 0.040167
+  type: 'test'
+  ...
+# Subtest: roster options use the canonical registry
+ok 378 - roster options use the canonical registry
+  ---
+  duration_ms: 6.894
+  type: 'test'
+  ...
+# Subtest: Ruck can be assigned to a roster member as its code
+ok 379 - Ruck can be assigned to a roster member as its code
+  ---
+  duration_ms: 0.168792
+  type: 'test'
+  ...
+# Subtest: unsupported roster display labels throw before persistence
+ok 380 - unsupported roster display labels throw before persistence
+  ---
+  duration_ms: 0.313625
+  type: 'test'
+  ...
+# Subtest: existing canonical roster positions round-trip unchanged
+ok 381 - existing canonical roster positions round-trip unchanged
+  ---
+  duration_ms: 0.05025
+  type: 'test'
+  ...
+# Subtest: RUC form values resolve to the Ruck Impact 7 path
+ok 382 - RUC form values resolve to the Ruck Impact 7 path
+  ---
+  duration_ms: 0.058791
+  type: 'test'
+  ...
+# Subtest: other form values resolve to their canonical calculation groups
+ok 383 - other form values resolve to their canonical calculation groups
+  ---
+  duration_ms: 0.108916
+  type: 'test'
+  ...
+# Subtest: the first supported source wins during non-destructive read normalization
+ok 384 - the first supported source wins during non-destructive read normalization
+  ---
+  duration_ms: 0.038208
+  type: 'test'
+  ...
+# Subtest: strict type guard does not treat aliases as stored canonical values
+ok 385 - strict type guard does not treat aliases as stored canonical values
+  ---
+  duration_ms: 0.026833
+  type: 'test'
+  ...
+# Subtest: historical benchmark-only composite groups retain Stage 0 behaviour
+ok 386 - historical benchmark-only composite groups retain Stage 0 behaviour
+  ---
+  duration_ms: 0.026375
+  type: 'test'
+  ...
+# Subtest: onboarding hydrates through the canonical normalizer and renders registry labels
+ok 387 - onboarding hydrates through the canonical normalizer and renders registry labels
+  ---
+  duration_ms: 1.904166
+  type: 'test'
+  ...
+# Subtest: onboarding validates the canonical value again at the repository boundary
+ok 388 - onboarding validates the canonical value again at the repository boundary
+  ---
+  duration_ms: 0.894708
+  type: 'test'
+  ...
+# Subtest: profile editing returns to profile so its existing loader refetches saved state
+ok 389 - profile editing returns to profile so its existing loader refetches saved state
+  ---
+  duration_ms: 0.573792
+  type: 'test'
+  ...
+# Subtest: roster persistence canonicalizes before updating squad_members
+ok 390 - roster persistence canonicalizes before updating squad_members
+  ---
+  duration_ms: 2.707792
+  type: 'test'
+  ...
+# Subtest: own profile visibility includes public and follower posts
+ok 391 - own profile visibility includes public and follower posts
+  ---
+  duration_ms: 0.85875
+  type: 'test'
+  ...
+# Subtest: other profile uses the exact supplied author identity
+ok 392 - other profile uses the exact supplied author identity
+  ---
+  duration_ms: 0.057709
+  type: 'test'
+  ...
+# Subtest: target identity never falls back to signed-in viewer
+ok 393 - target identity never falls back to signed-in viewer
+  ---
+  duration_ms: 0.089416
+  type: 'test'
+  ...
+# Subtest: public posts are visible to an unrelated viewer
+ok 394 - public posts are visible to an unrelated viewer
+  ---
+  duration_ms: 0.437459
+  type: 'test'
+  ...
+# Subtest: followers gain follower-only posts
+ok 395 - followers gain follower-only posts
+  ---
+  duration_ms: 0.05725
+  type: 'test'
+  ...
+# Subtest: author viewing public route retains own follower posts
+ok 396 - author viewing public route retains own follower posts
+  ---
+  duration_ms: 0.08075
+  type: 'test'
+  ...
+# Subtest: player stat recap resolves as a supported type
+ok 397 - player stat recap resolves as a supported type
+  ---
+  duration_ms: 0.053125
+  type: 'test'
+  ...
+# Subtest: manual recap resolves from canonical type
+ok 398 - manual recap resolves from canonical type
+  ---
+  duration_ms: 0.038125
+  type: 'test'
+  ...
+# Subtest: manual recap resolves from stable manual game id
+ok 399 - manual recap resolves from stable manual game id
+  ---
+  duration_ms: 0.203084
+  type: 'test'
+  ...
+# Subtest: team selection remains profile-eligible like mobile
+ok 400 - team selection remains profile-eligible like mobile
+  ---
+  duration_ms: 0.250959
+  type: 'test'
+  ...
+# Subtest: tracked attributable game resolves as tracked recap
+ok 401 - tracked attributable game resolves as tracked recap
+  ---
+  duration_ms: 0.091958
+  type: 'test'
+  ...
+# Subtest: unsupported post types degrade to a generic post
+ok 402 - unsupported post types degrade to a generic post
+  ---
+  duration_ms: 0.033292
+  type: 'test'
+  ...
+# Subtest: unsupported post title fails gracefully
+ok 403 - unsupported post title fails gracefully
+  ---
+  duration_ms: 0.036875
+  type: 'test'
+  ...
+# Subtest: tracked player post opens the canonical player summary
+ok 404 - tracked player post opens the canonical player summary
+  ---
+  duration_ms: 0.029667
+  type: 'test'
+  ...
+# Subtest: tracked team post opens the canonical game summary
+ok 405 - tracked team post opens the canonical game summary
+  ---
+  duration_ms: 0.026208
+  type: 'test'
+  ...
+# Subtest: manual post opens the canonical manual summary
+ok 406 - manual post opens the canonical manual summary
+  ---
+  duration_ms: 0.034
+  type: 'test'
+  ...
+# Subtest: team selection opens the best supported team activity destination
+ok 407 - team selection opens the best supported team activity destination
+  ---
+  duration_ms: 0.025666
+  type: 'test'
+  ...
+# Subtest: missing destination identifiers do not fabricate a route
+ok 408 - missing destination identifiers do not fabricate a route
+  ---
+  duration_ms: 0.023042
+  type: 'test'
+  ...
+# Subtest: stable game/player identity is preserved independently
+ok 409 - stable game/player identity is preserved independently
+  ---
+  duration_ms: 0.024542
+  type: 'test'
+  ...
+# Subtest: posts order newest first
+ok 410 - posts order newest first
+  ---
+  duration_ms: 6.119125
+  type: 'test'
+  ...
+# Subtest: equal timestamps use a stable descending id tie-breaker
+ok 411 - equal timestamps use a stable descending id tie-breaker
+  ---
+  duration_ms: 0.074875
+  type: 'test'
+  ...
+# Subtest: pagination merge removes duplicate rows by post id
+ok 412 - pagination merge removes duplicate rows by post id
+  ---
+  duration_ms: 0.037833
+  type: 'test'
+  ...
+# Subtest: cursor preserves the stable compound boundary
+ok 413 - cursor preserves the stable compound boundary
+  ---
+  duration_ms: 0.105042
+  type: 'test'
+  ...
+# Subtest: payload context uses only present canonical values
+ok 414 - payload context uses only present canonical values
+  ---
+  duration_ms: 0.071959
+  type: 'test'
+  ...
+# Subtest: nested mobile payload context resolves team-selection identity
+ok 415 - nested mobile payload context resolves team-selection identity
+  ---
+  duration_ms: 0.034875
+  type: 'test'
+  ...
+# Subtest: manual payload exposes available headline stats without inventing values
+ok 416 - manual payload exposes available headline stats without inventing values
+  ---
+  duration_ms: 0.088792
+  type: 'test'
+  ...
+# Subtest: unknown payload fields do not invent card content
+ok 417 - unknown payload fields do not invent card content
+  ---
+  duration_ms: 0.027042
+  type: 'test'
+  ...
+# Subtest: repository scopes reads to exact author, hidden state, visibility and stable pagination
+ok 418 - repository scopes reads to exact author, hidden state, visibility and stable pagination
+  ---
+  duration_ms: 16.366708
+  type: 'test'
+  ...
+# Subtest: blocked relationship is checked before the post query
+ok 419 - blocked relationship is checked before the post query
+  ---
+  duration_ms: 0.747541
+  type: 'test'
+  ...
+# Subtest: viewer-reported posts are excluded using the existing moderation contract
+ok 420 - viewer-reported posts are excluded using the existing moderation contract
+  ---
+  duration_ms: 0.477833
+  type: 'test'
+  ...
+# Subtest: profile loading, blocked, empty and request failure states are distinct
+ok 421 - profile loading, blocked, empty and request failure states are distinct
+  ---
+  duration_ms: 0.341125
+  type: 'test'
+  ...
+# Subtest: profile uses repository hook and shared renderer instead of raw post queries
+ok 422 - profile uses repository hook and shared renderer instead of raw post queries
+  ---
+  duration_ms: 0.307
+  type: 'test'
+  ...
+# Subtest: existing stats and game log implementations remain wired
+ok 423 - existing stats and game log implementations remain wired
+  ---
+  duration_ms: 0.491875
+  type: 'test'
+  ...
+# Subtest: profile posts do not add a second like or comment mutation system
+ok 424 - profile posts do not add a second like or comment mutation system
+  ---
+  duration_ms: 0.274167
+  type: 'test'
+  ...
+# Subtest: profile posts make no backend or migration changes
+ok 425 - profile posts make no backend or migration changes
+  ---
+  duration_ms: 0.26575
+  type: 'test'
+  ...
+# Subtest: normal internal return paths are allowed
+ok 426 - normal internal return paths are allowed
+  ---
+  duration_ms: 0.637583
+  type: 'test'
+  ...
+# Subtest: external HTTPS return paths are rejected
+ok 427 - external HTTPS return paths are rejected
+  ---
+  duration_ms: 0.061834
+  type: 'test'
+  ...
+# Subtest: protocol-relative return paths are rejected
+ok 428 - protocol-relative return paths are rejected
+  ---
+  duration_ms: 0.046292
+  type: 'test'
+  ...
+# Subtest: encoded external return paths are decoded and rejected
+ok 429 - encoded external return paths are decoded and rejected
+  ---
+  duration_ms: 0.088958
+  type: 'test'
+  ...
+# Subtest: javascript, data, and backslash redirect forms are rejected
+ok 430 - javascript, data, and backslash redirect forms are rejected
+  ---
+  duration_ms: 0.099583
+  type: 'test'
+  ...
+# Subtest: malformed encoded return paths fall back safely
+ok 431 - malformed encoded return paths fall back safely
+  ---
+  duration_ms: 0.048125
+  type: 'test'
+  ...
+# Subtest: missing return paths use the safe dashboard default
+ok 432 - missing return paths use the safe dashboard default
+  ---
+  duration_ms: 0.081875
+  type: 'test'
+  ...
+# Subtest: sign-in path preserves the exact encoded internal game destination
+ok 433 - sign-in path preserves the exact encoded internal game destination
+  ---
+  duration_ms: 0.044167
+  type: 'test'
+  ...
+# Subtest: onboarding path preserves the game without bypassing onboarding
+ok 434 - onboarding path preserves the game without bypassing onboarding
+  ---
+  duration_ms: 0.243208
+  type: 'test'
+  ...
+# Subtest: game identifiers are preserved and safely encoded by the canonical summary route
+ok 435 - game identifiers are preserved and safely encoded by the canonical summary route
+  ---
+  duration_ms: 0.264583
+  type: 'test'
+  ...
+# Subtest: permission failures are distinguishable without exposing protected data
+ok 436 - permission failures are distinguishable without exposing protected data
+  ---
+  duration_ms: 0.1105
+  type: 'test'
+  ...
+# Subtest: network and ordinary query failures remain distinct
+ok 437 - network and ordinary query failures remain distinct
+  ---
+  duration_ms: 0.050042
+  type: 'test'
+  ...
+# Subtest: signed-out game route is protected before the game redirect renders
+ok 438 - signed-out game route is protected before the game redirect renders
+  ---
+  duration_ms: 5.280292
+  type: 'test'
+  ...
+# Subtest: authenticated game alias reaches the existing canonical summary directly
+ok 439 - authenticated game alias reaches the existing canonical summary directly
+  ---
+  duration_ms: 1.144625
+  type: 'test'
+  ...
+# Subtest: email password sign-in uses only the sanitized return destination
+ok 440 - email password sign-in uses only the sanitized return destination
+  ---
+  duration_ms: 0.689
+  type: 'test'
+  ...
+# Subtest: OAuth callback retains and sanitizes the internal return destination
+ok 441 - OAuth callback retains and sanitizes the internal return destination
+  ---
+  duration_ms: 0.525375
+  type: 'test'
+  ...
+# Subtest: registration and email verification retain the same safe return destination
+ok 442 - registration and email verification retain the same safe return destination
+  ---
+  duration_ms: 0.489875
+  type: 'test'
+  ...
+# Subtest: incomplete profiles finish onboarding before resuming the game
+ok 443 - incomplete profiles finish onboarding before resuming the game
+  ---
+  duration_ms: 1.014375
+  type: 'test'
+  ...
+# Subtest: missing, permission, and network game outcomes do not render an empty summary
+ok 444 - missing, permission, and network game outcomes do not render an empty summary
+  ---
+  duration_ms: 0.341875
+  type: 'test'
+  ...
+# Subtest: landing primary CTA targets dashboard and never disabled New Game
+ok 445 - landing primary CTA targets dashboard and never disabled New Game
+  ---
+  duration_ms: 0.314042
+  type: 'test'
+  ...
+# Subtest: active public acquisition controls do not target DisabledRoute
+ok 446 - active public acquisition controls do not target DisabledRoute
+  ---
+  duration_ms: 0.361
+  type: 'test'
+  ...
+# Subtest: anonymous vote-card and informational public routes remain unchanged
+ok 447 - anonymous vote-card and informational public routes remain unchanged
+  ---
+  duration_ms: 0.3315
+  type: 'test'
+  ...
+# Subtest: intentional legacy DisabledRoute aliases remain present but inactive from acquisition
+ok 448 - intentional legacy DisabledRoute aliases remain present but inactive from acquisition
+  ---
+  duration_ms: 0.220916
+  type: 'test'
+  ...
+# Subtest: production route safety includes a branded catch-all and hides the vote-card fixture
+ok 449 - production route safety includes a branded catch-all and hides the vote-card fixture
+  ---
+  duration_ms: 0.88625
+  type: 'test'
+  ...
+# Subtest: signed-in users can still read informational and support routes
+ok 450 - signed-in users can still read informational and support routes
+  ---
+  duration_ms: 0.214584
+  type: 'test'
+  ...
+# Subtest: the legacy singular squad route resolves to the canonical teams index
+ok 451 - the legacy singular squad route resolves to the canonical teams index
+  ---
+  duration_ms: 0.185583
+  type: 'test'
+  ...
+# Subtest: basic player game uses canonical base and fantasy totals
+ok 452 - basic player game uses canonical base and fantasy totals
+  ---
+  duration_ms: 0.77625
+  type: 'test'
+  ...
+# Subtest: sequencing modifiers describe base events without inflating them
+ok 453 - sequencing modifiers describe base events without inflating them
+  ---
+  duration_ms: 0.162375
+  type: 'test'
+  ...
+# Subtest: legacy modifier-only rows still count one base attempt
+ok 454 - legacy modifier-only rows still count one base attempt
+  ---
+  duration_ms: 0.0515
+  type: 'test'
+  ...
+# Subtest: quarter aggregation preserves total and filtered results
+ok 455 - quarter aggregation preserves total and filtered results
+  ---
+  duration_ms: 0.211791
+  type: 'test'
+  ...
+# Subtest: leaderboard contract excludes team-stat games and deduplicates joined official rows
+ok 456 - leaderboard contract excludes team-stat games and deduplicates joined official rows
+  ---
+  duration_ms: 0.126667
+  type: 'test'
+  ...
+# Subtest: manual totals remain outside the tracked official-event contract
+ok 457 - manual totals remain outside the tracked official-event contract
+  ---
+  duration_ms: 0.067041
+  type: 'test'
+  ...
+# Subtest: web leaderboard repository is wired to the canonical database authority
+ok 458 - web leaderboard repository is wired to the canonical database authority
+  ---
+  duration_ms: 3.172292
+  type: 'test'
+  ...
+1..458
+# tests 458
+# suites 0
+# pass 458
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 470.948875

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import DashboardSkeleton from '@/components/dashboard/DashboardSkeleton'
 import { supabase } from '@/lib/supabase'
 import { getProfileCompletion, isProfileComplete } from '@/lib/auth'
 import { setClubColours } from '@/lib/theme'
+import { buildOnboardingPath, buildSignInPath, getSafeReturnPath } from '@/lib/canonical/route-safety'
 
 const PUBLIC_ROUTES = new Set([
   '/',
@@ -23,7 +25,11 @@ const PUBLIC_ROUTES = new Set([
 ])
 
 function isPublicRoute(pathname: string) {
-  return PUBLIC_ROUTES.has(pathname) || pathname.startsWith('/game/')
+  return PUBLIC_ROUTES.has(pathname)
+}
+
+function isAuthEntryRoute(pathname: string) {
+  return pathname === '/sign-in' || pathname === '/login' || pathname === '/sign-up' || pathname === '/signup' || pathname === '/register'
 }
 
 function isOnboardingAllowedRoute(pathname: string) {
@@ -65,12 +71,12 @@ export default function App() {
       const isEditOnboarding = onOnboardingRoute && new URLSearchParams(location.search).get('mode') === 'edit'
 
       const { data: sessionData } = await supabase.auth.getSession()
+      if (cancelled) return
       const session = sessionData.session
 
       if (!session) {
         if (!publicRoute) {
-          const redirect = `${pathname}${location.search || ''}`
-          navigate(`/sign-in?redirect=${encodeURIComponent(redirect)}`, { replace: true })
+          navigate(buildSignInPath(`${pathname}${location.search || ''}`), { replace: true })
         }
         if (!cancelled) {
           hasResolvedInitialGate.current = true
@@ -92,10 +98,17 @@ export default function App() {
       }
 
       const profile = await getProfileCompletion(session.user.id)
+      if (cancelled) return
       const complete = isProfileComplete(profile)
 
-      if ((publicRoute || onCheckEmailRoute) && pathname !== '/reset-password') {
-        navigate(complete ? '/dashboard' : '/onboarding', { replace: true })
+      const shouldLeavePublicEntry =
+        isAuthEntryRoute(pathname) || onCheckEmailRoute || pathname === '/' || pathname === '/landing'
+
+      if (shouldLeavePublicEntry) {
+        const requested = isAuthEntryRoute(pathname)
+          ? getSafeReturnPath(new URLSearchParams(location.search).get('redirect'))
+          : '/dashboard'
+        navigate(complete ? requested : buildOnboardingPath(requested), { replace: true })
         if (!cancelled) {
           hasResolvedInitialGate.current = true
           setChecking(false)
@@ -103,8 +116,9 @@ export default function App() {
         return
       }
 
-      if (!complete && !onboardingAllowedRoute && pathname !== '/reset-password') {
-        navigate('/onboarding', { replace: true })
+      if (!complete && !onboardingAllowedRoute && !publicRoute && pathname !== '/reset-password') {
+        const returnPath = `${pathname}${location.search || ''}`
+        navigate(pathname.startsWith('/game/') ? buildOnboardingPath(returnPath) : '/onboarding', { replace: true })
         if (!cancelled) {
           hasResolvedInitialGate.current = true
           setChecking(false)
@@ -138,7 +152,7 @@ export default function App() {
   }, [location.pathname, location.search])
 
   if (checking) {
-    return <main className="min-h-screen p-6 app-bg">Checking session…</main>
+    return <main className="min-h-screen p-6 app-bg">{location.pathname === '/dashboard' ? <div className="mx-auto max-w-[1440px]"><DashboardSkeleton /></div> : 'Checking session…'}</main>
   }
 
   return <Outlet />

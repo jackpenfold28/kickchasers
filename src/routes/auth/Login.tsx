@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Provider } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { authCallbackUrl } from '@/lib/siteUrl'
+import { getSafeReturnPath } from '@/lib/canonical/route-safety'
 import {
   AuthDivider,
   AuthShell,
@@ -37,10 +38,12 @@ function AppleIcon() {
 
 export default function Login() {
   const navigate = useNavigate()
-  const [qp] = useSearchParams()
-  const redirectTo = qp.get('redirect') || '/dashboard'
+  const [qp, setQp] = useSearchParams()
+  const redirectTo = getSafeReturnPath(qp.get('redirect'))
+  const encodedRedirect = encodeURIComponent(redirectTo)
 
-  const [showEmail, setShowEmail] = useState(false)
+  // Keep the selected method when the auth gate or development server remounts this page.
+  const showEmail = qp.get('method') === 'email'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
@@ -52,7 +55,7 @@ export default function Login() {
     setBusy(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: authCallbackUrl },
+      options: { redirectTo: `${authCallbackUrl}?redirect=${encodedRedirect}` },
     })
     setBusy(false)
     if (error) setErr(error.message)
@@ -78,7 +81,7 @@ export default function Login() {
       description="Return to your match data, live tracking workflow, and performance insights with the same premium KickChasers experience."
       footer={
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link className={authLinkClassName} to="/sign-up">
+          <Link className={authLinkClassName} to={`/sign-up?redirect=${encodedRedirect}`}>
             Create account
           </Link>
           <Link className={authLinkClassName} to="/forgot">
@@ -121,7 +124,11 @@ export default function Login() {
           <button
             type="button"
             className={authPrimaryButtonClassName}
-            onClick={() => setShowEmail(true)}
+            onClick={() => setQp((current) => {
+              const next = new URLSearchParams(current)
+              next.set('method', 'email')
+              return next
+            }, { replace: true })}
             disabled={busy}
           >
             Sign in with email

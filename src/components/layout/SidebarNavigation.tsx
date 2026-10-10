@@ -22,6 +22,7 @@ type SidebarNavigationProps = {
   mobileOpen: boolean
   displayName: string
   avatarUrl: string | null
+  unreadCount: number | null
   onCloseMobile: () => void
   onToggleCollapsed: () => void
   onOpenProfile: () => void
@@ -60,10 +61,12 @@ function Item({
   item,
   collapsed,
   onNavigate,
+  unreadCount,
 }: {
   item: NavItem
   collapsed: boolean
   onNavigate: () => void
+  unreadCount: number | null
 }) {
   const Icon = item.icon
   return (
@@ -96,6 +99,17 @@ function Item({
             }}
           />
           {!collapsed && <span>{item.label}</span>}
+          {item.path === '/notifications' && unreadCount != null && unreadCount > 0 ? (
+            <span
+              className={clsx(
+                'inline-flex min-w-5 items-center justify-center rounded-full bg-[#39FF88] px-1.5 text-[10px] font-black leading-5 text-[#07121F]',
+                collapsed && 'absolute -right-1 -top-1'
+              )}
+              aria-label={`${unreadCount} unread notifications`}
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          ) : null}
           {collapsed && <span className="sr-only">{item.label}</span>}
         </>
       )}
@@ -109,6 +123,7 @@ export default function SidebarNavigation({
   mobileOpen,
   displayName,
   avatarUrl,
+  unreadCount,
   onCloseMobile,
   onToggleCollapsed,
   onOpenProfile,
@@ -156,7 +171,7 @@ export default function SidebarNavigation({
               type="button"
               onClick={onToggleCollapsed}
               className={clsx(
-                'hidden lg:inline-flex items-center justify-center rounded-full text-slate-500 transition-all duration-200 hover:bg-white/[0.04] hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/10',
+                'hidden lg:inline-flex items-center justify-center rounded-full text-slate-500 transition-all duration-200 hover:bg-white/[0.04] hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
                 collapsed ? 'h-8 w-8' : 'absolute right-0 top-0 h-8 w-8'
               )}
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -198,7 +213,7 @@ export default function SidebarNavigation({
             <div className={clsx(collapsed ? 'flex flex-1 flex-col justify-center' : '')}>
               <nav className={clsx(collapsed ? 'flex flex-col items-center gap-3' : 'space-y-1')}>
                 {items.map((item) => (
-                  <Item key={item.path} item={item} collapsed={collapsed} onNavigate={onCloseMobile} />
+                  <Item key={item.path} item={item} collapsed={collapsed} onNavigate={onCloseMobile} unreadCount={unreadCount} />
                 ))}
               </nav>
             </div>

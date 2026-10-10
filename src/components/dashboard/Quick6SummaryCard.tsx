@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import type { Quick6Scope, Quick6Summary } from '@/lib/portal-quick6'
+import { quick6Delta } from '@/lib/canonical/quick6-comparison'
 
 type Quick6SummaryCardProps = {
   summary: Quick6Summary
@@ -82,24 +83,20 @@ export default function Quick6SummaryCard({ summary, scope, onScopeChange }: Qui
           {summary.stats.map((stat, index) => {
             const current = stat[scope]
             const reference = scope === 'last3' ? stat.season : scope === 'season' ? stat.last3 : stat.season
-            const delta =
-              current.available &&
-              reference.available &&
-              current.value != null &&
-              reference.value != null
-                ? Number((current.value - reference.value).toFixed(1))
-                : null
+            const delta = quick6Delta(current, reference)
             const showDelta = delta != null && Math.abs(delta) > 0
             const positive = (delta ?? 0) > 0
 
             return (
               <div
                 key={stat.key}
+                data-trend={showDelta ? (positive ? 'up' : 'down') : 'equal'}
                 className={clsx(
                   'group relative overflow-hidden rounded-[22px] px-3 py-4 text-center transition duration-200 ease-out sm:px-4 lg:px-3 xl:px-4',
                   'shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]',
                   'hover:-translate-y-[1px] hover:shadow-[0_8px_22px_rgba(5,10,20,0.18),inset_0_1px_0_rgba(255,255,255,0.05)]',
-                  tileBackgrounds[index]
+                  tileBackgrounds[index],
+                  showDelta && (positive ? 'quick6-trend-up' : 'quick6-trend-down')
                 )}
               >
                 <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-200 group-hover:opacity-100 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),transparent_60%)]" />

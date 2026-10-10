@@ -116,7 +116,7 @@ export default function GameLogCard({ row }: { row: GameLogRow }) {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(57,255,136,0)_0%,rgba(57,255,136,0.6)_35%,rgba(57,255,136,0.6)_65%,rgba(57,255,136,0)_100%)]" />
       <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2">
         <span className={`inline-flex min-h-7 items-center rounded-b-[10px] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] shadow-[0_6px_16px_rgba(0,0,0,0.2)] ${statusClasses(status)}`}>
-          {status}
+          {row.statusDetail || status}
         </span>
       </div>
 

@@ -312,9 +312,10 @@ export async function loadQuick6Dataset(userId: string, games: GameLogRow[]): Pr
 export async function loadQuick6Summary(
   userId: string,
   games: GameLogRow[],
-  selectedSeasonYear?: number | null
+  selectedSeasonYear?: number | null,
+  dataset?: Quick6Dataset
 ): Promise<Quick6Summary> {
-  const { loggedGames, availableSeasonYears } = await loadQuick6Dataset(userId, games)
+  const { loggedGames, availableSeasonYears } = dataset ?? await loadQuick6Dataset(userId, games)
 
   const currentYear = new Date().getFullYear()
   const seasonYear =

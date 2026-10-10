@@ -1,0 +1,572 @@
+[
+  {
+    "communityColumns": "332px",
+    "dividerToQuick": 24,
+    "headerColumns": "178px 178px",
+    "headerTiles": [
+      {
+        "h": 69.796875,
+        "left": 12,
+        "top": 174,
+        "w": 178
+      },
+      {
+        "h": 69.796875,
+        "left": 200,
+        "top": 174,
+        "w": 178
+      },
+      {
+        "h": 69.796875,
+        "left": 12,
+        "top": 253.796875,
+        "w": 178
+      },
+      {
+        "h": 69.796875,
+        "left": 200,
+        "top": 253.796875,
+        "w": 178
+      }
+    ],
+    "overflow": 0,
+    "panels": [
+      {
+        "height": 684.5,
+        "name": "Action Inbox",
+        "top": 1859.5,
+        "width": 366
+      },
+      {
+        "height": 768,
+        "name": "Recent Games",
+        "top": 2568,
+        "width": 366
+      },
+      {
+        "height": 1383.5625,
+        "name": "My Squads",
+        "top": 3360,
+        "width": 366
+      },
+      {
+        "height": 830.5,
+        "name": "Profile Snapshot",
+        "top": 4767.5625,
+        "width": 366
+      },
+      {
+        "height": 220,
+        "name": "Live Around Me",
+        "top": 5622.0625,
+        "width": 366
+      },
+      {
+        "height": 639,
+        "name": "Leaderboard Snapshot",
+        "top": 5866.0625,
+        "width": 366
+      },
+      {
+        "height": 3564,
+        "name": "Community Activity",
+        "top": 6529.0625,
+        "width": 366
+      },
+      {
+        "height": 738,
+        "name": "Portal Activity",
+        "top": 10117.0625,
+        "width": 366
+      }
+    ],
+    "quickTop": 364.59375,
+    "recapImages": [
+      {
+        "height": 415,
+        "loaded": true
+      },
+      {
+        "height": 415,
+        "loaded": true
+      },
+      {
+        "height": 415,
+        "loaded": true
+      },
+      {
+        "height": 415,
+        "loaded": true
+      },
+      {
+        "height": 415,
+        "loaded": true
+      },
+      {
+        "height": 415,
+        "loaded": true
+      }
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "welcomeColor": "rgb(148, 163, 184)"
+  },
+  {
+    "communityColumns": "323.5px 323.5px",
+    "dividerToQuick": 24,
+    "headerColumns": "347.5px 347.5px",
+    "headerTiles": [
+      {
+        "h": 69.796875,
+        "left": 24,
+        "top": 182,
+        "w": 347.5
+      },
+      {
+        "h": 69.796875,
+        "left": 381.5,
+        "top": 182,
+        "w": 347.5
+      },
+      {
+        "h": 69.796875,
+        "left": 24,
+        "top": 261.796875,
+        "w": 347.5
+      },
+      {
+        "h": 69.796875,
+        "left": 381.5,
+        "top": 261.796875,
+        "w": 347.5
+      }
+    ],
+    "overflow": 0,
+    "panels": [
+      {
+        "height": 692.5,
+        "name": "Action Inbox",
+        "top": 1553,
+        "width": 705
+      },
+      {
+        "height": 721,
+        "name": "Recent Games",
+        "top": 2269.5,
+        "width": 705
+      },
+      {
+        "height": 1391.5625,
+        "name": "My Squads",
+        "top": 3014.5,
+        "width": 705
+      },
+      {
+        "height": 668.5,
+        "name": "Profile Snapshot",
+        "top": 4430.0625,
+        "width": 705
+      },
+      {
+        "height": 188,
+        "name": "Live Around Me",
+        "top": 5122.5625,
+        "width": 705
+      },
+      {
+        "height": 589.5,
+        "name": "Leaderboard Snapshot",
+        "top": 5334.5625,
+        "width": 705
+      },
+      {
+        "height": 1862.125,
+        "name": "Community Activity",
+        "top": 5948.0625,
+        "width": 705
+      },
+      {
+        "height": 586,
+        "name": "Portal Activity",
+        "top": 7834.1875,
+        "width": 705
+      }
+    ],
+    "quickTop": 372.59375,
+    "recapImages": [
+      {
+        "height": 404.375,
+        "loaded": true
+      },
+      {
+        "height": 404.375,
+        "loaded": true
+      },
+      {
+        "height": 404.375,
+        "loaded": true
+      },
+      {
+        "height": 404.375,
+        "loaded": true
+      },
+      {
+        "height": 404.375,
+        "loaded": true
+      },
+      {
+        "height": 404.375,
+        "loaded": true
+      }
+    ],
+    "viewport": [
+      768,
+      1024
+    ],
+    "welcomeColor": "rgb(148, 163, 184)"
+  },
+  {
+    "communityColumns": "331.5px 331.5px",
+    "dividerToQuick": 24,
+    "headerColumns": "355.5px 355.5px",
+    "headerTiles": [
+      {
+        "h": 69.796875,
+        "left": 264,
+        "top": 104,
+        "w": 355.5
+      },
+      {
+        "h": 69.796875,
+        "left": 629.5,
+        "top": 104,
+        "w": 355.5
+      },
+      {
+        "h": 69.796875,
+        "left": 264,
+        "top": 183.796875,
+        "w": 355.5
+      },
+      {
+        "h": 69.796875,
+        "left": 629.5,
+        "top": 183.796875,
+        "w": 355.5
+      }
+    ],
+    "overflow": 0,
+    "panels": [
+      {
+        "height": 692.5,
+        "name": "Action Inbox",
+        "top": 981.59375,
+        "width": 721
+      },
+      {
+        "height": 721,
+        "name": "Recent Games",
+        "top": 1698.09375,
+        "width": 721
+      },
+      {
+        "height": 1391.5625,
+        "name": "My Squads",
+        "top": 2443.09375,
+        "width": 721
+      },
+      {
+        "height": 668.5,
+        "name": "Profile Snapshot",
+        "top": 3858.65625,
+        "width": 721
+      },
+      {
+        "height": 188,
+        "name": "Live Around Me",
+        "top": 4551.15625,
+        "width": 721
+      },
+      {
+        "height": 589.5,
+        "name": "Leaderboard Snapshot",
+        "top": 4763.15625,
+        "width": 721
+      },
+      {
+        "height": 1864.125,
+        "name": "Community Activity",
+        "top": 5376.65625,
+        "width": 721
+      },
+      {
+        "height": 420,
+        "name": "Portal Activity",
+        "top": 7264.78125,
+        "width": 721
+      }
+    ],
+    "quickTop": 294.59375,
+    "recapImages": [
+      {
+        "height": 414.375,
+        "loaded": true
+      },
+      {
+        "height": 414.375,
+        "loaded": true
+      },
+      {
+        "height": 414.375,
+        "loaded": true
+      },
+      {
+        "height": 414.375,
+        "loaded": true
+      },
+      {
+        "height": 414.375,
+        "loaded": true
+      },
+      {
+        "height": 414.375,
+        "loaded": true
+      }
+    ],
+    "viewport": [
+      1024,
+      768
+    ],
+    "welcomeColor": "rgb(148, 163, 184)"
+  },
+  {
+    "communityColumns": "502.5px 502.5px",
+    "dividerToQuick": 24,
+    "headerColumns": "150px 120.016px 120.016px 120.016px",
+    "headerTiles": [
+      {
+        "h": 69.796875,
+        "left": 786.953125,
+        "top": 32,
+        "w": 150
+      },
+      {
+        "h": 69.796875,
+        "left": 946.953125,
+        "top": 32,
+        "w": 120.015625
+      },
+      {
+        "h": 69.796875,
+        "left": 1076.96875,
+        "top": 32,
+        "w": 120.015625
+      },
+      {
+        "h": 69.796875,
+        "left": 1206.984375,
+        "top": 32,
+        "w": 120.015625
+      }
+    ],
+    "overflow": 0,
+    "panels": [
+      {
+        "height": 692.5,
+        "name": "Action Inbox",
+        "top": 142.796875,
+        "width": 360
+      },
+      {
+        "height": 721,
+        "name": "Recent Games",
+        "top": 859.296875,
+        "width": 444.0625
+      },
+      {
+        "height": 1444.0625,
+        "name": "My Squads",
+        "top": 859.296875,
+        "width": 290.9375
+      },
+      {
+        "height": 890.5,
+        "name": "Profile Snapshot",
+        "top": 859.296875,
+        "width": 280
+      },
+      {
+        "height": 188,
+        "name": "Live Around Me",
+        "top": 2327.359375,
+        "width": 597.421875
+      },
+      {
+        "height": 609.5,
+        "name": "Leaderboard Snapshot",
+        "top": 2327.359375,
+        "width": 441.578125
+      },
+      {
+        "height": 1881,
+        "name": "Community Activity",
+        "top": 2960.859375,
+        "width": 1063
+      },
+      {
+        "height": 340,
+        "name": "Portal Activity",
+        "top": 4865.859375,
+        "width": 1063
+      }
+    ],
+    "quickTop": 142.796875,
+    "recapImages": [
+      {
+        "height": 420,
+        "loaded": true
+      },
+      {
+        "height": 420,
+        "loaded": true
+      },
+      {
+        "height": 420,
+        "loaded": true
+      },
+      {
+        "height": 420,
+        "loaded": true
+      },
+      {
+        "height": 420,
+        "loaded": true
+      },
+      {
+        "height": 420,
+        "loaded": true
+      }
+    ],
+    "viewport": [
+      1366,
+      900
+    ],
+    "welcomeColor": "rgb(148, 163, 184)"
+  },
+  {
+    "communityColumns": "631px 631px",
+    "dividerToQuick": 24,
+    "headerColumns": "150px 164.891px 164.891px 164.891px",
+    "headerTiles": [
+      {
+        "h": 69.796875,
+        "left": 1057.828125,
+        "top": 32,
+        "w": 150
+      },
+      {
+        "h": 69.796875,
+        "left": 1217.828125,
+        "top": 32,
+        "w": 164.890625
+      },
+      {
+        "h": 69.796875,
+        "left": 1392.71875,
+        "top": 32,
+        "w": 164.890625
+      },
+      {
+        "h": 69.796875,
+        "left": 1567.609375,
+        "top": 32,
+        "w": 164.890625
+      }
+    ],
+    "overflow": 0,
+    "panels": [
+      {
+        "height": 692.5,
+        "name": "Action Inbox",
+        "top": 142.796875,
+        "width": 360
+      },
+      {
+        "height": 721,
+        "name": "Recent Games",
+        "top": 859.296875,
+        "width": 558.90625
+      },
+      {
+        "height": 1391.5625,
+        "name": "My Squads",
+        "top": 859.296875,
+        "width": 366.171875
+      },
+      {
+        "height": 683.5,
+        "name": "Profile Snapshot",
+        "top": 859.296875,
+        "width": 346.90625
+      },
+      {
+        "height": 188,
+        "name": "Live Around Me",
+        "top": 2274.859375,
+        "width": 745.1875
+      },
+      {
+        "height": 589.5,
+        "name": "Leaderboard Snapshot",
+        "top": 2274.859375,
+        "width": 550.8125
+      },
+      {
+        "height": 1881,
+        "name": "Community Activity",
+        "top": 2888.359375,
+        "width": 1320
+      },
+      {
+        "height": 340,
+        "name": "Portal Activity",
+        "top": 4793.359375,
+        "width": 1320
+      }
+    ],
+    "quickTop": 142.796875,
+    "recapImages": [
+      {
+        "height": 420,
+        "loaded": true
+      },
+      {
+        "height": 420,
+        "loaded": true
+      },
+      {
+        "height": 420,
+        "loaded": true
+      },
+      {
+        "height": 420,
+        "loaded": true
+      },
+      {
+        "height": 420,
+        "loaded": true
+      },
+      {
+        "height": 420,
+        "loaded": true
+      }
+    ],
+    "viewport": [
+      1920,
+      1080
+    ],
+    "welcomeColor": "rgb(148, 163, 184)"
+  }
+]

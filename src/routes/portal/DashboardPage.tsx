@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
@@ -9,17 +9,26 @@ import {
   Radio,
   ShieldCheck,
   Star,
-  Trophy,
   Users2,
 } from 'lucide-react'
 import PortalCard from '@/components/cards/PortalCard'
 import MatchScoreCard from '@/components/dashboard/MatchScoreCard'
 import Quick6SummaryCard from '@/components/dashboard/Quick6SummaryCard'
+import DashboardSkeleton, { DashboardSectionSkeleton } from '@/components/dashboard/DashboardSkeleton'
+import DashboardLeaderboard from '@/components/dashboard/DashboardLeaderboard'
+import DashboardCommunityActivity from '@/components/dashboard/DashboardCommunityActivity'
 import GameLogCard from '@/components/portal/games/GameLogCard'
-import { loadDashboardData, type DashboardActionItem, type DashboardData } from '@/lib/portal-dashboard'
+import { loadDashboardData, retryDashboardSection, type DashboardDeferredSection, type DashboardActionItem, type DashboardData } from '@/lib/portal-dashboard'
 import type { Quick6Scope } from '@/lib/portal-quick6'
 import { formatRoundLabel } from '@/lib/round-label'
+import { leaderboardGradient } from '@/lib/canonical/dashboard-leaderboard'
+import { useDashboardCommunityActivity } from '@/hooks/useDashboardCommunityActivity'
+import { mergeDashboardUpdate } from '@/lib/canonical/dashboard-loading'
 import { supabase } from '@/lib/supabase'
+
+function squadSurface(palette?: { primary: string | null; secondary: string | null }) {
+  return { backgroundImage: `linear-gradient(#080e1aa6,#080e1aa6),${leaderboardGradient(palette?.primary, palette?.secondary)}` }
+}
 
 function formatHandle(handle: string | null) {
   if (!handle) return null
@@ -176,30 +185,35 @@ function LogoBadge({ src, label, className = 'h-12 w-12 rounded-2xl' }: { src: s
 
 export default function DashboardPage() {
   const navigate = useNavigate()
+  const requestGeneration = useRef(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<DashboardData | null>(null)
   const [quick6Scope, setQuick6Scope] = useState<Quick6Scope>('season')
   const [selectedSeasonYear, setSelectedSeasonYear] = useState<number | null>(null)
+  const [viewerId, setViewerId] = useState<string | null>(null)
+  const feedActivity = useDashboardCommunityActivity(viewerId)
 
   useEffect(() => {
     let cancelled = false
+    requestGeneration.current += 1
 
     ;(async () => {
       setLoading(true)
+      setData(null)
       try {
         const { data: authData } = await supabase.auth.getUser()
+        if (cancelled) return
         const user = authData.user
         if (!user) {
           navigate('/sign-in', { replace: true })
           return
         }
+        if (!cancelled) setViewerId(user.id)
 
-        const next = await loadDashboardData(user.id, selectedSeasonYear)
-        if (!cancelled) {
-          setData(next)
-          setError(null)
-        }
+        await loadDashboardData(user.id, selectedSeasonYear, (patch, completed) => {
+          if (!cancelled) { setData((current) => mergeDashboardUpdate(current, patch, completed)); setError(null); setLoading(false) }
+        })
       } catch (loadError) {
         if (!cancelled) {
           setError(loadError instanceof Error ? loadError.message : 'Unable to load dashboard.')
@@ -211,6 +225,7 @@ export default function DashboardPage() {
 
     return () => {
       cancelled = true
+      requestGeneration.current += 1
     }
   }, [navigate, selectedSeasonYear])
 
@@ -224,9 +239,24 @@ export default function DashboardPage() {
     }
   }, [data])
 
-  if (loading) {
-    return <main className="min-h-screen p-6 app-bg">Loading dashboard…</main>
+  const retrySection = async (section: DashboardDeferredSection) => {
+    if (!viewerId || !data) return
+    const generation = requestGeneration.current
+    setData((current) => current ? { ...current, pendingSections: [...(current.pendingSections ?? []), section], sectionErrors: { ...current.sectionErrors, [section]: undefined } } : current)
+    try {
+      const patch = await retryDashboardSection(section, viewerId, data.selectedSeasonYear)
+      if (generation === requestGeneration.current) setData((current) => current ? { ...current, ...patch, pendingSections: current.pendingSections?.filter((key) => key !== section) } : current)
+    } catch {
+      if (generation === requestGeneration.current) setData((current) => current ? { ...current, pendingSections: current.pendingSections?.filter((key) => key !== section), sectionErrors: { ...current.sectionErrors, [section]: 'Could not load this section. Please try again.' } } : current)
+    }
   }
+
+  const sectionError = (section: DashboardDeferredSection) => <div role="alert" className="py-4 text-sm text-slate-300">
+    <p>{data?.sectionErrors?.[section]}</p>
+    <button type="button" onClick={() => void retrySection(section)} className="mt-2 min-h-11 rounded-lg px-3 font-semibold text-[#39FF14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#39FF14]">Retry</button>
+  </div>
+
+  if (loading) return <DashboardSkeleton />
 
   if (error || !data) {
     return (
@@ -280,7 +310,7 @@ export default function DashboardPage() {
 
   return (
     <section className="grid gap-6">
-      <div className="pb-4">
+      <div>
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between xl:gap-8">
           <div className="flex items-center gap-4 xl:flex-1">
             <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#101A2D] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
@@ -293,7 +323,7 @@ export default function DashboardPage() {
               )}
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-slate-500">Welcome Back</p>
+              <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-slate-400">Welcome Back</p>
               <p className="pr-2 text-[1.45rem] font-black italic leading-[1.02] tracking-[-0.04em] text-white sm:text-[1.7rem]">
                 {(data.profile.name || 'KickChasers Player').toUpperCase()}
               </p>
@@ -301,7 +331,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="w-full xl:max-w-[720px] xl:flex-[1.1]">
-            <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-[minmax(150px,0.9fr)_repeat(3,minmax(0,1fr))]">
+            <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-[minmax(150px,0.9fr)_repeat(3,minmax(0,1fr))]">
               {headerStats.map((stat) => (
                 <div
                   key={stat.key}
@@ -412,21 +442,21 @@ export default function DashboardPage() {
         <PortalCard
           title="Action Inbox"
           subtitle="Pending decisions, invites, and request work"
-          className="bg-[linear-gradient(180deg,rgba(16,26,42,0.96)_0%,rgba(9,16,28,0.98)_100%)]"
+          className="dashboard-inbox"
         >
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {inboxPreview.length ? (
               inboxPreview.map((action) => {
                 const status = actionStatusMeta(action)
                 const StatusIcon = status.icon
 
                 return (
-                  <div key={action.id} className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.025)_100%)] p-3.5">
+                  <div key={action.id} className={`dashboard-inbox-row ${action.readAt ? 'is-resolved' : 'needs-attention'}`} style={squadSurface(data.profile.palette)}>
                     <div className="flex items-start justify-between gap-3">
-                      <span className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${actionAccentClass(action.accent)}`}>
+                      <span className={`text-[11px] font-semibold uppercase tracking-[0.1em] ${actionAccentClass(action.accent)}`}>
                         {actionTypeLabel(action)}
                       </span>
-                      <span className="shrink-0 pt-0.5 text-[11px] uppercase tracking-[0.18em] text-slate-500">{formatRelative(action.createdAt)}</span>
+                      <span className="shrink-0 pt-0.5 text-[11px] text-slate-300">{formatRelative(action.createdAt)}</span>
                     </div>
 
                     <div className="mt-3 flex items-start gap-3">
@@ -436,20 +466,20 @@ export default function DashboardPage() {
                         className="h-11 w-11 shrink-0 rounded-full"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-white">{actionTitle(action)}</p>
-                        <p className="mt-1 text-sm text-slate-400">{actionContext(action)}</p>
+                        <p className="text-sm font-semibold leading-5 text-white [overflow-wrap:anywhere]">{actionTitle(action)}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-300">{actionContext(action)}</p>
                         {action.actorHandle ? (
-                          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">{formatHandle(action.actorHandle)}</p>
+                          <p className="mt-1 text-xs text-slate-300">{formatHandle(action.actorHandle)}</p>
                         ) : null}
                       </div>
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/8 pt-3">
+                    <div className="mt-2 flex items-center justify-between gap-3">
                       <span className={`inline-flex min-w-0 items-center gap-2 text-xs font-medium ${status.className}`}>
                         <StatusIcon className="h-3.5 w-3.5 shrink-0" />
                         {status.label}
                       </span>
-                      <Link to={actionHref(action)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#9CE8BE]">
+                      <Link to={actionHref(action)} className="dashboard-inline-action">
                         {action.actionLabel}
                         <ChevronRight className="h-3.5 w-3.5" />
                       </Link>
@@ -458,7 +488,7 @@ export default function DashboardPage() {
                 )
               })
             ) : (
-              <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.03] p-5 text-sm text-slate-400">
+              <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.03] p-5 text-xs leading-5 text-slate-300">
                 No pending action items right now. Squad invites, track requests, and admin decisions will surface here first.
               </div>
             )}
@@ -466,7 +496,7 @@ export default function DashboardPage() {
 
           <Link
             to="/notifications"
-            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-[#9CE8BE] hover:bg-white/[0.05] sm:w-auto"
+            className="dashboard-section-action mt-3"
           >
             Open full inbox
             <ChevronRight className="h-4 w-4" />
@@ -474,7 +504,9 @@ export default function DashboardPage() {
         </PortalCard>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.95fr)_minmax(280px,0.9fr)]">
+      {viewerId ? <DashboardCommunityActivity viewerId={viewerId} activity={feedActivity} /> : null}
+
+      <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.95fr)_minmax(280px,0.9fr)]">
         <PortalCard
           title="Recent Games"
           subtitle="Match-card view from your game log"
@@ -508,10 +540,11 @@ export default function DashboardPage() {
         >
           <div className="space-y-3">
             {data.squads.length ? (
-              data.squads.map((squad) => (
+              data.squads.slice(0, 3).map((squad) => (
                 <Link
                   key={squad.id}
                   to={`/teams/${squad.id}`}
+                  style={squadSurface(data.squadPalettes[squad.id])}
                   className="group relative block overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(135deg,rgba(21,54,120,0.44)_0%,rgba(5,10,18,0.82)_50%,rgba(0,120,96,0.22)_100%)] pt-5 shadow-[0_14px_30px_rgba(2,6,18,0.22),inset_0_1px_0_rgba(255,255,255,0.05)] transition duration-200 hover:-translate-y-[1px] hover:border-white/14"
                 >
                   <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(4,8,14,0.08)_0%,rgba(4,8,14,0.2)_42%,rgba(4,8,14,0.38)_100%)]" />
@@ -570,7 +603,7 @@ export default function DashboardPage() {
           </div>
 
           <Link to="/teams?tab=my-squads" className="mt-4 inline-flex w-full items-center justify-center gap-2 text-sm font-medium text-[#9CE8BE] sm:w-auto sm:justify-start">
-            Open Teams workspace
+            See more squads
             <ChevronRight className="h-4 w-4" />
           </Link>
         </PortalCard>
@@ -578,16 +611,15 @@ export default function DashboardPage() {
         <PortalCard
           title="Profile Snapshot"
           subtitle="Season identity and recent form"
-          className="overflow-hidden bg-[linear-gradient(180deg,rgba(16,26,42,0.96)_0%,rgba(9,16,28,0.98)_100%)]"
+          className="dashboard-profile overflow-hidden"
         >
-          <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.07)_0%,rgba(255,255,255,0.025)_58%,rgba(57,255,136,0.05)_100%)] p-4 shadow-[0_14px_30px_rgba(2,6,18,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(57,255,136,0)_0%,rgba(57,255,136,0.56)_50%,rgba(57,255,136,0)_100%)] opacity-80" />
-            <div className="flex items-center gap-4">
+          <div className="dashboard-profile-identity" style={squadSurface(data.profile.palette)}>
+            <div className="flex items-center gap-3">
               <LogoBadge src={data.profile.avatarUrl} label={data.profile.name || 'User'} className="h-16 w-16 shrink-0 rounded-full" />
               <div className="min-w-0">
-                <p className="truncate text-lg font-black italic leading-tight tracking-[-0.03em] text-white">{data.profile.name || 'KickChasers Player'}</p>
-                <p className="mt-1 text-sm text-slate-400">{formatHandle(data.profile.handle) || 'Handle pending'}</p>
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                <p className="text-xl font-black italic leading-tight tracking-[-0.03em] text-white">{data.profile.name || 'KickChasers Player'}</p>
+                <p className="mt-1 text-xs text-slate-200">{formatHandle(data.profile.handle) || 'Handle pending'}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-300 [overflow-wrap:anywhere]">
                   {[data.profile.clubName, data.profile.squadName, data.profile.position ? `${data.profile.position}${data.profile.playerNumber ? ` • #${data.profile.playerNumber}` : ''}` : data.profile.playerNumber ? `#${data.profile.playerNumber}` : null]
                     .filter(Boolean)
                     .join(' • ') || 'Profile identity will expand as squad data lands'}
@@ -596,50 +628,40 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Season Games</p>
+          <div className="dashboard-profile-stats mt-3 grid grid-cols-2 gap-2">
+            <div className="dashboard-profile-stat">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">Season Games</p>
               <p className="mt-2 text-[2rem] font-black italic leading-none tracking-[-0.04em] text-white">{data.profile.seasonGames}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Recent Disposals</p>
+            <div className="dashboard-profile-stat">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">Recent Disposals</p>
               <p className="mt-2 text-[2rem] font-black italic leading-none tracking-[-0.04em] text-white">{data.profile.formAverages ? data.profile.formAverages.disposals : '-'}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Roles</p>
-              <p className="mt-2 truncate text-sm font-semibold text-white">{data.profile.roles.length ? data.profile.roles.join(', ') : 'Pending'}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Goals / Tackles</p>
-              <p className="mt-2 text-sm font-semibold text-white">
-                {data.profile.formAverages ? `${data.profile.formAverages.goals} G • ${data.profile.formAverages.tackles} T` : 'Latest 3 pending'}
-              </p>
             </div>
           </div>
 
-          <div className="mt-4 space-y-2.5">
+          <div className="mt-4 space-y-2">
             {data.profile.recentGames.length ? (
               data.profile.recentGames.map((game) => (
                 <Link
                   key={`profile:${game.id}:${game.manualId || 'tracked'}`}
                   to={game.isManual && game.manualId ? `/games/manual/${game.manualId}` : `/games/${game.id}`}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.035] px-3 py-3 transition hover:border-[#39FF88]/24 hover:bg-white/[0.055]"
+                  className="dashboard-profile-game" style={squadSurface(data.profile.palette)}
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <LogoBadge src={game.opponentLogoUrl} label={game.opponent || 'Opponent'} className="h-9 w-9 shrink-0 rounded-full" />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-white">{game.opponent || 'Opponent'}</p>
-                      <p className="mt-0.5 text-xs text-slate-500">{formatShortDate(game.date)} • {formatStatus(game.status)}</p>
+                      <p className="mt-0.5 text-xs text-slate-300">{formatShortDate(game.date)} • {formatStatus(game.status)}</p>
                     </div>
                   </div>
-                  <div className="min-w-[72px] text-right">
+                  <div className="min-w-0 max-w-[40%] text-right">
                     <p className="truncate text-xs font-semibold text-slate-300">{game.venue || 'Venue TBC'}</p>
-                    <p className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-slate-600">{formatRoundLabel(game.round ?? null) || 'Game'}</p>
+                    <p className="mt-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-300">{formatRoundLabel(game.round ?? null) || 'Game'}</p>
                   </div>
                 </Link>
               ))
             ) : (
-              <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.03] p-4 text-sm text-slate-400">
+              <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.03] p-4 text-xs text-slate-200">
                 Profile form context will populate from recent games and manual entries.
               </div>
             )}
@@ -647,7 +669,7 @@ export default function DashboardPage() {
 
           <Link
             to="/profile"
-            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-[#9CE8BE] hover:bg-white/[0.05]"
+            className="dashboard-section-action mt-3"
           >
             Open profile
             <ChevronRight className="h-4 w-4" />
@@ -655,9 +677,9 @@ export default function DashboardPage() {
         </PortalCard>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
         <PortalCard title="Live Around Me" subtitle="Followed squads and tracked games happening right now">
-          {data.liveAroundMe.length ? (
+          {data.pendingSections?.includes('liveAroundMe') ? <DashboardSectionSkeleton label="live games" rows={2} /> : data.sectionErrors?.liveAroundMe ? sectionError('liveAroundMe') : data.liveAroundMe.length ? (
             <div className="grid gap-3 lg:grid-cols-2">
               {data.liveAroundMe.map((game) => (
                 <Link
@@ -706,73 +728,31 @@ export default function DashboardPage() {
           )}
         </PortalCard>
 
-        <PortalCard title="Leaderboard Snapshot" subtitle="Compact leaderboard teaser grounded in the live stats product">
-          {data.leaderboard.length ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-2xl border border-[#39FF88]/20 bg-[#39FF88]/8 px-3 py-2 text-xs uppercase tracking-[0.22em] text-[#B8FFD5]">
-                <span className="inline-flex items-center gap-2">
-                  <Trophy className="h-3.5 w-3.5" />
-                  Disposals Leaders
-                </span>
-                <span>{new Date().getFullYear()} season</span>
-              </div>
-
-              {data.leaderboard.map((row, index) => (
-                <div key={row.userId} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold ${
-                      index === 0 ? 'bg-[#39FF88] text-[#07101D]' : 'border border-white/10 bg-[#0C1627] text-slate-200'
-                    }`}>
-                      {row.rank}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">{row.playerName}</p>
-                      <p className="text-xs text-slate-500">
-                        {row.clubName || row.squadName || 'KickChasers'} • {row.games} games
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-semibold text-white">{row.statValue}</p>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Disposals</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.03] p-5 text-sm text-slate-400">
-              Leaderboard leaders will appear here once season event totals are available for the current filters.
-            </div>
-          )}
-
-          <Link to="/stats" className="mt-4 inline-flex w-full items-center justify-center gap-2 text-sm font-medium text-[#9CE8BE] sm:w-auto sm:justify-start">
-            Open full leaderboard
-            <ChevronRight className="h-4 w-4" />
-          </Link>
+        <PortalCard title="Leaderboard Snapshot" subtitle="Season disposals from your squads and across KickChasers">
+          {data.pendingSections?.includes('leaderboard') ? <DashboardSectionSkeleton label="season rankings" rows={5} /> : data.sectionErrors?.leaderboard ? sectionError('leaderboard') : <DashboardLeaderboard rows={data.leaderboard} squads={data.squads} viewerId={viewerId} seasonYear={data.selectedSeasonYear} />}
         </PortalCard>
       </div>
 
-      <PortalCard title="Recent Activity" subtitle="Lower-priority movement across games and requests">
-        <div className="grid gap-3 lg:grid-cols-2">
+
+      <PortalCard title="Portal Activity" subtitle="Lower-priority movement across games and requests" className="dashboard-activity">
+        <div className="grid gap-2.5 lg:grid-cols-2">
           {data.recentActivity.length ? (
             data.recentActivity.map((item) => (
               <Link
                 key={item.id}
                 to={item.href}
-                className="flex items-start justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 transition hover:border-white/20 hover:bg-white/[0.05]"
+                className={`dashboard-activity-row ${item.kind === 'game' ? 'is-game' : 'is-notification'}`}
               >
-                <div className="flex items-start gap-3">
-                  <div className={`mt-0.5 flex h-9 w-9 items-center justify-center rounded-full ${
-                    item.kind === 'game' ? 'bg-[#39FF88]/12 text-[#B8FFD5]' : 'bg-white/8 text-slate-300'
-                  }`}>
+                <div className="flex min-w-0 items-start gap-3">
+                  {item.imageUrl ? <LogoBadge src={item.imageUrl} label={item.imageLabel} className="h-10 w-10 shrink-0 rounded-full" /> : <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 text-slate-300">
                     {item.kind === 'game' ? <Star className="h-4 w-4" /> : <Users2 className="h-4 w-4" />}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-white">{item.title}</p>
-                    <p className="mt-1 text-sm text-slate-400">{item.subtitle}</p>
+                  </div>}
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-5 text-white">{item.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-300">{item.subtitle}</p>
                   </div>
                 </div>
-                <span className="shrink-0 text-[11px] uppercase tracking-[0.18em] text-slate-500">{formatRelative(item.createdAt)}</span>
+                <span className="dashboard-activity-time">{formatRelative(item.createdAt)}</span>
               </Link>
             ))
           ) : (

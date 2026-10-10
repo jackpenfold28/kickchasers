@@ -1,0 +1,25 @@
+{
+  "originals": 27836841,
+  "variants": 32506528,
+  "smallestVariantsTotal": 5330460,
+  "fullSizeWebpTotal": 16620898,
+  "newOriginals": 16496284,
+  "oldOriginals": 11340557,
+  "hero": [
+    {
+      "src": "/landing/images/coaches-box-640.webp",
+      "width": 640,
+      "bytes": 341138
+    },
+    {
+      "src": "/landing/images/coaches-box-1280.webp",
+      "width": 1280,
+      "bytes": 1240124
+    },
+    {
+      "src": "/landing/images/coaches-box-1448.webp",
+      "width": 1448,
+      "bytes": 1497796
+    }
+  ]
+}

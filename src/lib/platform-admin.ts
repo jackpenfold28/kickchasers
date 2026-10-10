@@ -18,25 +18,11 @@ export async function fetchPlatformAdminStatus(userId?: string | null): Promise<
   }
 
   const { data: functionResult, error: functionError } = await supabase.rpc('f_is_platform_admin')
-
-  let isAdmin = Boolean(functionResult)
-  if (!isAdmin || functionError) {
-    const { data, error } = await supabase
-      .from('platform_admins')
-      .select('profile_user_id')
-      .eq('profile_user_id', resolvedUserId)
-      .maybeSingle()
-
-    if (error && error.code !== 'PGRST116') {
-      throw error
-    }
-
-    isAdmin = Boolean(data?.profile_user_id)
-  }
+  if (functionError) throw functionError
 
   return {
     userId: resolvedUserId,
-    isAdmin,
+    isAdmin: Boolean(functionResult),
   }
 }
 

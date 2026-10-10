@@ -10,8 +10,32 @@ import PortalCard from '@/components/cards/PortalCard'
 import MatchScoreCard from '@/components/dashboard/MatchScoreCard'
 import TeamPageIcon from '@/components/icons/TeamPageIcon'
 import SquadBrandingPanel from '@/components/squads/SquadBrandingPanel'
+import TeamStatsGamesPanel from '@/components/squads/TeamStatsGamesPanel'
+import BestAndFairestPanel from '@/components/squads/BestAndFairestPanel'
 import { resolveLogoPublicUrl } from '@/lib/logo-storage'
 import { supabase } from '@/lib/supabase'
+import {
+  PLAYER_POSITIONS,
+  getPlayerPositionLabel,
+  type CanonicalPlayerPosition,
+} from '@/lib/canonical/positions'
+import {
+  membershipsForSquadMember,
+  removePlayerGroupSelection,
+  summarizePlayerGroups,
+  uniquePlayerGroupIds,
+  type PlayerGroupRecord,
+} from '@/lib/canonical/player-groups'
+import { canAccessTeamStatsGames } from '@/lib/canonical/team-stats-games'
+import { getSquadVoteAccess } from '@/lib/squad-votes'
+import {
+  archiveSquadPlayerGroup,
+  createSquadPlayerGroup,
+  getSquadPlayerGroupsSnapshot,
+  renameSquadPlayerGroup,
+  setSquadMemberPlayerGroups,
+  type SquadPlayerGroupsSnapshot,
+} from '@/lib/squad-player-groups'
 import {
   addGuestPlayer,
   decideGuestMergeRequest,
@@ -52,7 +76,7 @@ import {
   type SquadMember,
 } from '@/lib/squads'
 
-type DetailTab = 'activity' | 'players' | 'team' | 'manage'
+type DetailTab = 'activity' | 'coaches' | 'votes' | 'players' | 'team' | 'manage'
 type PeopleTab = 'players' | 'coaches' | 'members' | 'trackers'
 type TeamResultFilter = 'all' | 'wins' | 'losses'
 type LeaderboardValueMode = 'total' | 'average'
@@ -151,7 +175,6 @@ type ManagePerson = {
   member: SquadMember | null
 }
 
-const POSITION_OPTIONS = ['Forward', 'Midfield', 'Defence', 'Ruck', 'Utility', 'Bench'] as const
 const RESULT_FILTERS: TeamResultFilter[] = ['all', 'wins', 'losses']
 const TEAM_STAT_CARD_BACKGROUNDS = [
   'bg-[linear-gradient(180deg,rgba(32,52,88,0.28)_0%,rgba(15,24,43,0.12)_100%)] hover:bg-[linear-gradient(180deg,rgba(45,72,118,0.34)_0%,rgba(18,30,53,0.16)_100%)]',
@@ -524,7 +547,8 @@ async function fetchSquadGames(squadId: string): Promise<SquadGameSummary[]> {
     supabase
       .from('games')
       .select('id,opponent,opponent_logo_path,grade_id,date,round,status,track_both_teams')
-      .in('id', gameIds),
+      .in('id', gameIds)
+      .neq('tracker_mode', 'team_stats_game'),
     supabase
       .from('v_counted_events')
       .select('game_id,team_side,stat_key')
@@ -677,7 +701,7 @@ async function fetchPlayersLeaderboard(squadId: string, seasonYear: number | nul
   const allGameIds = ((links ?? []) as Array<{ game_id?: string | null }>).map((row) => row.game_id).filter((id): id is string => Boolean(id))
   if (!allGameIds.length) return { topStatKeys: [], players: [], isEmpty: true }
 
-  let gamesQuery = supabase.from('games').select('id,date').in('id', allGameIds)
+  let gamesQuery = supabase.from('games').select('id,date').in('id', allGameIds).neq('tracker_mode', 'team_stats_game')
   if (seasonYear) {
     gamesQuery = gamesQuery.gte('date', `${seasonYear}-01-01T00:00:00.000Z`).lt('date', `${seasonYear + 1}-01-01T00:00:00.000Z`)
   }
@@ -838,7 +862,7 @@ async function fetchTeamAverages(
     return { grades: [], seasonYears: [], finalGameCount: 0, allCount: 0, winCount: 0, lossCount: 0, all: {}, wins: {}, losses: {} }
   }
 
-  let gamesQuery = supabase.from('games').select('id,date,track_both_teams,grade_id,round').in('id', allGameIds)
+  let gamesQuery = supabase.from('games').select('id,date,track_both_teams,grade_id,round').in('id', allGameIds).neq('tracker_mode', 'team_stats_game')
   if (gradeId) gamesQuery = gamesQuery.eq('grade_id', gradeId)
   const { data: games, error: gamesError } = await gamesQuery
   if (gamesError) throw gamesError
@@ -1020,7 +1044,7 @@ export default function SquadDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const initialTab = searchParams.get('tab')
   const [tab, setTab] = useState<DetailTab>(
-    initialTab === 'players' || initialTab === 'team' || initialTab === 'manage' ? initialTab : 'activity'
+    initialTab === 'coaches' || initialTab === 'votes' || initialTab === 'players' || initialTab === 'team' || initialTab === 'manage' ? initialTab : 'activity'
   )
   const [peopleTab, setPeopleTab] = useState<PeopleTab>('players')
 
@@ -1039,6 +1063,7 @@ export default function SquadDetailPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [userProfile, setUserProfile] = useState<{ name: string | null; playerNumber: number | null } | null>(null)
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false)
+  const [canManageVotes, setCanManageVotes] = useState(false)
   const [clubRoles, setClubRoles] = useState<ClubRole[]>([])
   const [clubRolePeople, setClubRolePeople] = useState<{
     coaches: ClubRolePerson[]
@@ -1055,6 +1080,15 @@ export default function SquadDetailPage() {
   const [membershipRole, setMembershipRole] = useState<string | null>(null)
   const [membershipStatus, setMembershipStatus] = useState<string | null>(null)
   const [members, setMembers] = useState<SquadMember[]>([])
+  const [playerGroupsSnapshot, setPlayerGroupsSnapshot] = useState<SquadPlayerGroupsSnapshot>({
+    canRead: false,
+    canManage: false,
+    groups: [],
+    memberships: [],
+  })
+  const [playerGroupsLoading, setPlayerGroupsLoading] = useState(true)
+  const [playerGroupsError, setPlayerGroupsError] = useState<string | null>(null)
+  const [playerGroupMutation, setPlayerGroupMutation] = useState<string | null>(null)
   const [connections, setConnections] = useState<FollowConnection[]>([])
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([])
@@ -1101,6 +1135,12 @@ export default function SquadDetailPage() {
   const [guestEditEmail, setGuestEditEmail] = useState('')
   const [guestEditNumber, setGuestEditNumber] = useState('')
   const [mergeModalMember, setMergeModalMember] = useState<SquadMember | null>(null)
+  const [groupNameMode, setGroupNameMode] = useState<'create' | 'rename' | null>(null)
+  const [groupNameTarget, setGroupNameTarget] = useState<PlayerGroupRecord | null>(null)
+  const [groupNameDraft, setGroupNameDraft] = useState('')
+  const [groupAssignmentMember, setGroupAssignmentMember] = useState<SquadMember | null>(null)
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([])
+  const [selectedPrimaryGroupId, setSelectedPrimaryGroupId] = useState<string | null>(null)
 
   const [guestName, setGuestName] = useState('')
   const [guestEmail, setGuestEmail] = useState('')
@@ -1139,6 +1179,15 @@ export default function SquadDetailPage() {
   const canChangeLeague = squad?.isOfficial ? isPlatformAdmin : canManageTeamAdminStuff
   const canDelete = squad?.isOfficial ? isPlatformAdmin : canManageTeamAdminStuff
   const canUseTeamSelection = Boolean((isOwner || directMemberId) && (isAcceptedMember || isOwner))
+  const canUseCoaches = canAccessTeamStatsGames({
+    viewerUserId: userId,
+    ownerUserId: squad?.ownerId,
+    isOfficial: squad?.isOfficial,
+    isPlatformAdmin,
+    membershipRole,
+    membershipStatus,
+    clubRoles,
+  })
 
   const viewerState = useMemo(() => {
     if (isOwner) return 'owner'
@@ -1160,10 +1209,18 @@ export default function SquadDetailPage() {
   }, [guestMembers, myGuestMergeRequests, userId, userProfile])
 
   const availableTabs = useMemo(() => {
-    if (viewerState === 'locked') return [] as DetailTab[]
-    if (viewerState === 'follower') return ['activity'] as DetailTab[]
-    return ['activity', 'players', 'team', 'manage'] as DetailTab[]
-  }, [viewerState])
+    if (viewerState === 'locked') return [...(canUseCoaches ? ['coaches' as const] : []), ...(canManageVotes ? ['votes' as const] : [])] as DetailTab[]
+    if (viewerState === 'follower') {
+      const tabs: DetailTab[] = playerGroupsSnapshot.canManage ? ['activity', 'manage'] : ['activity']
+      if (canUseCoaches) tabs.splice(1, 0, 'coaches')
+      if (canManageVotes) tabs.splice(canUseCoaches ? 2 : 1, 0, 'votes')
+      return tabs
+    }
+    const tabs: DetailTab[] = ['activity', 'players', 'team', 'manage']
+    if (canUseCoaches) tabs.splice(1, 0, 'coaches')
+    if (canManageVotes) tabs.splice(canUseCoaches ? 2 : 1, 0, 'votes')
+    return tabs
+  }, [canManageVotes, canUseCoaches, playerGroupsSnapshot.canManage, viewerState])
 
   useEffect(() => {
     setSearchParams((prev) => {
@@ -1181,6 +1238,7 @@ export default function SquadDetailPage() {
   async function loadDetail(silent = false) {
     if (!id) return
     if (!silent) setLoading(true)
+    if (!silent) setCanManageVotes(false)
     setRefreshing(true)
     try {
       const { data: userData } = await supabase.auth.getUser()
@@ -1258,6 +1316,12 @@ export default function SquadDetailPage() {
       setGradeOptions(grades)
       setSelectedGradeId(detail.gradeId ?? '')
       setAvatarMap(avatars)
+      try {
+        const voteAccess = await getSquadVoteAccess(detail.id)
+        setCanManageVotes(voteAccess.canManage)
+      } catch {
+        setCanManageVotes(false)
+      }
       setError(null)
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load team detail.')
@@ -1269,6 +1333,26 @@ export default function SquadDetailPage() {
 
   useEffect(() => {
     void loadDetail()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
+
+  async function loadPlayerGroups(squadId = id) {
+    if (!squadId) return
+    setPlayerGroupsLoading(true)
+    try {
+      const snapshot = await getSquadPlayerGroupsSnapshot(squadId)
+      setPlayerGroupsSnapshot(snapshot)
+      setPlayerGroupsError(null)
+    } catch (loadError) {
+      setPlayerGroupsError(loadError instanceof Error ? loadError.message : 'Unable to load player sides.')
+    } finally {
+      setPlayerGroupsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadPlayerGroups()
+    // Page load is deliberately read-only: unlike mobile, web does not run ensure/backfill RPCs here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
@@ -1362,7 +1446,7 @@ export default function SquadDetailPage() {
     }
   }
 
-  async function onUpdatePosition(memberId: string, position: string | null) {
+  async function onUpdatePosition(memberId: string, position: CanonicalPlayerPosition | null) {
     setSavingMemberId(memberId)
     try {
       await updateMemberPosition(memberId, position)
@@ -1628,6 +1712,108 @@ export default function SquadDetailPage() {
     }
   }
 
+  async function refreshPlayerGroups(includeRoster = false) {
+    await Promise.all([
+      loadPlayerGroups(),
+      includeRoster ? loadDetail(true) : Promise.resolve(),
+    ])
+  }
+
+  function openCreatePlayerGroup() {
+    setGroupNameMode('create')
+    setGroupNameTarget(null)
+    setGroupNameDraft('')
+    setPlayerGroupsError(null)
+  }
+
+  function openRenamePlayerGroup(group: PlayerGroupRecord) {
+    setGroupNameMode('rename')
+    setGroupNameTarget(group)
+    setGroupNameDraft(group.name)
+    setPlayerGroupsError(null)
+  }
+
+  async function onSavePlayerGroupName(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!id || !playerGroupsSnapshot.canManage) return
+    try {
+      setPlayerGroupMutation(groupNameMode === 'rename' ? `rename:${groupNameTarget?.id ?? ''}` : 'create')
+      setPlayerGroupsError(null)
+      if (groupNameMode === 'rename' && groupNameTarget) {
+        await renameSquadPlayerGroup(groupNameTarget.id, groupNameDraft)
+      } else if (groupNameMode === 'create') {
+        await createSquadPlayerGroup(id, groupNameDraft)
+      } else {
+        return
+      }
+      setGroupNameMode(null)
+      setGroupNameTarget(null)
+      setGroupNameDraft('')
+      await refreshPlayerGroups()
+    } catch (mutationError) {
+      setPlayerGroupsError(mutationError instanceof Error ? mutationError.message : 'Unable to save player side.')
+    } finally {
+      setPlayerGroupMutation(null)
+    }
+  }
+
+  async function onArchivePlayerGroup(group: PlayerGroupRecord) {
+    if (!playerGroupsSnapshot.canManage) return
+    const confirmed = window.confirm(
+      `Archive ${group.name}? Its player assignments will be removed, but the side and squad members will not be deleted.`,
+    )
+    if (!confirmed) return
+    try {
+      setPlayerGroupMutation(`archive:${group.id}`)
+      setPlayerGroupsError(null)
+      await archiveSquadPlayerGroup(group.id)
+      await refreshPlayerGroups(true)
+    } catch (mutationError) {
+      setPlayerGroupsError(mutationError instanceof Error ? mutationError.message : 'Unable to archive player side.')
+    } finally {
+      setPlayerGroupMutation(null)
+    }
+  }
+
+  function openPlayerGroupAssignment(member: SquadMember) {
+    const current = membershipsForSquadMember(playerGroupsSnapshot.memberships, member.id)
+    setGroupAssignmentMember(member)
+    setSelectedGroupIds(uniquePlayerGroupIds(current.map((membership) => membership.groupId)))
+    setSelectedPrimaryGroupId(current.find((membership) => membership.isPrimary)?.groupId ?? null)
+    setActionMember(null)
+    setPlayerGroupsError(null)
+  }
+
+  function togglePlayerGroupAssignment(groupId: string) {
+    if (selectedGroupIds.includes(groupId)) {
+      const next = removePlayerGroupSelection(selectedGroupIds, selectedPrimaryGroupId, groupId)
+      setSelectedGroupIds(next.groupIds)
+      setSelectedPrimaryGroupId(next.primaryGroupId)
+      return
+    }
+    setSelectedGroupIds((current) => [...current, groupId])
+    if (selectedGroupIds.length === 0) setSelectedPrimaryGroupId(groupId)
+  }
+
+  async function onSavePlayerGroupAssignment() {
+    if (!groupAssignmentMember || !playerGroupsSnapshot.canManage) return
+    try {
+      setPlayerGroupMutation(`member:${groupAssignmentMember.id}`)
+      setPlayerGroupsError(null)
+      await setSquadMemberPlayerGroups(
+        groupAssignmentMember.id,
+        selectedGroupIds,
+        selectedPrimaryGroupId,
+      )
+      setGroupAssignmentMember(null)
+      await refreshPlayerGroups(true)
+    } catch (mutationError) {
+      setPlayerGroupsError(mutationError instanceof Error ? mutationError.message : 'Unable to update player sides.')
+    } finally {
+      setPlayerGroupMutation(null)
+    }
+  }
+
   async function onShare() {
     try {
       const target = window.location.href
@@ -1740,6 +1926,16 @@ export default function SquadDetailPage() {
           }
         }),
     [activeTeamStats, teamResultFilter, teamStats.losses, teamStats.wins]
+  )
+
+  const playerGroupSummaries = useMemo(
+    () => summarizePlayerGroups(playerGroupsSnapshot.groups, playerGroupsSnapshot.memberships),
+    [playerGroupsSnapshot.groups, playerGroupsSnapshot.memberships]
+  )
+
+  const playerGroupsById = useMemo(
+    () => new Map(playerGroupsSnapshot.groups.map((group) => [group.id, group])),
+    [playerGroupsSnapshot.groups]
   )
 
   const playersPeople = useMemo(
@@ -1880,6 +2076,24 @@ export default function SquadDetailPage() {
       visible: canUseTeamSelection,
       accent: false,
       asLink: true,
+    },
+    {
+      key: 'coaches',
+      label: 'Coaches',
+      icon: <TeamPageIcon name="football" className="h-5 w-5" />,
+      onClick: () => setTab('coaches'),
+      visible: canUseCoaches,
+      accent: false,
+      asLink: false,
+    },
+    {
+      key: 'votes',
+      label: 'Best & Fairest',
+      icon: <TeamPageIcon name="star" className="h-5 w-5" />,
+      onClick: () => setTab('votes'),
+      visible: canManageVotes,
+      accent: false,
+      asLink: false,
     },
     {
       key: 'pending',
@@ -2029,7 +2243,7 @@ export default function SquadDetailPage() {
           <div className="teams-segmented">
             {availableTabs.map((item) => (
               <button key={item} onClick={() => setTab(item)} className={`teams-segment ${tab === item ? 'is-active' : ''}`}>
-                {item === 'activity' ? 'Activity' : item === 'players' ? 'Players' : item === 'team' ? 'Team' : 'Manage'}
+                {item === 'activity' ? 'Activity' : item === 'coaches' ? 'Coaches' : item === 'votes' ? 'Voting' : item === 'players' ? 'Players' : item === 'team' ? 'Team' : 'Manage'}
               </button>
             ))}
           </div>
@@ -2041,7 +2255,7 @@ export default function SquadDetailPage() {
           </PortalCard>
         )}
 
-        {viewerState === 'locked' ? (
+        {viewerState === 'locked' && !canUseCoaches && !canManageVotes ? (
           <PortalCard className="teams-section-card">
             <div className="flex flex-col items-start gap-4">
               <div className="flex items-center gap-3">
@@ -2177,6 +2391,12 @@ export default function SquadDetailPage() {
             </PortalCard>
           </div>
         )}
+
+        {tab === 'coaches' && availableTabs.includes('coaches') && userId ? (
+          <TeamStatsGamesPanel squadId={squad.id} viewerUserId={userId} />
+        ) : null}
+
+        {tab === 'votes' && availableTabs.includes('votes') ? <BestAndFairestPanel squadId={squad.id} /> : null}
 
         {tab === 'players' && availableTabs.includes('players') && (
           <PortalCard className="teams-section-card">
@@ -2396,10 +2616,10 @@ export default function SquadDetailPage() {
                   <h3 className="mt-2 text-xl font-semibold text-white">Management Actions</h3>
                 </div>
 
-                {!(canManageTeamAdminStuff || canManageGuests) ? (
+                {!(canManageTeamAdminStuff || canManageGuests || playerGroupsSnapshot.canManage) ? (
                   <div className="rounded-[24px] bg-white/[0.03] p-5">
                     <p className="text-lg font-semibold text-white">Limited access</p>
-                    <p className="mt-2 text-sm text-slate-400">Members can view the manage structure, but only admins and trackers get operational tools. Trackers are limited to guest workflows.</p>
+                    <p className="mt-2 text-sm text-slate-400">You can view team information, but the current server role does not grant management tools.</p>
                   </div>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
@@ -2448,10 +2668,91 @@ export default function SquadDetailPage() {
                         <p className="mt-1 text-sm text-slate-400">Update grade assignment for this team.</p>
                       </button>
                     ) : null}
+                    {playerGroupsSnapshot.canManage ? (
+                      <button
+                        className="teams-operational-card text-left"
+                        onClick={() => document.getElementById('player-sides-management')?.scrollIntoView({ behavior: 'smooth' })}
+                      >
+                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.06] text-[#9CE8BE] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                          <TeamPageIcon name="group" className="h-5 w-5" />
+                        </span>
+                        <p className="mt-3 font-semibold text-white">Player Sides</p>
+                        <p className="mt-1 text-sm text-slate-400">Create sides and manage roster assignments.</p>
+                      </button>
+                    ) : null}
                   </div>
                 )}
               </div>
             </PortalCard>
+
+            <div id="player-sides-management">
+            <PortalCard className="teams-section-card">
+              <div className="grid gap-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Roster groups</p>
+                    <h3 className="mt-2 text-xl font-semibold text-white">Player Sides</h3>
+                    <p className="mt-1 text-sm text-slate-400">Named sides support multiple memberships and one optional primary side per player.</p>
+                  </div>
+                  {playerGroupsSnapshot.canManage ? (
+                    <button className="teams-action-chip teams-action-chip--accent justify-center" onClick={openCreatePlayerGroup}>
+                      Create side
+                    </button>
+                  ) : null}
+                </div>
+
+                {playerGroupsLoading ? (
+                  <div className="rounded-[22px] bg-white/[0.03] p-5 text-sm text-slate-400">Loading player sides…</div>
+                ) : playerGroupsError ? (
+                  <div className="rounded-[22px] bg-red-400/5 p-5">
+                    <p className="text-sm text-red-300">{playerGroupsError}</p>
+                    <button className="teams-action-chip mt-3" onClick={() => void loadPlayerGroups()}>Try again</button>
+                  </div>
+                ) : !playerGroupsSnapshot.canRead ? (
+                  <div className="rounded-[22px] bg-white/[0.03] p-5">
+                    <p className="font-semibold text-white">Player sides unavailable</p>
+                    <p className="mt-1 text-sm text-slate-400">Your current server role cannot read this squad’s player groups.</p>
+                  </div>
+                ) : !playerGroupSummaries.length ? (
+                  <div className="rounded-[22px] bg-white/[0.03] p-5">
+                    <p className="font-semibold text-white">No active player sides</p>
+                    <p className="mt-1 text-sm text-slate-400">
+                      {playerGroupsSnapshot.canManage ? 'Create a side to begin assigning roster players.' : 'An authorized coach or admin can create the first side.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {playerGroupSummaries.map((group) => (
+                      <div key={group.id} className="rounded-[24px] bg-white/[0.03] p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-white">{group.name}</p>
+                            <p className="mt-1 text-sm text-slate-400">
+                              {group.memberCount} {group.memberCount === 1 ? 'player' : 'players'}
+                              {group.primaryMemberCount ? ` • ${group.primaryMemberCount} primary` : ' • no primary players'}
+                            </p>
+                          </div>
+                          {group.isDefault ? <span className="rounded-full bg-white/5 px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-slate-400">Default</span> : null}
+                        </div>
+                        {playerGroupsSnapshot.canManage ? (
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button className="teams-action-chip" onClick={() => openRenamePlayerGroup(group)}>Rename</button>
+                            <button
+                              className="teams-action-chip !text-red-300"
+                              disabled={playerGroupMutation === `archive:${group.id}`}
+                              onClick={() => void onArchivePlayerGroup(group)}
+                            >
+                              {playerGroupMutation === `archive:${group.id}` ? 'Archiving…' : 'Archive'}
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </PortalCard>
+            </div>
 
             <PortalCard className="teams-section-card">
               <div className="grid gap-6">
@@ -2548,9 +2849,14 @@ export default function SquadDetailPage() {
                   <div className="grid gap-3">
                     {activePeople.map((person) => {
                       const canOpenProfile = Boolean(person.userId && !person.isGuest)
+                      const personGroupMemberships = person.member
+                        ? membershipsForSquadMember(playerGroupsSnapshot.memberships, person.member.id)
+                        : []
                       const canManageRow = Boolean(
                         person.member &&
-                          ((canManageTeamAdminStuff && !person.isGuest) || (canManageGuests && person.isGuest))
+                          ((canManageTeamAdminStuff && !person.isGuest) ||
+                            (canManageGuests && person.isGuest) ||
+                            (peopleTab === 'players' && playerGroupsSnapshot.canManage))
                       )
                       const content = (
                         <div className="flex items-center gap-4">
@@ -2570,9 +2876,25 @@ export default function SquadDetailPage() {
                               {person.isGuest
                                 ? 'Guest'
                                 : peopleTab === 'players'
-                                  ? `No. ${person.jerseyNumber ?? '—'}${person.position ? ` • ${formatPosition(person.position)}` : ''}`
+                                  ? `No. ${person.jerseyNumber ?? '—'}${person.position ? ` • ${getPlayerPositionLabel(person.position) ?? formatPosition(person.position)}` : ''}`
                                   : person.handle || formatPosition(person.role) || 'Linked member'}
                             </p>
+                            {peopleTab === 'players' && personGroupMemberships.length ? (
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                {personGroupMemberships.map((membership) => {
+                                  const group = playerGroupsById.get(membership.groupId)
+                                  if (!group) return null
+                                  return (
+                                    <span
+                                      key={membership.groupId}
+                                      className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${membership.isPrimary ? 'bg-[#9CE8BE]/15 text-[#9CE8BE]' : 'bg-white/5 text-slate-400'}`}
+                                    >
+                                      {group.name}{membership.isPrimary ? ' • Primary' : ''}
+                                    </span>
+                                  )
+                                })}
+                              </div>
+                            ) : null}
                           </div>
                           {canManageRow ? (
                             <button
@@ -2685,18 +3007,30 @@ export default function SquadDetailPage() {
       <TeamsModal open={Boolean(actionMember)} onClose={() => setActionMember(null)} title={actionMember ? displayMemberName(actionMember) : 'Manage member'} subtitle="Member actions open in a sheet, not inline">
         {actionMember ? (
           <div className="grid gap-2">
-            <button className="teams-action-chip justify-between" onClick={() => { setNumberModalMember(actionMember); setNumberModalValue(actionMember.jerseyNumber?.toString() ?? ''); setActionMember(null) }}>
-              <span className="inline-flex items-center gap-2">
-                <TeamPageIcon name="tag" className="h-4 w-4" />
-                Edit jersey number
-              </span>
-            </button>
-            <button className="teams-action-chip justify-between" onClick={() => { setPositionMember(actionMember); setActionMember(null) }}>
-              <span className="inline-flex items-center gap-2">
-                <TeamPageIcon name="sports-soccer" className="h-4 w-4" />
-                Edit position
-              </span>
-            </button>
+            {((canManageTeamAdminStuff && Boolean(actionMember.userId)) || (canManageGuests && !actionMember.userId)) ? (
+              <>
+                <button className="teams-action-chip justify-between" onClick={() => { setNumberModalMember(actionMember); setNumberModalValue(actionMember.jerseyNumber?.toString() ?? ''); setActionMember(null) }}>
+                  <span className="inline-flex items-center gap-2">
+                    <TeamPageIcon name="tag" className="h-4 w-4" />
+                    Edit jersey number
+                  </span>
+                </button>
+                <button className="teams-action-chip justify-between" onClick={() => { setPositionMember(actionMember); setActionMember(null) }}>
+                  <span className="inline-flex items-center gap-2">
+                    <TeamPageIcon name="sports-soccer" className="h-4 w-4" />
+                    Edit position
+                  </span>
+                </button>
+              </>
+            ) : null}
+            {playerGroupsSnapshot.canManage && peopleTab === 'players' ? (
+              <button className="teams-action-chip justify-between" onClick={() => openPlayerGroupAssignment(actionMember)}>
+                <span className="inline-flex items-center gap-2">
+                  <TeamPageIcon name="group" className="h-4 w-4" />
+                  Edit player sides
+                </span>
+              </button>
+            ) : null}
             {canManageTeamAdminStuff && !actionMember.userId ? (
               <button
                 className="teams-action-chip justify-between"
@@ -2765,6 +3099,91 @@ export default function SquadDetailPage() {
         ) : null}
       </TeamsModal>
 
+      <TeamsModal
+        open={Boolean(groupNameMode)}
+        onClose={() => { setGroupNameMode(null); setGroupNameTarget(null); setGroupNameDraft('') }}
+        title={groupNameMode === 'rename' ? 'Rename Player Side' : 'Create Player Side'}
+        subtitle="The server keeps the side identity and owns slug generation."
+      >
+        <form className="grid gap-3" onSubmit={onSavePlayerGroupName}>
+          <input
+            className="input"
+            value={groupNameDraft}
+            onChange={(event) => setGroupNameDraft(event.target.value)}
+            placeholder="Side name"
+            autoFocus
+          />
+          {playerGroupsError ? <p className="text-sm text-red-300">{playerGroupsError}</p> : null}
+          <button
+            className="teams-action-chip teams-action-chip--accent justify-center"
+            disabled={Boolean(playerGroupMutation) || !groupNameDraft.trim()}
+            type="submit"
+          >
+            {playerGroupMutation ? 'Saving…' : groupNameMode === 'rename' ? 'Save name' : 'Create side'}
+          </button>
+        </form>
+      </TeamsModal>
+
+      <TeamsModal
+        open={Boolean(groupAssignmentMember)}
+        onClose={() => setGroupAssignmentMember(null)}
+        title={groupAssignmentMember ? `Player Sides — ${displayMemberName(groupAssignmentMember)}` : 'Player Sides'}
+        subtitle="A player can belong to multiple sides and have at most one primary side."
+      >
+        {playerGroupsSnapshot.groups.length ? (
+          <div className="grid gap-3">
+            {playerGroupsSnapshot.groups.map((group) => {
+              const selected = selectedGroupIds.includes(group.id)
+              const primary = selectedPrimaryGroupId === group.id
+              return (
+                <div key={group.id} className="rounded-[22px] bg-white/[0.03] p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <button
+                      type="button"
+                      className="flex min-w-0 items-center gap-3 text-left"
+                      onClick={() => togglePlayerGroupAssignment(group.id)}
+                    >
+                      <span className={`flex h-5 w-5 items-center justify-center rounded border ${selected ? 'border-[#9CE8BE] bg-[#9CE8BE] text-[#08111E]' : 'border-white/20 text-transparent'}`}>✓</span>
+                      <span className="truncate font-semibold text-white">{group.name}</span>
+                    </button>
+                    {selected ? (
+                      <button
+                        type="button"
+                        className={`teams-action-chip ${primary ? 'teams-action-chip--accent' : ''}`}
+                        onClick={() => setSelectedPrimaryGroupId(primary ? null : group.id)}
+                      >
+                        {primary ? 'Primary side' : 'Make primary'}
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              )
+            })}
+            <p className="text-xs text-slate-500">Removing the current primary side leaves the player without a primary; the server does not infer a fallback from ordering.</p>
+            {playerGroupsError ? <p className="text-sm text-red-300">{playerGroupsError}</p> : null}
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                className="teams-action-chip justify-center"
+                type="button"
+                onClick={() => { setSelectedGroupIds([]); setSelectedPrimaryGroupId(null) }}
+              >
+                Unassign all
+              </button>
+              <button
+                className="teams-action-chip teams-action-chip--accent justify-center"
+                disabled={Boolean(playerGroupMutation)}
+                type="button"
+                onClick={() => void onSavePlayerGroupAssignment()}
+              >
+                {playerGroupMutation ? 'Saving…' : 'Save sides'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-[22px] bg-white/[0.03] p-5 text-sm text-slate-400">Create an active player side before assigning this roster member.</div>
+        )}
+      </TeamsModal>
+
       <TeamsModal open={Boolean(numberModalMember)} onClose={() => setNumberModalMember(null)} title={numberModalMember ? `Edit jersey number` : 'Edit jersey number'} subtitle="Number changes require confirmation before saving">
         {numberModalMember ? (
           <div className="grid gap-3">
@@ -2789,23 +3208,37 @@ export default function SquadDetailPage() {
 
       <TeamsModal open={Boolean(positionMember)} onClose={() => setPositionMember(null)} title={positionMember ? 'Edit position' : 'Edit position'} subtitle="Position changes apply immediately from the sheet">
         <div className="grid gap-2 sm:grid-cols-2">
-          {POSITION_OPTIONS.map((position) => (
+          {PLAYER_POSITIONS.map((position) => (
             <button
-              key={position}
+              key={position.code}
               className="teams-action-chip justify-between"
               disabled={!positionMember}
               onClick={() => {
                 if (!positionMember) return
-                void onUpdatePosition(positionMember.id, position)
+                void onUpdatePosition(positionMember.id, position.code)
                 setPositionMember(null)
               }}
             >
               <span className="inline-flex items-center gap-2">
                 <TeamPageIcon name="sports-soccer" className="h-4 w-4" />
-                {position}
+                {position.label} ({position.shortLabel})
               </span>
             </button>
           ))}
+          <button
+            className="teams-action-chip justify-between sm:col-span-2"
+            disabled={!positionMember}
+            onClick={() => {
+              if (!positionMember) return
+              void onUpdatePosition(positionMember.id, null)
+              setPositionMember(null)
+            }}
+          >
+            <span className="inline-flex items-center gap-2">
+              <TeamPageIcon name="sports-soccer" className="h-4 w-4" />
+              Clear position
+            </span>
+          </button>
         </div>
       </TeamsModal>
 

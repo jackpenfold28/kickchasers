@@ -37,6 +37,8 @@ import {
   type OnboardingRole,
   type OnboardingStepKey,
 } from '@/lib/onboarding'
+import { getSafeReturnPath } from '@/lib/canonical/route-safety'
+import { getPlayerPositionLabel, normalizePlayerPosition } from '@/lib/canonical/positions'
 
 type StateRow = {
   code: string
@@ -498,6 +500,7 @@ export default function Onboarding() {
   const navigate = useNavigate()
   const [query] = useSearchParams()
   const editMode = query.get('edit') === '1' || query.get('mode') === 'edit'
+  const returnPath = getSafeReturnPath(query.get('returnTo'))
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -644,7 +647,7 @@ export default function Onboarding() {
           setAvatarUrl(resolveAvatarUrl(profile.avatar_url, profile.avatar_path))
           setActionPhotoPath(profile.action_photo_path || null)
           setActionPhotoUrl(resolveAvatarUrl(profile.action_photo_url, profile.action_photo_path))
-          setPlayerPosition((profile.player_position as OnboardingPosition | null) ?? null)
+          setPlayerPosition(normalizePlayerPosition(profile.player_position))
           setPlayerNumber(profile.player_number != null ? String(profile.player_number) : '')
           const parsedDob = parseStoredDob(profile.dob)
           setDob(parsedDob)
@@ -997,7 +1000,7 @@ export default function Onboarding() {
       })
 
       setMessage(editMode || profileAlreadyComplete ? 'Profile updated.' : 'Onboarding complete.')
-      navigate('/dashboard', { replace: true })
+      navigate(returnPath, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to finish onboarding.')
     } finally {
@@ -1013,7 +1016,8 @@ export default function Onboarding() {
   const requestClubLink = `/request-club?stateCode=${encodeURIComponent(selectedStateCode)}&stateName=${encodeURIComponent(selectedStateName || '')}&leagueId=${encodeURIComponent(selectedLeagueId)}&leagueName=${encodeURIComponent(selectedLeagueName || '')}&returnTo=${encodeURIComponent('/onboarding')}`
   const stepMeta = STEP_META[stepIndex]
   const stepIcon = STEP_ICON_SRC[currentStep]
-  const positionSubtitle = playerPosition ? `${playerPosition} selected` : 'Player position'
+  const positionLabel = getPlayerPositionLabel(playerPosition)
+  const positionSubtitle = positionLabel ? `${positionLabel} selected` : 'Player position'
   const actionPreviewName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ') || 'Your Name'
 
   return (
@@ -1322,7 +1326,7 @@ export default function Onboarding() {
                     <div className={`space-y-4 p-4 ${ONBOARDING_PANEL_CLASS}`}>
                       <SelectorField
                         label="Position"
-                        value={playerPosition}
+                        value={positionLabel}
                         placeholder="Select position"
                         onPress={() => setActiveSheet('position')}
                       />
@@ -1488,11 +1492,11 @@ export default function Onboarding() {
       >
         {POSITION_OPTIONS.map((position) => (
           <OptionRow
-            key={position}
-            title={position}
-            selected={position === playerPosition}
+            key={position.code}
+            title={`${position.label} (${position.shortLabel})`}
+            selected={position.code === playerPosition}
             onPress={() => {
-              setPlayerPosition(position)
+              setPlayerPosition(position.code)
               setActiveSheet(null)
             }}
           />

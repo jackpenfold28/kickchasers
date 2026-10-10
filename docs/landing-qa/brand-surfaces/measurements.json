@@ -1,0 +1,72 @@
+[
+  {
+    "broken": [],
+    "cta": true,
+    "framed": 0,
+    "green": "#39FF14",
+    "height": 1080,
+    "overflow": 0,
+    "page": 9332,
+    "width": 1920,
+    "lazyInClosedDetails": [
+      "Player profile with season totals and game history",
+      "Team selection and lineup poster"
+    ]
+  },
+  {
+    "broken": [],
+    "cta": true,
+    "framed": 0,
+    "green": "#39FF14",
+    "height": 900,
+    "overflow": 0,
+    "page": 8789,
+    "width": 1366,
+    "lazyInClosedDetails": [
+      "Player profile with season totals and game history",
+      "Team selection and lineup poster"
+    ]
+  },
+  {
+    "broken": [],
+    "cta": true,
+    "framed": 0,
+    "green": "#39FF14",
+    "height": 768,
+    "overflow": 0,
+    "page": 8014,
+    "width": 1024,
+    "lazyInClosedDetails": [
+      "Player profile with season totals and game history",
+      "Team selection and lineup poster"
+    ]
+  },
+  {
+    "broken": [],
+    "cta": true,
+    "framed": 0,
+    "green": "#39FF14",
+    "height": 1024,
+    "overflow": 0,
+    "page": 7018,
+    "width": 768,
+    "lazyInClosedDetails": [
+      "Player profile with season totals and game history",
+      "Team selection and lineup poster"
+    ]
+  },
+  {
+    "broken": [],
+    "cta": true,
+    "framed": 0,
+    "green": "#39FF14",
+    "height": 844,
+    "overflow": 0,
+    "page": 7751,
+    "width": 390,
+    "lazyInClosedDetails": [
+      "Player profile with season totals and game history",
+      "Team selection and lineup poster"
+    ]
+  }
+]

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { AuthShell, authLinkClassName, authMessageClassName, authPrimaryButtonClassName } from '@/components/auth/AuthShell'
+import { getSafeReturnPath } from '@/lib/canonical/route-safety'
 
 export default function CheckEmail() {
   const navigate = useNavigate()
@@ -9,6 +10,8 @@ export default function CheckEmail() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isNewAccount = query.get('new') === '1'
+  const redirectTo = getSafeReturnPath(query.get('redirect'))
+  const signInPath = `/sign-in?redirect=${encodeURIComponent(redirectTo)}`
 
   async function refreshSession() {
     setBusy(true)
@@ -22,7 +25,7 @@ export default function CheckEmail() {
     }
 
     if (data.session?.user?.email_confirmed_at) {
-      navigate('/', { replace: true })
+      navigate(redirectTo, { replace: true })
       return
     }
 
@@ -40,7 +43,7 @@ export default function CheckEmail() {
       }
       footer={
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link to="/sign-in" className={authLinkClassName}>
+          <Link to={signInPath} className={authLinkClassName}>
             Use a different account
           </Link>
         </div>

@@ -1,20 +1,29 @@
 import { useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import {
-  STAT_LABELS,
   getLeaderboardPlayers,
   isLeaderboardStatValueAllowed,
   listClubOptions,
   listClubTints,
   listLeagueOptions,
   listStateOptions,
-  type LeaderboardFilters,
   type LeaderboardPlayer,
   type LeaderboardRangeMode,
   type LeaderboardStatKey,
 } from '@/lib/portal-stats'
-
-const AGE_OPTIONS = ['Any', 'U10', 'U12', 'U14', 'U16', 'U18', '18+', '30+'] as const
+import {
+  ALL_LEADERBOARD_STAT_KEYS,
+  EMPTY_LEADERBOARD_FILTERS,
+  LEADERBOARD_AGE_RANGES,
+  LEADERBOARD_STAT_LABELS,
+  filterLeaderboardPlayers,
+  getLeaderboardFilterAvailability,
+  rankLeaderboardItems,
+  reconcileLeaderboardFilters,
+  selectLeaderboardLeague,
+  selectLeaderboardState,
+  type CanonicalLeaderboardFilters,
+} from '@/lib/canonical/leaderboard-filters'
 
 const FEATURED_CARDS: Array<{ key: LeaderboardStatKey; title: string; subtitle: string }> = [
   { key: 'disposals', title: 'Top Disposals', subtitle: 'This Week' },
@@ -22,30 +31,9 @@ const FEATURED_CARDS: Array<{ key: LeaderboardStatKey; title: string; subtitle: 
   { key: 'goals', title: 'Top Goals', subtitle: 'This Week' },
 ]
 
-const ALL_LEADER_STATS: LeaderboardStatKey[] = [
-  'disposals',
-  'fantasy_points',
-  'goals',
-  'tackles',
-  'marks',
-  'kicks',
-  'handballs',
-  'clearances',
-  'inside_50s',
-  'rebound_50s',
-  'intercepts',
-  'one_percenters',
-  'hitouts',
-  'frees_for',
-  'frees_against',
-  'behinds',
-  'goal_assists',
-  'turnovers',
-]
-
 type ActiveTab = 'featured' | 'all'
 
-type FilterState = Pick<LeaderboardFilters, 'stateCode' | 'leagueId' | 'clubId' | 'ageRange'>
+type FilterState = CanonicalLeaderboardFilters
 
 type RankedRow = {
   player: LeaderboardPlayer
@@ -69,20 +57,14 @@ function addOpacity(hex: string | null | undefined, opacity: number) {
   return `rgba(${r}, ${g}, ${b}, ${opacity})`
 }
 
-function buildRankedRows(players: LeaderboardPlayer[], statKey: LeaderboardStatKey) {
-  return players
-    .map((player) => ({
-      player,
-      total: Number(player.stats[statKey] ?? 0),
-    }))
-    .filter((row) => row.total > 0 && isLeaderboardStatValueAllowed(statKey, row.total))
-    .sort((a, b) => {
-      if (b.total !== a.total) return b.total - a.total
-      const bDisposals = Number(b.player.stats.disposals ?? 0)
-      const aDisposals = Number(a.player.stats.disposals ?? 0)
-      if (bDisposals !== aDisposals) return bDisposals - aDisposals
-      return a.player.playerName.localeCompare(b.player.playerName)
-    })
+function buildRankedRows(
+  players: LeaderboardPlayer[],
+  statKey: LeaderboardStatKey,
+  options: { applyStatCaps?: boolean } = {},
+) {
+  return rankLeaderboardItems(players, (player) => player.stats[statKey])
+    .filter(({ value }) => !options.applyStatCaps || isLeaderboardStatValueAllowed(statKey, value))
+    .map(({ item: player, value: total }) => ({ player, total }))
 }
 
 function formatFilterSummary(filters: FilterState, states: Array<{ code: string; name: string | null }>, leagues: Array<{ id: string; name: string | null }>, clubs: Array<{ id: string; name: string | null }>) {
@@ -315,12 +297,7 @@ export default function StatsPage() {
   const [leagues, setLeagues] = useState<Array<{ id: string; name: string | null; stateCode: string | null }>>([])
   const [clubs, setClubs] = useState<Array<{ id: string; name: string | null; leagueId: string | null }>>([])
 
-  const [filters, setFilters] = useState<FilterState>({
-    stateCode: null,
-    leagueId: null,
-    clubId: null,
-    ageRange: 'Any',
-  })
+  const [filters, setFilters] = useState<FilterState>(EMPTY_LEADERBOARD_FILTERS)
 
   const [featuredPlayers, setFeaturedPlayers] = useState<LeaderboardPlayer[]>([])
   const [allPlayers, setAllPlayers] = useState<LeaderboardPlayer[]>([])
@@ -399,7 +376,7 @@ export default function StatsPage() {
     ;(async () => {
       setLoadingFeatured(true)
       try {
-        const players = await getLeaderboardPlayers(filters, 'week')
+        const players = await getLeaderboardPlayers(filters, 'week', 'player_game')
         if (!cancelled) {
           setFeaturedPlayers(players)
           setFeaturedError(null)
@@ -425,7 +402,7 @@ export default function StatsPage() {
     ;(async () => {
       setLoadingAll(true)
       try {
-        const players = await getLeaderboardPlayers(filters, rangeMode)
+        const players = await getLeaderboardPlayers(EMPTY_LEADERBOARD_FILTERS, rangeMode)
         if (!cancelled) {
           setAllPlayers(players)
           setAllError(null)
@@ -443,11 +420,14 @@ export default function StatsPage() {
     return () => {
       cancelled = true
     }
-  }, [filters, rangeMode])
+  }, [rangeMode])
 
   const featuredRowsByKey = useMemo(() => {
     return Object.fromEntries(
-      FEATURED_CARDS.map((card) => [card.key, buildRankedRows(featuredPlayers, card.key).slice(0, 5)])
+      FEATURED_CARDS.map((card) => [
+        card.key,
+        buildRankedRows(featuredPlayers, card.key, { applyStatCaps: true }).slice(0, 5),
+      ])
     ) as Record<LeaderboardStatKey, RankedRow[]>
   }, [featuredPlayers])
 
@@ -483,56 +463,75 @@ export default function StatsPage() {
     }
   }, [featuredClubIds])
 
-  const allRows = useMemo(() => buildRankedRows(allPlayers, selectedStat), [allPlayers, selectedStat])
+  const baseRows = useMemo(() => buildRankedRows(allPlayers, selectedStat), [allPlayers, selectedStat])
+
+  const filterAvailability = useMemo(
+    () => getLeaderboardFilterAvailability(baseRows.map(({ player }) => player), filters),
+    [baseRows, filters],
+  )
+  const availableStateCodes = filterAvailability.stateCodes
+  const availableLeagueIds = filterAvailability.leagueIds
+  const availableClubIds = filterAvailability.clubIds
+  const availableAgeRanges = filterAvailability.ageRanges
+
+  useEffect(() => {
+    if (loadingAll) return
+    setFilters((current) => reconcileLeaderboardFilters(current, filterAvailability))
+  }, [filterAvailability, loadingAll])
+
+  const allRows = useMemo(
+    () => buildRankedRows(filterLeaderboardPlayers(allPlayers, filters), selectedStat),
+    [allPlayers, filters, selectedStat],
+  )
 
   const stateItems = useMemo(
     () => [
-      { key: 'any', label: 'Any', active: !filters.stateCode, onClick: () => setFilters((prev) => ({ ...prev, stateCode: null, leagueId: null, clubId: null })) },
-      ...states.map((state) => ({
+      { key: 'any', label: 'Any', active: !filters.stateCode, onClick: () => setFilters((prev) => selectLeaderboardState(prev, null)) },
+      ...states.filter((state) => availableStateCodes.includes(state.code.toUpperCase())).map((state) => ({
         key: state.code,
         label: state.name || state.code,
-        active: filters.stateCode === state.code,
-        onClick: () => setFilters((prev) => ({ ...prev, stateCode: state.code, leagueId: null, clubId: null })),
+        active: filters.stateCode === state.code.toUpperCase(),
+        onClick: () => setFilters((prev) => selectLeaderboardState(prev, state.code)),
       })),
     ],
-    [filters.stateCode, states]
+    [availableStateCodes, filters.stateCode, states]
   )
 
   const leagueItems = useMemo(
     () => [
-      { key: 'any', label: 'Any', active: !filters.leagueId, onClick: () => setFilters((prev) => ({ ...prev, leagueId: null, clubId: null })) },
-      ...leagues.map((league) => ({
+      { key: 'any', label: 'Any', active: !filters.leagueId, onClick: () => setFilters((prev) => selectLeaderboardLeague(prev, null)) },
+      ...leagues.filter((league) => availableLeagueIds.has(league.id)).map((league) => ({
         key: league.id,
         label: league.name || 'League',
         active: filters.leagueId === league.id,
-        onClick: () => setFilters((prev) => ({ ...prev, leagueId: league.id, clubId: null })),
+        onClick: () => setFilters((prev) => selectLeaderboardLeague(prev, league.id)),
       })),
     ],
-    [filters.leagueId, leagues]
+    [availableLeagueIds, filters.leagueId, leagues]
   )
 
   const clubItems = useMemo(
     () => [
       { key: 'any', label: 'Any', active: !filters.clubId, onClick: () => setFilters((prev) => ({ ...prev, clubId: null })) },
-      ...clubs.map((club) => ({
+      ...clubs.filter((club) => availableClubIds.has(club.id)).map((club) => ({
         key: club.id,
         label: club.name || 'Club',
         active: filters.clubId === club.id,
         onClick: () => setFilters((prev) => ({ ...prev, clubId: club.id })),
       })),
     ],
-    [clubs, filters.clubId]
+    [availableClubIds, clubs, filters.clubId]
   )
 
   const ageItems = useMemo(
     () =>
-      AGE_OPTIONS.map((age) => ({
+      LEADERBOARD_AGE_RANGES.filter((age) => availableAgeRanges.includes(age)).map((age) => ({
         key: age,
         label: age,
         active: filters.ageRange === age,
         onClick: () => setFilters((prev) => ({ ...prev, ageRange: age })),
       })),
-    [filters.ageRange]
+    [availableAgeRanges, filters.ageRange]
   )
 
   const filterSummary = useMemo(() => formatFilterSummary(filters, states, leagues, clubs), [clubs, filters, leagues, states])
@@ -594,9 +593,7 @@ export default function StatsPage() {
         <>
           {featuredError ? (
             <div className="rounded-[24px] bg-red-500/10 px-5 py-4 text-sm text-red-200 shadow-[inset_0_0_0_1px_rgba(248,113,113,0.12)]">{featuredError}</div>
-          ) : null}
-
-          {loadingFeatured ? (
+          ) : loadingFeatured ? (
             <div className="rounded-[26px] bg-[#0D1625] px-5 py-8 text-sm text-slate-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_16px_36px_rgba(2,8,20,0.34)]">Loading weekly leaders…</div>
           ) : isFeaturedEmpty ? (
             <div className="rounded-[26px] bg-[#0D1625] px-5 py-8 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_16px_36px_rgba(2,8,20,0.34)]">
@@ -624,7 +621,7 @@ export default function StatsPage() {
         <>
           <div className="grid gap-3">
             <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
-              {ALL_LEADER_STATS.map((stat) => {
+              {ALL_LEADERBOARD_STAT_KEYS.map((stat) => {
                 const active = stat === selectedStat
                 return (
                   <button
@@ -638,7 +635,7 @@ export default function StatsPage() {
                         : 'border-white/5 bg-[#0D1526] text-slate-400 hover:bg-[#111C31] hover:text-white'
                     )}
                   >
-                    {STAT_LABELS[stat]}
+                    {LEADERBOARD_STAT_LABELS[stat]}
                   </button>
                 )
               })}
@@ -669,20 +666,22 @@ export default function StatsPage() {
             </div>
           </div>
 
-          {allError ? <div className="rounded-[24px] bg-red-500/10 px-5 py-4 text-sm text-red-200 shadow-[inset_0_0_0_1px_rgba(248,113,113,0.12)]">{allError}</div> : null}
-
-          <section className="overflow-hidden rounded-[26px] bg-[#0D1625] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_16px_36px_rgba(2,8,20,0.34)]">
-            {loadingAll ? (
+          {allError ? (
+            <div className="rounded-[24px] bg-red-500/10 px-5 py-4 text-sm text-red-200 shadow-[inset_0_0_0_1px_rgba(248,113,113,0.12)]">{allError}</div>
+          ) : (
+            <section className="overflow-hidden rounded-[26px] bg-[#0D1625] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_16px_36px_rgba(2,8,20,0.34)]">
+              {loadingAll ? (
               <div className="px-5 py-8 text-sm text-slate-400">Loading leaders…</div>
-            ) : allRows.length ? (
-              allRows.map((row, index) => <LeaderboardListRow key={`${row.player.userId}-${index}`} row={row} index={index} />)
-            ) : (
-              <div className="px-5 py-8 text-center">
-                <p className="text-base font-bold text-white">No leaders found</p>
-                <p className="mt-2 text-sm text-slate-400">Try adjusting filters or changing the stat.</p>
-              </div>
-            )}
-          </section>
+              ) : allRows.length ? (
+                allRows.map((row, index) => <LeaderboardListRow key={`${row.player.userId}-${index}`} row={row} index={index} />)
+              ) : (
+                <div className="px-5 py-8 text-center">
+                  <p className="text-base font-bold text-white">No leaders found</p>
+                  <p className="mt-2 text-sm text-slate-400">Try adjusting filters or changing the stat.</p>
+                </div>
+              )}
+            </section>
+          )}
         </>
       )}
     </section>

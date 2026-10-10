@@ -1,0 +1,419 @@
+{
+  "premium-promo": {
+    "original": "/landing/originals/premium-promo.png",
+    "width": 1122,
+    "height": 1402,
+    "originalBytes": 2384539,
+    "variants": [
+      {
+        "src": "/landing/images/premium-promo-640.webp",
+        "width": 640,
+        "bytes": 643422
+      },
+      {
+        "src": "/landing/images/premium-promo-1122.webp",
+        "width": 1122,
+        "bytes": 1845558
+      }
+    ]
+  },
+  "premium-card": {
+    "original": "/landing/originals/premium-card.png",
+    "width": 1080,
+    "height": 1350,
+    "originalBytes": 3194582,
+    "variants": [
+      {
+        "src": "/landing/images/premium-card-640.webp",
+        "width": 640,
+        "bytes": 573086
+      },
+      {
+        "src": "/landing/images/premium-card-1080.webp",
+        "width": 1080,
+        "bytes": 1326438
+      }
+    ]
+  },
+  "card-creator": {
+    "original": "/landing/originals/card-creator.png",
+    "width": 1284,
+    "height": 2778,
+    "originalBytes": 1879021,
+    "variants": [
+      {
+        "src": "/landing/images/card-creator-640.webp",
+        "width": 640,
+        "bytes": 416490
+      },
+      {
+        "src": "/landing/images/card-creator-1280.webp",
+        "width": 1280,
+        "bytes": 1269796
+      },
+      {
+        "src": "/landing/images/card-creator-1284.webp",
+        "width": 1284,
+        "bytes": 1157014
+      }
+    ]
+  },
+  "player-cutout": {
+    "original": "/landing/originals/player-cutout.png",
+    "width": 581,
+    "height": 1013,
+    "originalBytes": 616024,
+    "variants": [
+      {
+        "src": "/landing/images/player-cutout-581.webp",
+        "width": 581,
+        "bytes": 350984
+      }
+    ]
+  },
+  "team-tracking": {
+    "original": "/landing/originals/team-tracking.png",
+    "width": 2360,
+    "height": 1640,
+    "originalBytes": 663791,
+    "variants": [
+      {
+        "src": "/landing/images/team-tracking-640.webp",
+        "width": 640,
+        "bytes": 92294
+      },
+      {
+        "src": "/landing/images/team-tracking-1280.webp",
+        "width": 1280,
+        "bytes": 230968
+      },
+      {
+        "src": "/landing/images/team-tracking-1920.webp",
+        "width": 1920,
+        "bytes": 412338
+      },
+      {
+        "src": "/landing/images/team-tracking-2360.webp",
+        "width": 2360,
+        "bytes": 332490
+      }
+    ]
+  },
+  "team-selection": {
+    "original": "/landing/originals/team-selection.png",
+    "width": 1320,
+    "height": 2868,
+    "originalBytes": 1581615,
+    "variants": [
+      {
+        "src": "/landing/images/team-selection-640.webp",
+        "width": 640,
+        "bytes": 293798
+      },
+      {
+        "src": "/landing/images/team-selection-1280.webp",
+        "width": 1280,
+        "bytes": 983812
+      },
+      {
+        "src": "/landing/images/team-selection-1320.webp",
+        "width": 1320,
+        "bytes": 807550
+      }
+    ]
+  },
+  "single-player": {
+    "original": "/landing/originals/single-player.png",
+    "width": 2360,
+    "height": 1640,
+    "originalBytes": 1126790,
+    "variants": [
+      {
+        "src": "/landing/images/single-player-640.webp",
+        "width": 640,
+        "bytes": 102520
+      },
+      {
+        "src": "/landing/images/single-player-1280.webp",
+        "width": 1280,
+        "bytes": 307758
+      },
+      {
+        "src": "/landing/images/single-player-1920.webp",
+        "width": 1920,
+        "bytes": 566402
+      },
+      {
+        "src": "/landing/images/single-player-2360.webp",
+        "width": 2360,
+        "bytes": 480600
+      }
+    ]
+  },
+  "mapping-promo": {
+    "original": "/landing/originals/mapping-promo.png",
+    "width": 1122,
+    "height": 1402,
+    "originalBytes": 1532443,
+    "variants": [
+      {
+        "src": "/landing/images/mapping-promo-640.webp",
+        "width": 640,
+        "bytes": 458050
+      },
+      {
+        "src": "/landing/images/mapping-promo-1122.webp",
+        "width": 1122,
+        "bytes": 1176176
+      }
+    ]
+  },
+  "coaches-box": {
+    "original": "/landing/originals/coaches-box.png",
+    "width": 1448,
+    "height": 1086,
+    "originalBytes": 2050435,
+    "variants": [
+      {
+        "src": "/landing/images/coaches-box-640.webp",
+        "width": 640,
+        "bytes": 341138
+      },
+      {
+        "src": "/landing/images/coaches-box-1280.webp",
+        "width": 1280,
+        "bytes": 1240124
+      },
+      {
+        "src": "/landing/images/coaches-box-1448.webp",
+        "width": 1448,
+        "bytes": 1497796
+      }
+    ]
+  },
+  "team-mapping": {
+    "original": "/landing/originals/team-mapping.png",
+    "width": 2732,
+    "height": 2048,
+    "originalBytes": 1467044,
+    "variants": [
+      {
+        "src": "/landing/images/team-mapping-640.webp",
+        "width": 640,
+        "bytes": 131784
+      },
+      {
+        "src": "/landing/images/team-mapping-1280.webp",
+        "width": 1280,
+        "bytes": 342998
+      },
+      {
+        "src": "/landing/images/team-mapping-1920.webp",
+        "width": 1920,
+        "bytes": 638852
+      },
+      {
+        "src": "/landing/images/team-mapping-2732.webp",
+        "width": 2732,
+        "bytes": 635774
+      }
+    ]
+  },
+  "01-see-every-match-moment": {
+    "original": "/mockups/landing/01-see-every-match-moment.png",
+    "width": 1089,
+    "height": 2157,
+    "originalBytes": 1632959,
+    "variants": [
+      {
+        "src": "/landing/images/01-see-every-match-moment-640.webp",
+        "width": 640,
+        "bytes": 470994
+      },
+      {
+        "src": "/landing/images/01-see-every-match-moment-1089.webp",
+        "width": 1089,
+        "bytes": 1019182
+      }
+    ]
+  },
+  "02-track-every-afl-stat-live": {
+    "original": "/mockups/landing/02-track-every-afl-stat-live.png",
+    "width": 1089,
+    "height": 1248,
+    "originalBytes": 380578,
+    "variants": [
+      {
+        "src": "/landing/images/02-track-every-afl-stat-live-640.webp",
+        "width": 640,
+        "bytes": 129670
+      },
+      {
+        "src": "/landing/images/02-track-every-afl-stat-live-1089.webp",
+        "width": 1089,
+        "bytes": 222196
+      }
+    ]
+  },
+  "03-climb-the-leaderboards": {
+    "original": "/mockups/landing/03-climb-the-leaderboards.png",
+    "width": 1087,
+    "height": 2176,
+    "originalBytes": 842989,
+    "variants": [
+      {
+        "src": "/landing/images/03-climb-the-leaderboards-640.webp",
+        "width": 640,
+        "bytes": 264144
+      },
+      {
+        "src": "/landing/images/03-climb-the-leaderboards-1087.webp",
+        "width": 1087,
+        "bytes": 530034
+      }
+    ]
+  },
+  "04-two-trackers-one-game": {
+    "original": "/mockups/landing/04-two-trackers-one-game.png",
+    "width": 2386,
+    "height": 2078,
+    "originalBytes": 598059,
+    "variants": [
+      {
+        "src": "/landing/images/04-two-trackers-one-game-640.webp",
+        "width": 640,
+        "bytes": 94060
+      },
+      {
+        "src": "/landing/images/04-two-trackers-one-game-1280.webp",
+        "width": 1280,
+        "bytes": 231056
+      },
+      {
+        "src": "/landing/images/04-two-trackers-one-game-1920.webp",
+        "width": 1920,
+        "bytes": 405384
+      },
+      {
+        "src": "/landing/images/04-two-trackers-one-game-2386.webp",
+        "width": 2386,
+        "bytes": 345182
+      }
+    ]
+  },
+  "05-follow-local-footy": {
+    "original": "/mockups/landing/05-follow-local-footy.png",
+    "width": 1087,
+    "height": 2176,
+    "originalBytes": 868069,
+    "variants": [
+      {
+        "src": "/landing/images/05-follow-local-footy-640.webp",
+        "width": 640,
+        "bytes": 262376
+      },
+      {
+        "src": "/landing/images/05-follow-local-footy-1087.webp",
+        "width": 1087,
+        "bytes": 545424
+      }
+    ]
+  },
+  "07-see-whos-dominating": {
+    "original": "/mockups/landing/07-see-whos-dominating.png",
+    "width": 1087,
+    "height": 1188,
+    "originalBytes": 527786,
+    "variants": [
+      {
+        "src": "/landing/images/07-see-whos-dominating-640.webp",
+        "width": 640,
+        "bytes": 160066
+      },
+      {
+        "src": "/landing/images/07-see-whos-dominating-1087.webp",
+        "width": 1087,
+        "bytes": 321156
+      }
+    ]
+  },
+  "09-professional-match-summaries": {
+    "original": "/mockups/landing/09-professional-match-summaries.png",
+    "width": 2207,
+    "height": 1541,
+    "originalBytes": 1526933,
+    "variants": [
+      {
+        "src": "/landing/images/09-professional-match-summaries-640.webp",
+        "width": 640,
+        "bytes": 127658
+      },
+      {
+        "src": "/landing/images/09-professional-match-summaries-1280.webp",
+        "width": 1280,
+        "bytes": 417800
+      },
+      {
+        "src": "/landing/images/09-professional-match-summaries-1920.webp",
+        "width": 1920,
+        "bytes": 856052
+      },
+      {
+        "src": "/landing/images/09-professional-match-summaries-2207.webp",
+        "width": 2207,
+        "bytes": 930504
+      }
+    ]
+  },
+  "10-your-complete-player-profile": {
+    "original": "/mockups/landing/10-your-complete-player-profile.png",
+    "width": 1816,
+    "height": 1488,
+    "originalBytes": 794462,
+    "variants": [
+      {
+        "src": "/landing/images/10-your-complete-player-profile-640.webp",
+        "width": 640,
+        "bytes": 132070
+      },
+      {
+        "src": "/landing/images/10-your-complete-player-profile-1280.webp",
+        "width": 1280,
+        "bytes": 364884
+      },
+      {
+        "src": "/landing/images/10-your-complete-player-profile-1816.webp",
+        "width": 1816,
+        "bytes": 466652
+      }
+    ]
+  },
+  "11-instant-club-content-creation": {
+    "original": "/mockups/landing/11-instant-club-content-creation.png",
+    "width": 2578,
+    "height": 2170,
+    "originalBytes": 4168722,
+    "variants": [
+      {
+        "src": "/landing/images/11-instant-club-content-creation-640.webp",
+        "width": 640,
+        "bytes": 285856
+      },
+      {
+        "src": "/landing/images/11-instant-club-content-creation-1280.webp",
+        "width": 1280,
+        "bytes": 888560
+      },
+      {
+        "src": "/landing/images/11-instant-club-content-creation-1920.webp",
+        "width": 1920,
+        "bytes": 1749370
+      },
+      {
+        "src": "/landing/images/11-instant-club-content-creation-2578.webp",
+        "width": 2578,
+        "bytes": 2630188
+      }
+    ]
+  }
+}

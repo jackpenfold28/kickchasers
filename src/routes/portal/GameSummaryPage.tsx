@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import autoTable from 'jspdf-autotable'
 import jsPDF from 'jspdf'
@@ -31,6 +31,8 @@ import {
 } from '@/lib/portal-game-summary'
 import { getGameSummary, type GameSummary } from '@/lib/portal-games'
 import { formatRoundLabel } from '@/lib/round-label'
+import { isFinalGameStatus, trackedSummaryPollInterval } from '@/lib/canonical/games-parity-contract'
+import { classifyProtectedReadFailure, type ProtectedReadFailure } from '@/lib/canonical/route-safety'
 
 const formatDateTime = (value: string | null) => {
   if (!value) return 'Date TBD'
@@ -289,6 +291,7 @@ export default function GameSummaryPage() {
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState<GameSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [failureKind, setFailureKind] = useState<ProtectedReadFailure | null>(null)
   const [activeTab, setActiveTab] = useState<'players' | 'team'>('players')
   const [selectedScope, setSelectedScope] = useState<SummaryScope>('total')
   const [advanced, setAdvanced] = useState(false)
@@ -298,26 +301,49 @@ export default function GameSummaryPage() {
   const [downloading, setDownloading] = useState(false)
   const [homeTint, setHomeTint] = useState('#00d09c')
   const [awayTint, setAwayTint] = useState('#a855f7')
+  const loadInFlight = useRef(false)
 
-  useEffect(() => {
-    let cancelled = false
-
-    ;(async () => {
-      if (!id) return
-      try {
-        const data = await getGameSummary(id)
-        if (!cancelled) setSummary(data)
-      } catch (loadError) {
-        if (!cancelled) setError(loadError instanceof Error ? loadError.message : 'Unable to load game summary.')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
-
-    return () => {
-      cancelled = true
+  const loadSummary = useCallback(async () => {
+    if (!id || loadInFlight.current) return
+    loadInFlight.current = true
+    try {
+      const data = await getGameSummary(id)
+      setSummary(data)
+      if (data?.trackerMode === 'team_stats_game') setActiveTab('team')
+      setError(null)
+      setFailureKind(null)
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Unable to load game summary.')
+      setFailureKind(classifyProtectedReadFailure(loadError))
+    } finally {
+      loadInFlight.current = false
+      setLoading(false)
     }
   }, [id])
+
+  useEffect(() => { void loadSummary() }, [loadSummary])
+
+  useEffect(() => {
+    const visible = typeof document === 'undefined' || document.visibilityState === 'visible'
+    const intervalMs = trackedSummaryPollInterval(summary?.status, visible)
+    if (!intervalMs) return undefined
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void loadSummary()
+    }, intervalMs)
+    return () => window.clearInterval(interval)
+  }, [loadSummary, summary?.status])
+
+  useEffect(() => {
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible' && !isFinalGameStatus(summary?.status)) void loadSummary()
+    }
+    window.addEventListener('focus', refreshIfVisible)
+    document.addEventListener('visibilitychange', refreshIfVisible)
+    return () => {
+      window.removeEventListener('focus', refreshIfVisible)
+      document.removeEventListener('visibilitychange', refreshIfVisible)
+    }
+  }, [loadSummary, summary?.status])
 
   useEffect(() => {
     const handleScroll = () => setStickyVisible(window.scrollY > 280)
@@ -351,9 +377,21 @@ export default function GameSummaryPage() {
   }
 
   if (!summary) {
+    const failureMessage = failureKind === 'permission'
+      ? 'You do not have permission to view this game.'
+      : failureKind === 'network'
+        ? 'The game summary could not be reached. Check your connection and try again.'
+        : error
+          ? 'Unable to load the game summary. Try again.'
+          : 'Game summary not found.'
     return (
       <PortalCard>
-        <p className="text-sm text-red-300">{error || 'Game summary not available.'}</p>
+        <p className="text-sm text-red-300">{failureMessage}</p>
+        {error ? (
+          <button type="button" className="mt-4 rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/15" onClick={() => void loadSummary()}>
+            Try again
+          </button>
+        ) : null}
       </PortalCard>
     )
   }
@@ -362,9 +400,14 @@ export default function GameSummaryPage() {
   const effectiveScope = availableScopes.includes(selectedScope) ? selectedScope : 'total'
   const activeColumns = advanced ? ADVANCED_SUMMARY_COLUMNS : BASE_SUMMARY_COLUMNS
 
+  const benchmarkContext = {
+    quarterLengthMinutes: summary.quarterLength,
+    gradeId: summary.gradeId,
+    gameDate: summary.date,
+  }
   const playerRows = [
-    ...buildPlayerSummaryRows(summary.events, summary.players, { teamSide: 'home', scope: effectiveScope }),
-    ...buildPlayerSummaryRows(summary.events, summary.players, { teamSide: 'away', scope: effectiveScope }),
+    ...buildPlayerSummaryRows(summary.events, summary.players, { teamSide: 'home', scope: effectiveScope, benchmarkContext }),
+    ...buildPlayerSummaryRows(summary.events, summary.players, { teamSide: 'away', scope: effectiveScope, benchmarkContext }),
   ]
   const sortedRows = sortPlayerRows(playerRows, sortKey, sortDirection)
   const teamRows = buildTeamSummaryRows(summary.events, { scope: effectiveScope })
@@ -396,7 +439,10 @@ export default function GameSummaryPage() {
     awayTeamName: summary.awayTeamName || summary.opponent || 'Away',
   })
 
-  const statusLabel = formatStatus(summary.status)
+  const baseStatusLabel = formatStatus(summary.status)
+  const statusLabel = baseStatusLabel === 'LIVE' && summary.activeQuarter
+    ? `LIVE • Q${summary.activeQuarter}${summary.clockLabel ? ` • ${summary.clockLabel}` : ''}`
+    : baseStatusLabel
   const roundLabel = formatRoundLabel(summary.round, 'Round TBD')
   const venueLabel = summary.venue || 'Venue TBD'
   const dateLabel = formatDateTime(summary.date)
@@ -507,9 +553,10 @@ export default function GameSummaryPage() {
           availableScopes={availableScopes}
           advanced={advanced}
           onToggleAdvanced={() => setAdvanced((current) => !current)}
+          showPlayers={summary.trackerMode !== 'team_stats_game'}
         />
 
-        {activeTab === 'players' ? (
+        {activeTab === 'players' && summary.trackerMode !== 'team_stats_game' ? (
           <SummaryPlayersTable
             gameId={summary.id}
             rows={sortedRows}

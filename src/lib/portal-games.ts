@@ -1,4 +1,12 @@
 import { supabase } from '@/lib/supabase'
+import { buildTotalsFromEvents } from '@/lib/canonical/player-event-aggregate'
+import type { Band, StatKey } from '@/lib/canonical/benchmarks'
+import {
+  buildPerformanceEvaluation,
+  canMutateManualGame,
+  mapManualTotals,
+  type ManualTotalsResult,
+} from '@/lib/canonical/games-parity-contract'
 
 export type GameLogRow = {
   id: string
@@ -7,6 +15,7 @@ export type GameLogRow = {
   date: string | null
   venue: string | null
   status: string | null
+  statusDetail?: string | null
   round: number | null
   opponent: string | null
   squadName: string | null
@@ -41,11 +50,17 @@ export type GameSummaryPlayer = {
   teamSide: 'home' | 'away'
   number: number | null
   name: string
+  position: string | null
+  dob: string | null
 }
 
 export type GameSummaryEvent = {
+  id: string
   statKey: string
+  statDefinitionId: string | null
+  customLabel: string | null
   quarter: number | null
+  quarterClockLabel: string | null
   teamSide: 'home' | 'away'
   playerNumber: number | null
   profileUserId: string | null
@@ -64,12 +79,17 @@ export type TeamSummaryStat = {
 
 export type GameSummary = {
   id: string
+  trackerMode: string | null
   opponent: string | null
   date: string | null
   venue: string | null
   status: string | null
   round: number | null
   gradeLabel: string | null
+  gradeId: string | null
+  quarterLength: number | null
+  activeQuarter: number | null
+  clockLabel: string | null
   trackBothTeams: boolean
   homeTeamName: string | null
   awayTeamName: string | null
@@ -104,24 +124,20 @@ export type ManualGameSummary = {
   venue: string | null
   round: number | null
   opponentLogoUrl: string | null
-  stats: Record<string, number>
-}
-
-const EVENT_KEY_MAP: Record<string, keyof Omit<PlayerSummaryStat, 'playerId' | 'profileUserId' | 'teamSide' | 'number' | 'name' | 'disposals'>> = {
-  K: 'kicks',
-  K_EF: 'kicks',
-  K_IF: 'kicks',
-  HB: 'handballs',
-  HB_EF: 'handballs',
-  HB_IF: 'handballs',
-  M: 'marks',
-  MC: 'marks',
-  MUC: 'marks',
-  T: 'tackles',
-  G: 'goals',
-  GOAL: 'goals',
-  B: 'behinds',
-  BEHIND: 'behinds',
+  subjectName: string | null
+  playerNumber: number | null
+  position: string | null
+  teamName: string | null
+  teamLogoUrl: string | null
+  teamPrimaryColorHex: string | null
+  gradeId: string | null
+  quarterLength: number | null
+  stats: ManualTotalsResult['totals']
+  availability: ManualTotalsResult['availability']
+  impact7: number
+  impactBand: Band
+  benchmarkBands: Partial<Record<StatKey, Band>>
+  canEditDelete: boolean
 }
 
 function toPublicLogo(urlOrPath: string | null | undefined): string | null {
@@ -146,6 +162,23 @@ function toPublicLogo(urlOrPath: string | null | undefined): string | null {
 
   const { data } = supabase.storage.from('team-logos').getPublicUrl(clean)
   return data.publicUrl || urlOrPath
+}
+
+function formatLiveClockLabel(clock: Record<string, any> | null) {
+  if (!clock) return null
+  const activeQuarter = String(Number(clock.active_quarter ?? 1))
+  const stored = clock.quarter_timer_seconds
+  let seconds = typeof stored === 'object' && stored != null
+    ? Number(stored[activeQuarter] ?? 0)
+    : Number(stored ?? 0)
+  if (!Number.isFinite(seconds)) seconds = 0
+  if (clock.timer_running && clock.timer_started_at && clock.server_now) {
+    const startedAt = Date.parse(clock.timer_started_at)
+    const serverNow = Date.parse(clock.server_now)
+    if (Number.isFinite(startedAt) && Number.isFinite(serverNow)) seconds += Math.max(0, Math.floor((serverNow - startedAt) / 1000))
+  }
+  const wholeSeconds = Math.max(0, Math.floor(seconds))
+  return `${Math.floor(wholeSeconds / 60)}:${String(wholeSeconds % 60).padStart(2, '0')}`
 }
 
 function parseTeamSide(value: string | null | undefined): 'home' | 'away' {
@@ -173,6 +206,11 @@ function summarizeEvents(
   const teamMap = new Map<'home' | 'away', TeamSummaryStat>([
     ['home', emptyTeam('home')],
     ['away', emptyTeam('away')],
+  ])
+  const eventsByPlayer = new Map<string, typeof events>()
+  const eventsByTeam = new Map<'home' | 'away', typeof events>([
+    ['home', []],
+    ['away', []],
   ])
   const quarterMap = new Map<number, { homeGoals: number; homeBehinds: number; awayGoals: number; awayBehinds: number }>()
 
@@ -237,36 +275,62 @@ function summarizeEvents(
 
   for (const event of events) {
     const raw = (event.stat_key || '').toUpperCase()
-    const mapped = EVENT_KEY_MAP[raw]
-    if (!mapped) continue
 
     const side = parseTeamSide(event.team_side)
     const playerKey = resolvePlayerKey(side, event.player_number ?? null, event.profile_user_id ?? null)
-    const player = playerMap.get(playerKey)
-    const team = teamMap.get(side)
-
-    if (!player || !team) continue
-
-    player[mapped] += 1
-    team[mapped] += 1
-
-    if (mapped === 'kicks' || mapped === 'handballs') {
-      player.disposals += 1
-      team.disposals += 1
-    }
+    const playerEvents = eventsByPlayer.get(playerKey) ?? []
+    playerEvents.push(event)
+    eventsByPlayer.set(playerKey, playerEvents)
+    eventsByTeam.get(side)?.push(event)
 
     const q = Number(event.quarter ?? 0)
     if (q > 0) {
       const quarter = ensureQuarter(q)
-      if (mapped === 'goals') {
+      if (raw === 'G' || raw === 'GOAL') {
         if (side === 'home') quarter.homeGoals += 1
         else quarter.awayGoals += 1
       }
-      if (mapped === 'behinds') {
+      if (raw === 'B' || raw === 'BEHIND') {
         if (side === 'home') quarter.homeBehinds += 1
         else quarter.awayBehinds += 1
       }
     }
+  }
+
+  for (const [key, player] of playerMap) {
+    const totals = buildTotalsFromEvents(
+      (eventsByPlayer.get(key) ?? []).map((event) => ({
+        stat_key: event.stat_key ?? null,
+        quarter: event.quarter ?? null,
+        team_side: event.team_side ?? null,
+        player_number: event.player_number ?? null,
+      }))
+    )
+    player.kicks = totals.kicks
+    player.handballs = totals.handballs
+    player.marks = totals.marks
+    player.tackles = totals.tackles
+    player.goals = totals.goals
+    player.behinds = totals.behinds
+    player.disposals = totals.disposals
+  }
+
+  for (const [side, team] of teamMap) {
+    const totals = buildTotalsFromEvents(
+      (eventsByTeam.get(side) ?? []).map((event) => ({
+        stat_key: event.stat_key ?? null,
+        quarter: event.quarter ?? null,
+        team_side: event.team_side ?? null,
+        player_number: event.player_number ?? null,
+      }))
+    )
+    team.kicks = totals.kicks
+    team.handballs = totals.handballs
+    team.marks = totals.marks
+    team.tackles = totals.tackles
+    team.goals = totals.goals
+    team.behinds = totals.behinds
+    team.disposals = totals.disposals
   }
 
   const playerStats = Array.from(playerMap.values()).sort((a, b) => {
@@ -403,7 +467,8 @@ export async function listUserGames(userId: string): Promise<GameLogRow[]> {
     supabase
       .from('games')
       .select('id,opponent,date,venue,round,status,track_both_teams,opponent_logo_path,created_by,game_squads(team_side,squads(name,logo_url,primary_color_hex))')
-      .eq('created_by', userId),
+      .eq('created_by', userId)
+      .neq('tracker_mode', 'team_stats_game'),
     supabase
       .from('manual_player_game_totals')
       .select('id,user_id,game_id,opponent_name,opponent_logo_url,opponent_logo_path,venue,round,match_date,games(id,opponent,date,venue,round,status,opponent_logo_path)')
@@ -449,6 +514,7 @@ export async function listUserGames(userId: string): Promise<GameLogRow[]> {
         .from('games')
         .select('id,opponent,date,venue,round,status,track_both_teams,opponent_logo_path,game_squads(team_side,squads(name,logo_url,primary_color_hex))')
         .in('id', trackedIds)
+        .neq('tracker_mode', 'team_stats_game')
     : { data: [], error: null }
 
   if (trackedRows.error) throw trackedRows.error
@@ -611,7 +677,7 @@ export async function getGameSummary(gameId: string): Promise<GameSummary | null
   const { data: game, error } = await supabase
     .from('games')
     .select(
-      'id,opponent,date,venue,status,round,grade_id,track_both_teams,opponent_logo_path,game_squads(team_side,squads(name,logo_url,primary_color_hex))'
+      'id,opponent,date,venue,status,round,grade_id,quarter_length,active_quarter,track_both_teams,tracker_mode,opponent_logo_path,game_squads(team_side,squads(name,logo_url,primary_color_hex))'
     )
     .eq('id', gameId)
     .maybeSingle()
@@ -621,17 +687,19 @@ export async function getGameSummary(gameId: string): Promise<GameSummary | null
 
   const gradeId = (game as any).grade_id ?? null
 
-  const [playersRes, eventsRes, gradeRes] = await Promise.all([
+  const [playersRes, eventsRes, gradeRes, clockRes] = await Promise.all([
     supabase
       .from('game_players')
-      .select('id,number,name,team_side,profile_user_id')
+      .select('id,number,name,team_side,profile_user_id,position')
       .eq('game_id', gameId)
       .order('team_side', { ascending: true })
       .order('number', { ascending: true }),
     supabase
       .from('v_counted_events')
-      .select('stat_key,quarter,team_side,player_number,profile_user_id')
-      .eq('game_id', gameId),
+      .select('id,stat_key,quarter,quarter_clock_label,team_side,player_number,profile_user_id,created_at')
+      .eq('game_id', gameId)
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true }),
     gradeId
       ? supabase
           .from('league_grades')
@@ -639,31 +707,65 @@ export async function getGameSummary(gameId: string): Promise<GameSummary | null
           .eq('id', gradeId)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null } as any),
+    supabase.rpc('rpc_get_live_game_clock_state', { _game_id: gameId }),
   ])
 
   if (playersRes.error) throw playersRes.error
   if (eventsRes.error) throw eventsRes.error
   if (gradeRes?.error) throw gradeRes.error
 
+  const rawPlayers = (playersRes.data ?? []) as any[]
+  const profileIds = Array.from(new Set(rawPlayers.map((player) => player.profile_user_id).filter(Boolean)))
+  const profileRes = profileIds.length
+    ? await supabase.from('profiles_directory').select('user_id,player_position').in('user_id', profileIds)
+    : { data: [], error: null }
+  if (profileRes.error) throw profileRes.error
+  const profileById = new Map(((profileRes.data ?? []) as any[]).map((profile) => [profile.user_id, profile]))
+
+  const rawEvents = (eventsRes.data ?? []) as any[]
+  const customStatKeys = Array.from(
+    new Set(
+      rawEvents
+        .map((event) => String(event.stat_key ?? '').toUpperCase())
+        .filter((statKey) => statKey.startsWith('CUS_'))
+    )
+  )
+  const definitionsRes = customStatKeys.length
+    ? await supabase.from('tracker_stat_definitions').select('id,stat_key,name,short_code,is_builtin').in('stat_key', customStatKeys)
+    : { data: [], error: null }
+  if (definitionsRes.error) throw definitionsRes.error
+  const definitionByStatKey = new Map(
+    ((definitionsRes.data ?? []) as any[]).map((definition) => [String(definition.stat_key ?? '').toUpperCase(), definition])
+  )
+
   const squads = Array.isArray((game as any).game_squads) ? (game as any).game_squads : []
   const homeSquad = squads.find((sq: any) => sq.team_side === 'home') ?? squads[0] ?? null
   const awaySquad = squads.find((sq: any) => sq.team_side === 'away') ?? null
 
-  const { playerStats, teamStats, quarterBreakdown } = summarizeEvents((eventsRes.data ?? []) as any[], (playersRes.data ?? []) as any[])
-  const players: GameSummaryPlayer[] = ((playersRes.data ?? []) as any[]).map((player) => ({
+  const { playerStats, teamStats, quarterBreakdown } = summarizeEvents(rawEvents, rawPlayers)
+  const players: GameSummaryPlayer[] = rawPlayers.map((player) => ({
     id: String(player.id),
     profileUserId: player.profile_user_id ?? null,
     teamSide: parseTeamSide(player.team_side),
     number: player.number ?? null,
     name: player.name || `#${player.number ?? '-'}`,
+    position: player.position ?? profileById.get(player.profile_user_id)?.player_position ?? null,
+    dob: null,
   }))
-  const events: GameSummaryEvent[] = ((eventsRes.data ?? []) as any[]).map((event) => ({
-    statKey: String(event.stat_key || '').toUpperCase(),
+  const events: GameSummaryEvent[] = rawEvents.map((event) => {
+    const statKey = String(event.stat_key || '').toUpperCase()
+    const definition = definitionByStatKey.get(statKey) ?? null
+    return {
+    id: String(event.id),
+    statKey,
+    statDefinitionId: definition?.id ?? null,
+    customLabel: definition && !definition.is_builtin ? definition.name ?? definition.short_code ?? event.stat_key : null,
     quarter: event.quarter ?? null,
+    quarterClockLabel: event.quarter_clock_label ?? null,
     teamSide: parseTeamSide(event.team_side),
     playerNumber: event.player_number ?? null,
     profileUserId: event.profile_user_id ?? null,
-  }))
+  }})
 
   const scoreHomeGoals = teamStats.find((item) => item.teamSide === 'home')?.goals ?? 0
   const scoreHomeBehinds = teamStats.find((item) => item.teamSide === 'home')?.behinds ?? 0
@@ -671,15 +773,22 @@ export async function getGameSummary(gameId: string): Promise<GameSummary | null
   const scoreAwayBehinds = teamStats.find((item) => item.teamSide === 'away')?.behinds ?? 0
   const gradeRow = gradeRes?.data as { name?: string | null; code?: string | null; grade_catalog?: { label?: string | null } | null } | null
   const gradeLabel = gradeRow?.grade_catalog?.label ?? gradeRow?.name ?? gradeRow?.code ?? null
+  const liveClock = !clockRes.error && clockRes.data && typeof clockRes.data === 'object' ? clockRes.data as any : null
+  const latestEvent = [...events].reverse().find((event) => event.quarter != null)
 
   return {
     id: game.id,
+    trackerMode: (game as any).tracker_mode ?? null,
     opponent: game.opponent ?? null,
     date: game.date ?? null,
     venue: game.venue ?? null,
     status: game.status ?? null,
     round: game.round ?? null,
     gradeLabel,
+    gradeId,
+    quarterLength: (game as any).quarter_length ?? null,
+    activeQuarter: liveClock?.active_quarter ?? (game as any).active_quarter ?? latestEvent?.quarter ?? null,
+    clockLabel: formatLiveClockLabel(liveClock) ?? latestEvent?.quarterClockLabel ?? null,
     trackBothTeams: Boolean((game as any).track_both_teams),
     homeTeamName: homeSquad?.squads?.name ?? null,
     awayTeamName: awaySquad?.squads?.name ?? game.opponent ?? null,
@@ -701,34 +810,85 @@ export async function getGameSummary(gameId: string): Promise<GameSummary | null
 }
 
 export async function getManualGameSummary(manualId: string): Promise<ManualGameSummary | null> {
-  const { data, error } = await supabase.from('manual_player_game_totals').select('*').eq('id', manualId).maybeSingle()
-  if (error) throw error
-  if (!data) return null
+  const [{ data: post, error: postError }, { data: viewerData }] = await Promise.all([
+    supabase.from('posts').select('id,author_id').eq('manual_game_id', manualId).is('hidden_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    supabase.auth.getUser(),
+  ])
+  if (postError && postError.code !== 'PGRST116') throw postError
 
-  const row = data as Record<string, any>
-  const stats = {
-    kicks: Number(row.k ?? 0),
-    handballs: Number(row.hb ?? 0),
-    marks: Number(row.m ?? 0),
-    tackles: Number(row.t ?? 0),
-    goals: Number(row.g ?? 0),
-    behinds: Number(row.b ?? 0),
-    disposals: Number(row.disposals ?? Number(row.k ?? 0) + Number(row.hb ?? 0)),
-    clearances: Number(row.clearances ?? row.cl ?? 0),
-    inside50s: Number(row.inside_50s ?? row.i50 ?? 0),
-    rebound50s: Number(row.rebound_50s ?? row.r50 ?? 0),
-    hitouts: Number(row.hitouts ?? row.ho ?? 0),
+  let row: Record<string, any> | null = null
+  if (post?.id) {
+    const { data, error } = await supabase.rpc('rpc_get_manual_game_summary_for_post', { _post_id: post.id })
+    if (error) throw error
+    row = (Array.isArray(data) ? data[0] : data) as Record<string, any> | null
+  } else {
+    const { data, error } = await supabase.from('manual_player_game_totals').select('*').eq('id', manualId).maybeSingle()
+    if (error) throw error
+    row = data as Record<string, any> | null
   }
+  if (!row) return null
+
+  const [gameRes, profileRes, clubRes] = await Promise.all([
+    row.game_id
+      ? supabase.from('games').select('id,opponent,date,venue,round,grade_id,quarter_length,opponent_logo_path').eq('id', row.game_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null } as any),
+    row.user_id
+      ? supabase.from('profiles_directory').select('user_id,name,player_number,player_position,team_name,team_logo_url,team_logo_path,home_club_id').eq('user_id', row.user_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null } as any),
+    row.subject_club_id
+      ? supabase.from('clubs').select('id,name,logo_path,primary_color').eq('id', row.subject_club_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null } as any),
+  ])
+  if (gameRes.error && gameRes.error.code !== 'PGRST116') throw gameRes.error
+  if (profileRes.error && profileRes.error.code !== 'PGRST116') throw profileRes.error
+  if (clubRes.error && clubRes.error.code !== 'PGRST116') throw clubRes.error
+
+  const game = gameRes.data as any
+  const profile = profileRes.data as any
+  const club = clubRes.data as any
+  const clubId = row.subject_club_id ?? profile?.home_club_id ?? null
+  const squadRes = clubId
+    ? await supabase.from('squads').select('name,logo_url,primary_color_hex,is_official').eq('club_id', clubId).order('is_official', { ascending: false }).limit(1).maybeSingle()
+    : { data: null, error: null }
+  if (squadRes.error && squadRes.error.code !== 'PGRST116') throw squadRes.error
+  const squad = squadRes.data as any
+
+  const mapped = mapManualTotals(row)
+  const position = row.subject_position ?? profile?.player_position ?? null
+  const performance = buildPerformanceEvaluation({
+    totals: mapped.totals,
+    position,
+    ratingOverride: mapped.ratingOverride,
+    context: {
+      quarterLengthMinutes: game?.quarter_length ?? null,
+      gradeId: game?.grade_id ?? null,
+      playerDob: null,
+      gameDate: row.match_date ?? game?.date ?? null,
+    },
+  })
 
   return {
     id: row.id,
     gameId: row.game_id ?? null,
     userId: row.user_id ?? null,
-    opponent: row.opponent_name ?? null,
-    date: row.match_date ?? null,
-    venue: row.venue ?? null,
-    round: row.round ?? null,
-    opponentLogoUrl: toPublicLogo(row.opponent_logo_url ?? row.opponent_logo_path ?? null),
-    stats,
+    opponent: row.opponent_name ?? game?.opponent ?? null,
+    date: row.match_date ?? game?.date ?? null,
+    venue: row.venue ?? game?.venue ?? null,
+    round: row.round ?? game?.round ?? null,
+    opponentLogoUrl: toPublicLogo(row.opponent_logo_url ?? row.opponent_logo_path ?? game?.opponent_logo_path ?? null),
+    subjectName: row.subject_display_name ?? profile?.name ?? null,
+    playerNumber: profile?.player_number ?? null,
+    position,
+    teamName: squad?.name ?? club?.name ?? profile?.team_name ?? null,
+    teamLogoUrl: toPublicLogo(squad?.logo_url ?? club?.logo_path ?? profile?.team_logo_url ?? profile?.team_logo_path ?? null),
+    teamPrimaryColorHex: squad?.primary_color_hex ?? club?.primary_color ?? null,
+    gradeId: game?.grade_id ?? null,
+    quarterLength: game?.quarter_length ?? null,
+    stats: mapped.totals,
+    availability: mapped.availability,
+    impact7: performance.impact7,
+    impactBand: performance.impactBand,
+    benchmarkBands: performance.bands,
+    canEditDelete: canMutateManualGame(viewerData.user?.id, row.user_id),
   }
 }

@@ -19,11 +19,13 @@ export type PortalNotificationType =
   | 'official_squad_admin_request_decided'
   | 'user_followed'
   | 'official_game_live_started'
+  | 'team_selection_posted'
   | 'track_request'
   | 'track_request_accepted'
   | 'track_request_declined'
   | 'vote_card_assigned'
   | 'vote_card_reminder'
+  | 'unknown'
 
 export type PortalNotificationPayload = {
   request_id?: string | null
@@ -56,6 +58,7 @@ export type PortalNotificationPayload = {
   comment_id?: string | null
   comment_preview?: string | null
   card_id?: string | null
+  tracker_mode?: string | null
   award_type_name?: string | null
   vote_group_name?: string | null
   home_team_name?: string | null
@@ -67,6 +70,7 @@ export type PortalNotificationPayload = {
 export type PortalNotification = {
   id: string
   type: PortalNotificationType
+  rawType: string | null
   refId: string | null
   squadId: string | null
   payload: PortalNotificationPayload | null
@@ -80,7 +84,7 @@ export type PortalNotification = {
   squadLogoUrl: string | null
 }
 
-function normalizeNotificationType(input: string | null | undefined): PortalNotificationType {
+export function normalizeNotificationType(input: string | null | undefined): PortalNotificationType {
   if (
     input === 'squad_invite' ||
     input === 'squad_invite_accepted' ||
@@ -100,6 +104,7 @@ function normalizeNotificationType(input: string | null | undefined): PortalNoti
     input === 'official_squad_admin_request_decided' ||
     input === 'user_followed' ||
     input === 'official_game_live_started' ||
+    input === 'team_selection_posted' ||
     input === 'track_request' ||
     input === 'track_request_accepted' ||
     input === 'track_request_declined' ||
@@ -109,7 +114,7 @@ function normalizeNotificationType(input: string | null | undefined): PortalNoti
     return input
   }
 
-  return 'squad_invite'
+  return 'unknown'
 }
 
 function resolveStorageUrl(input: string | null | undefined, defaultBucket = 'profile-avatars') {
@@ -135,13 +140,16 @@ function resolveStorageUrl(input: string | null | undefined, defaultBucket = 'pr
   return data.publicUrl || input
 }
 
-export async function listNotifications(userId: string, limit = 80): Promise<PortalNotification[]> {
-  const { data, error } = await supabase
-    .from('notifications')
-    .select('id,type,ref_id,squad_id,payload,actor_id,read_at,created_at')
-    .eq('recipient_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(limit)
+export async function listNotifications(
+  userId: string,
+  limit = 50,
+  cursor: string | null = null,
+): Promise<PortalNotification[]> {
+  const { data, error } = await supabase.rpc('f_notifications_list', {
+    _uid: userId,
+    _limit: limit,
+    _cursor: cursor,
+  })
 
   if (error) throw error
 
@@ -187,6 +195,7 @@ export async function listNotifications(userId: string, limit = 80): Promise<Por
       return {
         id: row.id,
         type: normalizeNotificationType(row.type),
+        rawType: typeof row.type === 'string' ? row.type : null,
         refId: row.ref_id ?? null,
         squadId: row.squad_id ?? null,
         payload: (row.payload as PortalNotificationPayload | null) ?? null,
@@ -204,12 +213,19 @@ export async function listNotifications(userId: string, limit = 80): Promise<Por
 
 export async function markNotificationsRead(userId: string, ids: string[]) {
   if (!ids.length) return
-  const { error } = await supabase
-    .from('notifications')
-    .update({ read_at: new Date().toISOString() })
-    .eq('recipient_id', userId)
-    .in('id', ids)
+  const { error } = await supabase.rpc('f_notifications_mark_read', {
+    _uid: userId,
+    _ids: ids,
+  })
   if (error) throw error
+}
+
+export async function getUnreadNotificationsCount(userId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('f_notifications_unread_count', { _uid: userId })
+  if (error) throw error
+  const count = Number(data)
+  if (!Number.isFinite(count) || count < 0) throw new Error('Unread notification count was invalid.')
+  return Math.trunc(count)
 }
 
 export async function respondInvite(userId: string, memberId: string, accept: boolean) {

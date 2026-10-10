@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabase'
 import { createRoleRequest } from '@/lib/account-management'
+import {
+  PLAYER_POSITIONS,
+  canonicalizeOptionalPlayerPosition,
+  type CanonicalPlayerPosition,
+} from '@/lib/canonical/positions'
 
 export const ONBOARDING_STEPS = [
   'welcome',
@@ -14,7 +19,7 @@ export type OnboardingStepKey = (typeof ONBOARDING_STEPS)[number]
 export type OnboardingRole = 'player' | 'coach' | 'tracker' | 'member'
 export type RequestableRole = Exclude<OnboardingRole, 'member'>
 export type ProfileRole = OnboardingRole | 'admin'
-export type OnboardingPosition = 'DEF' | 'MID' | 'FWD'
+export type OnboardingPosition = CanonicalPlayerPosition
 
 export const ONBOARDING_ROLE_OPTIONS: Array<{
   key: OnboardingRole
@@ -43,7 +48,7 @@ export const ONBOARDING_ROLE_OPTIONS: Array<{
   },
 ] as const
 
-export const POSITION_OPTIONS: OnboardingPosition[] = ['DEF', 'MID', 'FWD']
+export const POSITION_OPTIONS = PLAYER_POSITIONS
 
 export type ProfileCompletionRow = {
   user_id: string
@@ -275,6 +280,12 @@ export async function finishOnboarding(input: FinishOnboardingInput): Promise<vo
     : rolesForProfileBase
   const primaryRole =
     rolesForProfileBase[0] ?? (selectedRoles.includes('member') ? 'supporter' : lockedAdminRole ? 'admin' : null)
+  const canonicalPlayerPosition = selectedRoles.includes('player')
+    ? canonicalizeOptionalPlayerPosition(playerPosition)
+    : null
+  if (selectedRoles.includes('player') && !canonicalPlayerPosition) {
+    throw new Error('Position is required for players.')
+  }
 
   await ensureProfileExists(userId)
   const { prevHomeClubId } = await fetchPreviousProfileState(userId)
@@ -299,7 +310,7 @@ export async function finishOnboarding(input: FinishOnboardingInput): Promise<vo
     primary_role: primaryRole,
     game_day_roles: rolesToPersist.length ? rolesToPersist : null,
     game_day_role: primaryRole ?? null,
-    player_position: selectedRoles.includes('player') ? playerPosition : null,
+    player_position: canonicalPlayerPosition,
     player_number: selectedRoles.includes('player') ? playerNumber : null,
   }
 

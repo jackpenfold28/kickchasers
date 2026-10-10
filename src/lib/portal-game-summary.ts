@@ -1,8 +1,11 @@
 import type { GameSummaryEvent, GameSummaryPlayer } from '@/lib/portal-games'
+import { buildTotalsFromEvents } from '@/lib/canonical/player-event-aggregate'
+import { buildPerformanceEvaluation, countTrackedCustomStats } from '@/lib/canonical/games-parity-contract'
+import type { Band, BenchmarkContext } from '@/lib/canonical/benchmarks'
 
 export type TeamSide = 'home' | 'away'
 export type SummaryScope = 'total' | number | `OT${number}`
-export type SummarySortKey = SummaryStatKey | 'name' | 'jumperNumber' | 'GB'
+export type SummarySortKey = SummaryStatKey | 'name' | 'jumperNumber' | 'GB' | 'impact7'
 
 export const SUMMARY_STAT_KEYS = [
   'K',
@@ -50,6 +53,10 @@ export type PlayerSummaryRow = {
   name: string
   linkedUser: boolean
   profileUserId: string | null
+  position: string | null
+  impact7: number
+  impactBand: Band
+  customStats: Record<string, number>
   stats: SummaryStats
 }
 
@@ -72,20 +79,6 @@ export type TeamComparisonGroup = {
     key: SummaryStatKey | 'GB' | 'DE%'
     label: string
   }>
-}
-
-const AF_WEIGHTS: Record<string, number> = {
-  K: 3,
-  H: 2,
-  M: 3,
-  T: 4,
-  G: 6,
-  B: 1,
-  FF: 1,
-  FA: -3,
-  CL: 3,
-  I50: 0,
-  R50: 0,
 }
 
 const EVENT_TO_SUMMARY_KEY: Record<string, SummaryStatKey> = {
@@ -235,7 +228,7 @@ const matchesScope = (event: GameSummaryEvent, scope: SummaryScope): boolean => 
 
 const findPlayerRow = (
   playerLookup: Map<string, PlayerSummaryRow>,
-  numberLookup: Map<number, string>,
+  numberLookup: Map<string, string>,
   event: GameSummaryEvent
 ): PlayerSummaryRow | null => {
   if (event.profileUserId) {
@@ -245,7 +238,7 @@ const findPlayerRow = (
   }
 
   if (typeof event.playerNumber === 'number') {
-    const key = numberLookup.get(event.playerNumber)
+    const key = numberLookup.get(`${event.teamSide}:${event.playerNumber}`)
     if (key && playerLookup.has(key)) return playerLookup.get(key) ?? null
   }
 
@@ -286,27 +279,44 @@ export const formatClubInitials = (value: string | null | undefined) => {
   return initials || value.trim().charAt(0).toUpperCase()
 }
 
-const applyDerivedStats = (stats: SummaryStats) => {
-  const kicks = stats.K ?? 0
-  const handballs = stats.HB ?? 0
-  stats.D = kicks + handballs
-
-  const kickTotal = kicks + (stats.KEF ?? 0) + (stats.KIF ?? 0)
-  const handballTotal = handballs + (stats.HEF ?? 0) + (stats.HIF ?? 0)
-
-  let af = 0
-  af += kickTotal * (AF_WEIGHTS.K || 0)
-  af += handballTotal * (AF_WEIGHTS.H || 0)
-  af += (stats.M || 0) * (AF_WEIGHTS.M || 0)
-  af += (stats.T || 0) * (AF_WEIGHTS.T || 0)
-  af += (stats.G || 0) * (AF_WEIGHTS.G || 0)
-  af += (stats.B || 0) * (AF_WEIGHTS.B || 0)
-  af += (stats.FF || 0) * (AF_WEIGHTS.FF || 0)
-  af += (stats.FA || 0) * (AF_WEIGHTS.FA || 0)
-  af += (stats.CL || 0) * (AF_WEIGHTS.CL || 0)
-  af += (stats.I50 || 0) * (AF_WEIGHTS.I50 || 0)
-  af += (stats.R50 || 0) * (AF_WEIGHTS.R50 || 0)
-  stats.AF = af
+const applyCanonicalStats = (stats: SummaryStats, events: GameSummaryEvent[]) => {
+  const totals = buildTotalsFromEvents(
+    events.map((event) => ({
+      stat_key: event.statKey,
+      quarter: event.quarter,
+      team_side: event.teamSide,
+      player_number: event.playerNumber,
+    }))
+  )
+  stats.K = totals.kicks
+  stats.HB = totals.handballs
+  stats.D = totals.disposals
+  stats.M = totals.marks
+  stats.T = totals.tackles
+  stats.G = totals.goals
+  stats.B = totals.behinds
+  stats.FF = totals.freesFor
+  stats.FA = totals.freesAgainst
+  stats.CL = totals.clearances
+  stats.I50 = totals.inside50s
+  stats.R50 = totals.rebound50s
+  stats.HO = totals.hitouts
+  stats.GBG = totals.groundBallGets
+  stats.HR = totals.handballReceives
+  stats.GA = totals.goalAssists
+  stats.TO = totals.turnovers
+  stats.INT = totals.intercepts
+  stats.ONE_PERCENT = totals.onePercenters
+  stats.CON = totals.contestedPossessions
+  stats.UC = totals.uncontestedPossessions
+  stats.MC = totals.contestedMarks
+  stats.MUC = totals.uncontestedMarks
+  stats.KEF = totals.effectiveKicks
+  stats.KIF = totals.ineffectiveKicks
+  stats.HEF = totals.effectiveHandballs
+  stats.HIF = totals.ineffectiveHandballs
+  stats.AF = totals.fantasy
+  return totals
 }
 
 export const buildAvailableScopes = (events: GameSummaryEvent[]) => {
@@ -324,10 +334,11 @@ export const buildAvailableScopes = (events: GameSummaryEvent[]) => {
 export const buildPlayerSummaryRows = (
   events: GameSummaryEvent[],
   players: GameSummaryPlayer[],
-  options: { teamSide: TeamSide; scope: SummaryScope }
+  options: { teamSide: TeamSide; scope: SummaryScope; benchmarkContext?: BenchmarkContext }
 ) => {
   const playerLookup = new Map<string, PlayerSummaryRow>()
-  const numberLookup = new Map<number, string>()
+  const numberLookup = new Map<string, string>()
+  const eventsByPlayer = new Map<string, GameSummaryEvent[]>()
 
   players
     .filter((player) => player.teamSide === options.teamSide)
@@ -339,10 +350,14 @@ export const buildPlayerSummaryRows = (
         name: player.name ?? '',
         linkedUser: Boolean(player.profileUserId),
         profileUserId: player.profileUserId ?? null,
+        position: player.position ?? null,
+        impact7: 0,
+        impactBand: 'Rookie',
+        customStats: {},
         stats: createEmptyStats(),
       }
       playerLookup.set(player.id, row)
-      if (typeof player.number === 'number') numberLookup.set(player.number, player.id)
+      if (typeof player.number === 'number') numberLookup.set(`${player.teamSide}:${player.number}`, player.id)
     })
 
   events
@@ -350,11 +365,27 @@ export const buildPlayerSummaryRows = (
     .forEach((event) => {
       const row = findPlayerRow(playerLookup, numberLookup, event)
       const key = EVENT_TO_SUMMARY_KEY[event.statKey]
-      if (!row || !key) return
-      row.stats[key] += 1
+      if (!row) return
+      if (key) row.stats[key] += 1
+      const playerEvents = eventsByPlayer.get(row.playerId) ?? []
+      playerEvents.push(event)
+      eventsByPlayer.set(row.playerId, playerEvents)
     })
 
-  for (const row of playerLookup.values()) applyDerivedStats(row.stats)
+  for (const row of playerLookup.values()) {
+    const playerEvents = eventsByPlayer.get(row.playerId) ?? []
+    const totals = applyCanonicalStats(row.stats, playerEvents)
+    const player = players.find((candidate) => candidate.id === row.playerId)
+    const performance = buildPerformanceEvaluation({
+      totals,
+      position: row.position,
+      scope: options.scope === 'total' ? 'game' : 'quarter',
+      context: { ...options.benchmarkContext, playerDob: player?.dob ?? options.benchmarkContext?.playerDob ?? null },
+    })
+    row.impact7 = performance.impact7
+    row.impactBand = performance.impactBand
+    row.customStats = countTrackedCustomStats(playerEvents)
+  }
 
   return Array.from(playerLookup.values()).sort((a, b) => {
     const aNum = a.jumperNumber ?? 9999
@@ -379,7 +410,12 @@ export const buildTeamSummaryRows = (events: GameSummaryEvent[], options: { scop
       row.stats[key] += 1
     })
 
-  rows.forEach((row) => applyDerivedStats(row.stats))
+  rows.forEach((row) =>
+    applyCanonicalStats(
+      row.stats,
+      events.filter((event) => event.teamSide === row.teamSide && matchesScope(event, options.scope))
+    )
+  )
   return rows
 }
 
@@ -417,6 +453,7 @@ export const sortPlayerRows = (
     const resolveValue = (row: PlayerSummaryRow) => {
       if (sortKey === 'name') return row.name.toLowerCase()
       if (sortKey === 'jumperNumber') return row.jumperNumber ?? 9999
+      if (sortKey === 'impact7') return row.impact7
       if (sortKey === 'GB') return (row.stats.G ?? 0) + (row.stats.B ?? 0) * 0.1
       if (sortKey === 'D') return row.stats.D ?? (row.stats.K ?? 0) + (row.stats.HB ?? 0)
       return row.stats[sortKey] ?? 0

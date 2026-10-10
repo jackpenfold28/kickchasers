@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import { normalizeHexColor, resolveSquadPrimaryColor } from '@/lib/squad-colors'
+import { buildInitialVoteSelections, buildVoteSubmitEntries, getVoteSelectionKey, validateVoteSelections } from '@/lib/canonical/squad-votes'
 import type {
   AccessState,
   MatchupSourceType,
@@ -54,74 +55,19 @@ function normalizeSearch(value: string) {
 }
 
 export function getSelectionKey(candidate: VoteCardCandidate | VoteCardEntry, sourceType: MatchupSourceType) {
-  return sourceType === 'tracked_game' ? candidate.gamePlayerId : candidate.squadMemberId
+  return getVoteSelectionKey(candidate, sourceType)
 }
 
 export function buildInitialSelections(context: PublicVoteCardContext): SelectedEntry[] {
-  const entryBySlot = new Map(context.entries.map((entry) => [entry.slotIndex, entry]))
-  const candidateKeys = new Map(
-    context.candidatePool.map((candidate) => [getSelectionKey(candidate, context.matchup.sourceType) ?? candidate.subjectKey, candidate])
-  )
-
-  return context.awardType.pointValues.map((pointsValue, index) => {
-    const slotIndex = index + 1
-    const existing = entryBySlot.get(slotIndex)
-    const selectionKey = existing ? getSelectionKey(existing, context.matchup.sourceType) ?? existing.subjectKey : null
-    return {
-      slotIndex,
-      pointsValue,
-      candidate: selectionKey ? candidateKeys.get(selectionKey) ?? null : null,
-    }
-  })
+  return buildInitialVoteSelections(context)
 }
 
 export function validateSelections(context: PublicVoteCardContext, selections: SelectedEntry[]) {
-  const errors: Record<number, string> = {}
-  const seenSelectionKeys = new Set<string>()
-  const expectedCount = context.awardType.pointValues.length
-
-  if (selections.length !== expectedCount) {
-    return {
-      formError: 'This card is not ready to submit yet. Please reload the page and try again.',
-      slotErrors: errors,
-    }
-  }
-
-  for (const selection of selections) {
-    if (!selection.candidate) {
-      errors[selection.slotIndex] = 'Select a player for this slot.'
-      continue
-    }
-
-    const identifier = getSelectionKey(selection.candidate, context.matchup.sourceType)
-    if (!identifier) {
-      errors[selection.slotIndex] =
-        context.matchup.sourceType === 'tracked_game'
-          ? 'This selection is missing a tracked player reference.'
-          : 'This selection is missing a squad member reference.'
-      continue
-    }
-
-    if (seenSelectionKeys.has(identifier)) {
-      errors[selection.slotIndex] = 'Each player can only be selected once.'
-      continue
-    }
-
-    seenSelectionKeys.add(identifier)
-  }
-
-  return {
-    formError: Object.keys(errors).length > 0 ? 'Complete every vote slot before submitting.' : null,
-    slotErrors: errors,
-  }
+  return validateVoteSelections(context, selections)
 }
 
 export function buildSubmitEntries(context: PublicVoteCardContext, selections: SelectedEntry[]) {
-  return selections.map((selection) => ({
-    slotIndex: selection.slotIndex,
-    gamePlayerId: context.matchup.sourceType === 'tracked_game' ? selection.candidate?.gamePlayerId ?? null : null,
-    squadMemberId: context.matchup.sourceType === 'manual' ? selection.candidate?.squadMemberId ?? null : null,
-  }))
+  return buildVoteSubmitEntries(context, selections)
 }
 
 function toRgb(hex: string) {

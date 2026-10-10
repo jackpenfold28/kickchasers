@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { buildDirectoryDecisionArgs, usesAtomicDirectoryDecision } from '@/lib/canonical/admin-contracts'
 
 export type RequestStatus = 'pending' | 'approved' | 'declined' | 'cancelled' | 'revoked' | 'archived'
 
@@ -846,12 +847,37 @@ export async function updateDirectoryRequestStatus(
   await setRequestStatus('official_directory_requests', requestId, status, actingUserId, adminNotes)
 }
 
+export async function decideDirectoryRequest(
+  request: DirectoryRequest,
+  status: Extract<RequestStatus, 'approved' | 'declined'>,
+  actingUserId: string | null,
+  adminNotes?: string | null
+) {
+  if (!actingUserId) throw new Error('Not authenticated.')
+
+  if (usesAtomicDirectoryDecision(request.requestKind)) {
+    const { error } = await supabase.rpc(
+      'rpc_decide_official_directory_request',
+      buildDirectoryDecisionArgs(request.id, status, adminNotes)
+    )
+    if (error) throw error
+    return
+  }
+
+  await setRequestStatus('official_directory_requests', request.id, status, actingUserId, adminNotes)
+}
+
 export async function approveDirectoryRequest(
   request: DirectoryRequest,
   actingUserId: string | null,
   adminNotes?: string | null
 ) {
   if (!actingUserId) throw new Error('Not authenticated.')
+
+  if (usesAtomicDirectoryDecision(request.requestKind)) {
+    await decideDirectoryRequest(request, 'approved', actingUserId, adminNotes)
+    return
+  }
 
   const payload = request.payload ?? {}
 

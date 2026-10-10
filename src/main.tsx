@@ -8,7 +8,6 @@ import Register from './routes/auth/Register'
 import CheckEmail from './routes/auth/CheckEmail'
 import Forgot from './routes/auth/Forgot'
 import ResetPassword from './routes/auth/ResetPassword'
-import Squad from './routes/Squad'
 import Landing from './routes/Landing'
 import HowItWorks from './routes/HowItWorks'
 import Onboarding from './routes/Onboarding'
@@ -23,17 +22,18 @@ import TeamSelectionPage from './routes/portal/TeamSelectionPage'
 import GamesPage from './routes/portal/GamesPage'
 import GameSummaryPage from './routes/portal/GameSummaryPage'
 import ManualGameSummaryPage from './routes/portal/ManualGameSummaryPage'
+import PlayerGameSummaryPage from './routes/portal/PlayerGameSummaryPage'
 import StatsPage from './routes/portal/StatsPage'
 import MatchDayPage from './routes/portal/MatchDayPage'
 import NotificationsPage from './routes/portal/NotificationsPage'
 import ProfilePage from './routes/portal/ProfilePage'
+import PlayerCardAlbumPage from './routes/portal/PlayerCardAlbumPage'
 import SettingsPage from './routes/portal/SettingsPage'
 import AdminPage from './routes/portal/AdminPage'
 import AdminLeaguesPage from './routes/portal/admin/AdminLeaguesPage'
 import AdminOfficialSquadsPage from './routes/portal/admin/AdminOfficialSquadsPage'
 import AdminModerationPage from './routes/portal/admin/AdminModerationPage'
 import AdminUsersPage from './routes/portal/admin/AdminUsersPage'
-import AdminManualFeedPostPage from './routes/portal/admin/AdminManualFeedPostPage'
 import AdminRequestDetailPage from './routes/portal/admin/AdminRequestDetailPage'
 import AdminRequestsPage from './routes/portal/admin/AdminRequestsPage'
 import AdminGamesPage from './routes/portal/admin/AdminGamesPage'
@@ -46,11 +46,13 @@ import RequestLeague from './routes/RequestLeague'
 import RequestClub from './routes/RequestClub'
 import PublicVoteCardPage from './routes/PublicVoteCardPage'
 import PublicVoteCardDevPage from './routes/PublicVoteCardDevPage'
-import PublicGamePage from './routes/PublicGamePage'
+import ProtectedGameRedirect from './routes/ProtectedGameRedirect'
+import AuthenticatedVoteCardPage from './routes/portal/AuthenticatedVoteCardPage'
+import NotFoundPage from './routes/NotFoundPage'
 import { legalDocuments } from './content/legalDocuments'
 
 const router = createBrowserRouter([
-  { path: 'vote-card/dev', element: <PublicVoteCardDevPage /> },
+  { path: 'vote-card/dev', element: import.meta.env.DEV ? <PublicVoteCardDevPage /> : <Navigate to="/" replace /> },
   { path: 'vote-card/:token', element: <PublicVoteCardPage /> },
   {
     path: '/',
@@ -77,10 +79,10 @@ const router = createBrowserRouter([
       { path: 'onboarding', element: <Onboarding /> },
       { path: 'request-league', element: <RequestLeague /> },
       { path: 'request-club', element: <RequestClub /> },
-      { path: 'game/:gameId', element: <PublicGamePage /> },
+      { path: 'game/:gameId', element: <ProtectedGameRedirect /> },
       { path: 'hub', element: <Navigate to="/dashboard" replace /> },
       { path: 'account/update-email', element: <Navigate to="/settings/update-email" replace /> },
-      { path: 'squad', element: <Squad /> },
+      { path: 'squad', element: <Navigate to="/teams" replace /> },
       {
         element: <PortalLayout />,
         children: [
@@ -90,16 +92,20 @@ const router = createBrowserRouter([
           { path: 'teams/new', element: <SquadCreatePage /> },
           { path: 'teams/:id', element: <SquadDetailPage /> },
           { path: 'teams/:id/team-selection', element: <TeamSelectionPage /> },
+          { path: 'teams/:id/votes/cards/:cardId', element: <AuthenticatedVoteCardPage /> },
           { path: 'squads', element: <SquadsPage /> },
           { path: 'squads/new', element: <SquadCreatePage /> },
           { path: 'squads/:id', element: <SquadDetailPage /> },
           { path: 'squads/:id/team-selection', element: <TeamSelectionPage /> },
+          { path: 'squads/:id/votes/cards/:cardId', element: <AuthenticatedVoteCardPage /> },
           { path: 'games', element: <GamesPage /> },
           { path: 'games/:id', element: <GameSummaryPage /> },
           { path: 'games/manual/:id', element: <ManualGameSummaryPage /> },
+          { path: 'player/:gameId/:playerId', element: <PlayerGameSummaryPage /> },
           { path: 'stats', element: <StatsPage /> },
           { path: 'notifications', element: <NotificationsPage /> },
           { path: 'profile', element: <ProfilePage /> },
+          { path: 'player-card/album/:id', element: <PlayerCardAlbumPage /> },
           { path: 'users/:id', element: <ProfilePage /> },
           { path: 'settings', element: <SettingsPage /> },
           { path: 'settings/update-email', element: <UpdateEmailPage /> },
@@ -112,7 +118,7 @@ const router = createBrowserRouter([
           { path: 'admin/users', element: <AdminUsersPage /> },
           { path: 'admin/requests', element: <AdminRequestsPage /> },
           { path: 'admin/games', element: <AdminGamesPage /> },
-          { path: 'admin/manual-feed-post', element: <AdminManualFeedPostPage /> },
+          { path: 'admin/manual-feed-post', element: <Navigate to="/admin" replace /> },
           { path: 'admin/requests/:requestType/:requestId', element: <AdminRequestDetailPage /> },
           { path: 'leagues/:id', element: <LeagueAdminDetailPage /> },
         ],
@@ -124,10 +130,10 @@ const router = createBrowserRouter([
       { path: 'setup/:gameId', element: <DisabledRoute /> },
       { path: 'summary/:gameId', element: <DisabledRoute /> },
       { path: 'viewer/:gameId', element: <DisabledRoute /> },
-      { path: 'player/:gameId/:playerId', element: <DisabledRoute /> },
     ],
   },
   { path: 'auth/callback', element: <AuthCallback /> },
+  { path: '*', element: <NotFoundPage /> },
 ])
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

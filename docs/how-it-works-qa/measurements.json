@@ -1,0 +1,267 @@
+[
+  {
+    "background": "rgb(2, 9, 26)",
+    "fonts": [
+      {
+        "size": "60px",
+        "tag": "H1",
+        "weight": "600"
+      },
+      {
+        "size": "48px",
+        "tag": "H2",
+        "weight": "600"
+      },
+      {
+        "size": "36px",
+        "tag": "H3",
+        "weight": "600"
+      }
+    ],
+    "height": 1080,
+    "hero": 628.4375,
+    "image": [
+      {
+        "alt": "KickChasers profile and onboarding context",
+        "height": 228.17852783203125,
+        "loaded": true,
+        "width": 278.4908447265625
+      }
+    ],
+    "index": {
+      "bottom": 0,
+      "height": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0,
+      "width": 0,
+      "x": 0,
+      "y": 0
+    },
+    "overflow": 0,
+    "page": 2175,
+    "panel": {
+      "bottom": 780.73876953125,
+      "height": 892.2205200195312,
+      "left": 696.634033203125,
+      "right": 1552.365966796875,
+      "top": -111.48175048828124,
+      "width": 855.73193359375,
+      "x": 696.634033203125,
+      "y": -111.48175048828124
+    },
+    "width": 1920
+  },
+  {
+    "background": "rgb(2, 9, 26)",
+    "fonts": [
+      {
+        "size": "60px",
+        "tag": "H1",
+        "weight": "600"
+      },
+      {
+        "size": "48px",
+        "tag": "H2",
+        "weight": "600"
+      },
+      {
+        "size": "36px",
+        "tag": "H3",
+        "weight": "600"
+      }
+    ],
+    "height": 900,
+    "hero": 628.4375,
+    "image": [
+      {
+        "alt": "KickChasers profile and onboarding context",
+        "height": 228.0387420654297,
+        "loaded": true,
+        "width": 278.3203125
+      }
+    ],
+    "index": {
+      "bottom": 0,
+      "height": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0,
+      "width": 0,
+      "x": 0,
+      "y": 0
+    },
+    "overflow": 0,
+    "page": 2175,
+    "panel": {
+      "bottom": 602.3006591796875,
+      "height": 891.6739501953125,
+      "left": 419.8961181640625,
+      "right": 1275.1038818359375,
+      "top": -289.373291015625,
+      "width": 855.207763671875,
+      "x": 419.8961181640625,
+      "y": -289.373291015625
+    },
+    "width": 1366
+  },
+  {
+    "background": "rgb(2, 9, 26)",
+    "fonts": [
+      {
+        "size": "60px",
+        "tag": "H1",
+        "weight": "600"
+      },
+      {
+        "size": "48px",
+        "tag": "H2",
+        "weight": "600"
+      },
+      {
+        "size": "36px",
+        "tag": "H3",
+        "weight": "600"
+      }
+    ],
+    "height": 768,
+    "hero": 649.4375,
+    "image": [
+      {
+        "alt": "KickChasers profile and onboarding context",
+        "height": 186.58868408203125,
+        "loaded": true,
+        "width": 227.726806640625
+      }
+    ],
+    "index": {
+      "bottom": 0,
+      "height": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0,
+      "width": 0,
+      "x": 0,
+      "y": 0
+    },
+    "overflow": 0,
+    "page": 2502,
+    "panel": {
+      "bottom": 574.2461547851562,
+      "height": 1300.440185546875,
+      "left": 344.3744201660156,
+      "right": 968.6256408691406,
+      "top": -726.1940307617188,
+      "width": 624.251220703125,
+      "x": 344.3744201660156,
+      "y": -726.1940307617188
+    },
+    "width": 1024
+  },
+  {
+    "background": "rgb(2, 9, 26)",
+    "fonts": [
+      {
+        "size": "52px",
+        "tag": "H1",
+        "weight": "600"
+      },
+      {
+        "size": "48px",
+        "tag": "H2",
+        "weight": "600"
+      },
+      {
+        "size": "36px",
+        "tag": "H3",
+        "weight": "600"
+      }
+    ],
+    "height": 1024,
+    "hero": 1104.625,
+    "image": [
+      {
+        "alt": "KickChasers profile and onboarding context",
+        "height": 327.67669677734375,
+        "loaded": true,
+        "width": 399.91058349609375
+      }
+    ],
+    "index": {
+      "bottom": -562.375,
+      "height": 46,
+      "left": 24,
+      "right": 1646.375,
+      "top": -608.375,
+      "width": 1622.375,
+      "x": 24,
+      "y": -608.375
+    },
+    "overflow": 0,
+    "page": 3083,
+    "panel": {
+      "bottom": 775.90234375,
+      "height": 1282.463134765625,
+      "left": 24.078826904296875,
+      "right": 728.9211120605469,
+      "top": -506.560791015625,
+      "width": 704.84228515625,
+      "x": 24.078826904296875,
+      "y": -506.560791015625
+    },
+    "width": 768
+  },
+  {
+    "background": "rgb(2, 9, 26)",
+    "fonts": [
+      {
+        "size": "40px",
+        "tag": "H1",
+        "weight": "600"
+      },
+      {
+        "size": "30px",
+        "tag": "H2",
+        "weight": "600"
+      },
+      {
+        "size": "30px",
+        "tag": "H3",
+        "weight": "600"
+      }
+    ],
+    "height": 844,
+    "hero": 1134.59375,
+    "image": [
+      {
+        "alt": "KickChasers profile and onboarding context",
+        "height": 164.469970703125,
+        "loaded": true,
+        "width": 200.7346038818359
+      }
+    ],
+    "index": {
+      "bottom": -807.40625,
+      "height": 46,
+      "left": 24,
+      "right": 1646.375,
+      "top": -853.40625,
+      "width": 1622.375,
+      "x": 24,
+      "y": -853.40625
+    },
+    "overflow": 0,
+    "page": 3276,
+    "panel": {
+      "bottom": 533.8916015625,
+      "height": 1281.4930419921875,
+      "left": 24.215896606445312,
+      "right": 350.7841339111328,
+      "top": -747.6014404296875,
+      "width": 326.5682373046875,
+      "x": 24.215896606445312,
+      "y": -747.6014404296875
+    },
+    "width": 390
+  }
+]

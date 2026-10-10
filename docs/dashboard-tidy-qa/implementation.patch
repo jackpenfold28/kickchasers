@@ -1,0 +1,119 @@
+--- src/routes/portal/DashboardPage.tsx before tidy
++++ src/routes/portal/DashboardPage.tsx after tidy
+@@ -228,7 +228,7 @@
+   }, [data])
+ 
+   if (loading) {
+-    return <main className="min-h-screen p-6 app-bg">Loading dashboard…</main>
++    return <p className="text-slate-300">Loading dashboard…</p>
+   }
+ 
+   if (error || !data) {
+@@ -283,7 +283,7 @@
+ 
+   return (
+     <section className="grid gap-6">
+-      <div className="pb-4">
++      <div>
+         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between xl:gap-8">
+           <div className="flex items-center gap-4 xl:flex-1">
+             <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#101A2D] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+@@ -296,7 +296,7 @@
+               )}
+             </div>
+             <div className="min-w-0">
+-              <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-slate-500">Welcome Back</p>
++              <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-slate-400">Welcome Back</p>
+               <p className="pr-2 text-[1.45rem] font-black italic leading-[1.02] tracking-[-0.04em] text-white sm:text-[1.7rem]">
+                 {(data.profile.name || 'KickChasers Player').toUpperCase()}
+               </p>
+@@ -304,7 +304,7 @@
+           </div>
+ 
+           <div className="w-full xl:max-w-[720px] xl:flex-[1.1]">
+-            <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-[minmax(150px,0.9fr)_repeat(3,minmax(0,1fr))]">
++            <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-[minmax(150px,0.9fr)_repeat(3,minmax(0,1fr))]">
+               {headerStats.map((stat) => (
+                 <div
+                   key={stat.key}
+@@ -477,7 +477,7 @@
+         </PortalCard>
+       </div>
+ 
+-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.95fr)_minmax(280px,0.9fr)]">
++      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.95fr)_minmax(280px,0.9fr)]">
+         <PortalCard
+           title="Recent Games"
+           subtitle="Match-card view from your game log"
+@@ -658,7 +658,7 @@
+         </PortalCard>
+       </div>
+ 
+-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
++      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
+         <PortalCard title="Live Around Me" subtitle="Followed squads and tracked games happening right now">
+           {data.liveAroundMe.length ? (
+             <div className="grid gap-3 lg:grid-cols-2">
+--- src/components/dashboard/DashboardCommunityActivity.tsx before tidy
++++ src/components/dashboard/DashboardCommunityActivity.tsx after tidy
+@@ -7,7 +7,7 @@
+ 
+ function LoadingCards() {
+   return (
+-    <div className="grid gap-4 lg:grid-cols-2" aria-label="Loading community activity" aria-busy="true">
++    <div className="grid gap-4 md:grid-cols-2" aria-label="Loading community activity" aria-busy="true">
+       {[0, 1].map((index) => (
+         <div key={index} className="h-64 animate-pulse rounded-2xl bg-white/[0.04] motion-reduce:animate-none" />
+       ))}
+@@ -52,7 +52,7 @@
+       ) : null}
+ 
+       {activity.state === 'ready' && activity.items.length ? (
+-        <div className="grid gap-4 lg:grid-cols-2">
++        <div className="grid gap-4 md:grid-cols-2">
+           {activity.items.map((post) => (
+             <PostActivityCard
+               key={post.id}
+--- src/components/layout/SidebarNavigation.tsx before tidy
++++ src/components/layout/SidebarNavigation.tsx after tidy
+@@ -171,7 +171,7 @@
+               type="button"
+               onClick={onToggleCollapsed}
+               className={clsx(
+-                'hidden lg:inline-flex items-center justify-center rounded-full text-slate-500 transition-all duration-200 hover:bg-white/[0.04] hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/10',
++                'hidden lg:inline-flex items-center justify-center rounded-full text-slate-500 transition-all duration-200 hover:bg-white/[0.04] hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
+                 collapsed ? 'h-8 w-8' : 'absolute right-0 top-0 h-8 w-8'
+               )}
+               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+--- tests/dashboard-community-activity-contracts.test.ts before tidy
++++ tests/dashboard-community-activity-contracts.test.ts after tidy
+@@ -129,7 +129,28 @@
+ })
+ test('activity cards use a narrow-safe responsive grid', async () => {
+   const source = await readFile(new URL('../src/components/dashboard/DashboardCommunityActivity.tsx', import.meta.url), 'utf8')
+-  assert.match(source, /grid gap-4 lg:grid-cols-2/)
++  assert.match(source, /grid gap-4 md:grid-cols-2/)
++})
++
++test('Dashboard preserves its operational module order', async () => {
++  const source = await readFile(new URL('../src/routes/portal/DashboardPage.tsx', import.meta.url), 'utf8')
++  const page = source.slice(source.indexOf('<section className="grid gap-6">'))
++  const markers = ['<Quick6SummaryCard', '<MatchScoreCard', 'title="Action Inbox"', 'title="Recent Games"', 'title="My Squads"', 'title="Profile Snapshot"', 'title="Live Around Me"', 'title="Leaderboard Snapshot"', '<DashboardCommunityActivity', 'title="Portal Activity"']
++  let previous = -1
++  for (const marker of markers) {
++    const position = page.indexOf(marker)
++    assert.ok(position > previous, `${marker} must remain present and in order`)
++    previous = position
++  }
++})
++
++test('Dashboard tidy stays within the approved external layout boundaries', async () => {
++  const source = await readFile(new URL('../src/routes/portal/DashboardPage.tsx', import.meta.url), 'utf8')
++  const shell = await readFile(new URL('../src/components/layout/PortalLayout.tsx', import.meta.url), 'utf8')
++  assert.match(source, /grid grid-cols-2 gap-2\.5 xl:grid-cols-/)
++  assert.equal((source.match(/grid items-start gap-6 xl:grid-cols-/g) ?? []).length, 2)
++  assert.match(shell, /max-w-\[1320px\]/)
++  assert.match(shell, /px-3 py-4 sm:px-6 sm:py-6 lg:py-8/)
+ })
+ 
+ test('Dashboard keeps its core modules and adds Community Activity', async () => {

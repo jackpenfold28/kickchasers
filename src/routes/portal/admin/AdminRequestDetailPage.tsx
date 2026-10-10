@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import PortalCard from '@/components/cards/PortalCard'
 import {
   approveDirectoryRequest,
+  decideDirectoryRequest,
   approveSquadAdminRequest,
   listDirectoryRequests,
   listSquadAdminRequests,
@@ -127,6 +128,8 @@ export default function AdminRequestDetailPage() {
     try {
       if (status === 'approved') {
         await approveDirectoryRequest(directoryRequest, actingUserId)
+      } else if (status === 'declined') {
+        await decideDirectoryRequest(directoryRequest, 'declined', actingUserId)
       } else {
         await updateDirectoryRequestStatus(directoryRequest.id, status, actingUserId)
       }

@@ -1,0 +1,29 @@
+[
+  {
+    "documentWidth": 1905,
+    "enhanced": true,
+    "overflow": [],
+    "viewport": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "documentWidth": 1009,
+    "enhanced": true,
+    "overflow": [],
+    "viewport": [
+      1024,
+      768
+    ]
+  },
+  {
+    "documentWidth": 753,
+    "enhanced": false,
+    "overflow": [],
+    "viewport": [
+      768,
+      1024
+    ]
+  }
+]

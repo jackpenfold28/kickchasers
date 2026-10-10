@@ -16,10 +16,8 @@ export default defineConfig({
     cors: true,        // allow cross‑origin requests from LAN devices
     // Allow all hosts for Replit proxy setup
     allowedHosts: true,
-    // Configure HMR for Replit proxy setup
-    hmr: {
-      clientPort: 443, // Use HTTPS port for Replit
-    },
+    // Replit terminates HTTPS at its proxy. Local browsers use Vite's actual port.
+    hmr: process.env.REPL_ID ? { clientPort: 443 } : undefined,
   },
   preview: {
     host: '0.0.0.0',   // expose preview server for Replit deployment
