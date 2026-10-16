@@ -2,12 +2,12 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { shouldPlayDemo } from './video-playback'
 
 /** Loop only in view, while respecting manual pause, tab visibility and reduced motion. */
-export function TeamTrackingVideo({ children }: { children: ReactNode }) {
+export function TeamTrackingVideo({ children, suspended = false, startTime = 0 }: { children: ReactNode; suspended?: boolean; startTime?: number }) {
   const [failed, setFailed] = useState(false)
   const video = useRef<HTMLVideoElement>(null)
   useEffect(() => {
     const media = video.current
-    if (!media || failed) return
+    if (!media || failed || suspended) return
     const preference = window.matchMedia('(prefers-reduced-motion: no-preference)')
     let visible = false
     let userPaused = false
@@ -62,10 +62,11 @@ export function TeamTrackingVideo({ children }: { children: ReactNode }) {
       media.removeEventListener('play', onPlay)
       media.pause()
     }
-  }, [failed])
+  }, [failed, suspended])
   if (failed) return <>{children}</>
   return <video ref={video} className="lp-team-video" src="/landing/video/team-tracking.mp4"
     poster="/landing/originals/team-tracking.png" width={1920} height={1336}
     controls muted playsInline loop preload="metadata" aria-label="KickChasers team tracking demonstration"
+    onLoadedMetadata={event => { if (startTime > 0) event.currentTarget.currentTime = Math.min(startTime, event.currentTarget.duration || startTime) }}
     onError={() => setFailed(true)}>{children}</video>
 }

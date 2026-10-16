@@ -2,10 +2,12 @@ import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { PublicSiteShell, type PublicNavItem } from '@/components/landing/PublicSiteShell'
 import { LandingMedia } from '@/components/landing/LandingMedia'
+import { TeamTrackingDemo } from '@/components/landing/TeamTrackingDemo'
 import { HeroVideoStage } from '@/components/landing/HeroVideoStage'
-import { TeamTrackingVideo } from '@/components/landing/TeamTrackingVideo'
+import { DevicePair, ScreenGallery } from '@/components/landing/ProductScreens'
+import { useLandingStory } from '@/components/landing/useLandingStory'
+import { ProductStoryStage } from '@/components/landing/ProductStoryStage'
 import { PricingSection } from '@/components/landing/PricingSection'
-import { MappingStory } from '@/components/landing/MappingStory'
 import '@/components/landing/landing.css'
 
 const authLink = (path: string) => `/sign-in?redirect=${encodeURIComponent(path)}`
@@ -19,6 +21,7 @@ function StartLink() { return <Link to={authLink('/dashboard')} className="lp-bu
 
 export default function Landing() {
   const { hash } = useLocation()
+  const scrollRoot = useLandingStory()
   useEffect(() => {
     if (!hash) return
     const frame = requestAnimationFrame(() => {
@@ -29,63 +32,114 @@ export default function Landing() {
     return () => cancelAnimationFrame(frame)
   }, [hash])
   return <PublicSiteShell variant="editorial" navItems={navigation}>
-    <div className="lp-page" id="landing-content" tabIndex={-1}>
+    <div ref={scrollRoot} className="lp-page lp-landing-story" id="landing-content" tabIndex={-1}>
       <HeroVideoStage>
         <section className="lp-hero" aria-labelledby="hero-heading">
           <p className="lp-kicker">Built for Australian football</p>
           <h1 id="hero-heading">Track the game.<br/><span>Know your impact.</span></h1>
           <p className="lp-intro">Track a player or team live, map the action, and turn the match into a performance card.</p>
           <div className="lp-actions"><StartLink/><a className="lp-text-link" href="#features">Explore the product <span aria-hidden="true">↓</span></a></div>
+        <TeamTrackingDemo/>
         </section>
-        <nav className="lp-proof" aria-label="Product chapters">
-          {[['Track','#features'],['Map','#mapping'],['Review','#match-summary'],['Create','#game-cards']].map(([title,href])=><a href={href} key={title}>{title}<span aria-hidden="true">↓</span></a>)}
-        </nav>
+
       </HeroVideoStage>
 
-      <section id="features" className="lp-section lp-wrap" aria-labelledby="single-heading">
-        <div className="lp-section-heading"><h2 id="single-heading">Every touch.<br/><span>Every part of the ground.</span></h2><div className="lp-section-description"><p>Track your own game live. Record each action, map where it happened and follow your influence quarter by quarter.</p><ul className="lp-benefits"><li>Live totals & quarter controls</li><li>Field mapping & Influence Timeline</li></ul></div></div>
-        <figure><LandingMedia asset="single-player" className="lp-product-frame lp-single-proof" alt="Single player live tracker: Tom Smith’s totals, stat pad, quarter controls, field map and Influence Timeline"/><figcaption className="lp-caption"><span>Live stats. Mapped actions. Your influence.</span><span>Tap to view the complete screen ↗</span></figcaption></figure>
-        <details className="lp-extra"><summary>Track from your phone, too <span aria-hidden="true">+</span></summary><div className="lp-extra-content"><LandingMedia asset="02-track-every-afl-stat-live" alt="Mobile player tracker with live totals and quarter controls" sizes="300px"/><p>Your live totals and quarter controls, in a smaller format.</p></div></details>
-      </section>
-
-      <section className="lp-band" id="team-tracking" aria-labelledby="team-heading"><div className="lp-section lp-wrap">
-        <div className="lp-section-heading"><h2 id="team-heading">One screen.<br/><span>Your whole team.</span></h2><div className="lp-section-description"><p className="lp-team-lead">Seamless player tracking. Every action in sequence.</p><p>Switch players and record the next stat, with your roster, live score and quarter controls in view.</p></div></div>
-        <ul className="lp-team-features" aria-label="Team tracking features">
-          <li><strong>Instant player switching</strong><span>From one player to the next in a tap.</span></li>
-          <li><strong>Team & player stats</strong><span>Individual output. The team picture.</span></li>
-          <li><strong>Advanced modifiers</strong><span>Add context to each action.</span></li>
-          <li><strong>Your custom stat pad</strong><span>The stats that matter to your club.</span></li>
-        </ul>
-        <figure className="lp-team-demo"><TeamTrackingVideo><LandingMedia asset="team-tracking" alt="Team tracker with full roster, selected player and stat pad"/></TeamTrackingVideo><figcaption className="lp-caption"><span>Follow the play. Capture every action.</span><span>Use fullscreen for the complete view.</span></figcaption></figure>
-        <div className="lp-team-context"><figure><LandingMedia asset="coaches-box" alt="Coach tracking local football with KickChasers from the coaches box" sizes="(max-width:760px) 92vw, 600px"/><figcaption className="lp-caption">From the boundary to the coaches box.</figcaption></figure><details className="lp-extra"><summary>Two trackers. One game. <span aria-hidden="true">+</span></summary><div className="lp-extra-content"><LandingMedia asset="04-two-trackers-one-game" alt="Linked tablet and phone tracking the same match" sizes="400px"/><p>Two devices can contribute to the same match. The creator controls the timer and quarters; linking requires a network connection.</p></div></details></div>
-      </div></section>
-
-      <section id="mapping" className="lp-section lp-wrap" aria-labelledby="mapping-heading">
-        <div className="lp-section-heading"><h2 id="mapping-heading">Know where the game<br/><span>is being won.</span></h2><p className="lp-section-description">From where the action happens to how the match is turning. One clear view of the game.</p></div>
-        <MappingStory/>
-      </section>
-
-      <section id="match-summary" className="lp-band" aria-labelledby="summary-heading"><div className="lp-section lp-wrap">
-        <div className="lp-section-heading"><h2 id="summary-heading">The final siren.<br/><span>The full picture.</span></h2><p className="lp-section-description">Review the score, player totals and quarter breakdowns. Put your performance in context with ratings and benchmarks.</p></div>
-        <figure className="lp-summary-proof"><LandingMedia asset="09-professional-match-summaries" className="lp-product-frame" alt="Match Summary showing final score, quarter tabs, player statistics and match results"/><figcaption className="lp-caption"><span>The result. The numbers behind it.</span><span>Tap to explore the complete summary ↗</span></figcaption></figure>
-        <details className="lp-extra"><summary>See performance ratings & benchmarks <span aria-hidden="true">+</span></summary><div className="lp-extra-content"><LandingMedia asset="07-see-whos-dominating" alt="Player performance rating and benchmarks" sizes="300px"/><p>See your match output alongside performance ratings and benchmarks.</p></div></details>
-      </div></section>
-
-      <section id="portal" className="lp-section lp-wrap lp-support" aria-labelledby="portal-heading">
-        <div className="lp-section-heading"><h2 id="portal-heading">Beyond game day.</h2><div className="lp-section-description"><p>Follow local footy, review your history and keep your squad connected.</p><Link className="lp-text-link" to={authLink('/hub')}>Explore the portal <span aria-hidden="true">↗</span></Link></div></div>
-        <div className="lp-support-grid">
-          <article><h3>Players</h3><p>Your game history, season stats, leaderboards and Player Card Album.</p></article>
-          <article><h3>Coaches</h3><p>Team output, match summaries, team selection and Best & Fairest voting.</p></article>
-          <article><h3>Clubs</h3><p>Squads, player groups, community posts and notifications.</p></article>
-          <article><h3>Families & supporters</h3><p>Match Day scores, local footy and shared player performances.</p></article>
+      <section id="features" className="lp-section lp-wrap lp-product-chapter" aria-labelledby="single-heading">
+        <div className="lp-product-split">
+          <div className="lp-product-copy">
+            <h2 id="single-heading">Every touch.<br/><span>Your impact.</span></h2>
+            <p>Follow one player from the first bounce to the final siren. Record the action, map where it happened and see the game take shape.</p>
+            <ul className="lp-product-points"><li><strong>Record in the moment.</strong> Kicks, marks, tackles and more, with a stat pad built for footy.</li><li><strong>Keep the whole game in view.</strong> Live totals, quarter controls and an Influence Timeline.</li></ul>
+            <a className="lp-text-link" href="#team-tracking">Tracking a whole team? <span aria-hidden="true">↓</span></a>
+          </div>
+          <DevicePair tablet="capture-player-ipad" phone="capture-player-phone" tabletAlt="iPad single-player tracker with Tom Smith’s live totals, stat pad, field map and Influence Timeline" phoneAlt="iPhone single-player tracker with live disposals, goals, quarter controls and stat pad" />
         </div>
-        <details className="lp-extra"><summary>A closer look at the season tools <span aria-hidden="true">+</span></summary><div className="lp-support-details"><LandingMedia asset="10-your-complete-player-profile" alt="Player profile with season totals and game history" sizes="500px"/><LandingMedia asset="team-selection" alt="Team selection and lineup poster" sizes="280px"/></div></details>
       </section>
 
-      <section id="game-cards" className="lp-card-band" aria-labelledby="cards-heading"><div className="lp-section lp-wrap">
-        <div className="lp-section-heading"><h2 id="cards-heading">Your performance.<br/><span>Your card.</span></h2><p className="lp-section-description">Your photo. Your club. Your match stats. Create a card worth keeping and sharing.</p></div>
-        <div className="lp-card-layout"><figure className="lp-finished-card"><LandingMedia asset="premium-card" alt="Finished Tom Smith performance card with 9.2 rating, 23 disposals, 2 goals and 103 AF points" sizes="(max-width:760px) 90vw, 520px"/><figcaption className="lp-caption">Your match. Your club. Your name.</figcaption></figure><figure className="lp-creator"><LandingMedia asset="card-creator" alt="Player Card Creator showing a second card example and the save and sharing controls" sizes="(max-width:760px) 230px, 280px"/><figcaption className="lp-caption">Create it. Keep it. Share it.</figcaption></figure></div>
-      </div></section>
+      <section id="team-tracking" className="lp-section lp-wrap lp-product-chapter" aria-labelledby="team-heading">
+        <div className="lp-product-split is-reversed">
+          <div className="lp-product-copy">
+            <h2 id="team-heading">One team.<br/><span>Every player.</span></h2>
+            <p>Move between players without losing the play. Your roster, live score and stat pad stay together, wherever you’re tracking.</p>
+            <ul className="lp-product-points"><li><strong>A tap to switch players.</strong> Individual contributions. A complete team picture.</li><li><strong>Your club. Your stat pad.</strong> Set up the actions and custom stats you want to record.</li></ul>
+          </div>
+          <DevicePair tablet="capture-team-ipad" phone="capture-team-phone" tabletAlt="iPad team tracker showing the roster, selected player, live score and both teams’ stat pads" phoneAlt="iPhone team tracker with player switching, action modifiers and custom stat pad" />
+        </div>
+      </section>
+
+      <section id="custom-stat-pad" className="lp-section lp-wrap lp-product-chapter lp-custom-pad" aria-labelledby="custom-pad-heading">
+        <div className="lp-section-heading"><h2 id="custom-pad-heading">Your game.<br/><span>Your stat pad.</span></h2><p className="lp-section-description">Make the stat pad your own. Arrange the actions, set up modifiers and choose the custom stats you want to track.</p></div>
+        <ScreenGallery screens={[
+          {asset:'capture-custom-pad',alt:'Edit your stat pad with modifier controls and a configurable action grid',label:'Arrange your stat pad'},
+          {asset:'capture-custom-stats',alt:'Custom stat editor showing available actions and their colours',label:'Choose your custom stats'},
+        ]}/>
+      </section>
+
+      <section id="mapping" className="lp-section lp-wrap lp-product-chapter" aria-labelledby="mapping-heading">
+        <ProductStoryStage kind="mapping">
+        <div className="lp-section-heading"><h2 id="mapping-heading">See the play.<br/><span>Read the ground.</span></h2></div>
+        <div className="lp-mapping-showcase">
+          <DevicePair tablet="capture-map-ipad" phone="capture-map-phone" tabletAlt="iPad team field mapping with both stat pads, action locations, Score Worm and momentum indicators" phoneAlt="iPhone field mapping with the oval, action filters and stat controls" />
+          <div className="lp-product-copy"><p>Go beyond the totals. Map actions on the oval and follow the Score Worm and momentum indicators as the match unfolds.</p><ul className="lp-product-points"><li><strong>Where it happened.</strong> Filter actions and quarters to find the passages that matter.</li><li><strong>How the game is turning.</strong> See scoring trends alongside the flow of the match.</li></ul></div>
+        </div>
+        </ProductStoryStage>
+      </section>
+
+      <section id="match-summary" className="lp-section lp-wrap lp-product-chapter" aria-labelledby="summary-heading">
+
+        <ScreenGallery story heading={<div className="lp-section-heading"><h2 id="summary-heading">The final siren.<br/><span>The full picture.</span></h2><p className="lp-section-description">Follow live scores on Match Day. Review the result, player totals and your own performance when the game is done.</p></div>} screens={[
+          {asset:'capture-summary',alt:'Match summary with final score, quarter breakdowns and player stat table',label:'The match, in detail'},
+          {asset:'capture-matchday',alt:'Match Day screen listing live and final games with team scores',label:'Stay with the live game'},
+          {asset:'capture-performance',alt:'Tom Smith’s match performance with rating, mapped stats and key action totals',label:'Your performance, in context'},
+        ]}/>
+      </section>
+
+      <section id="portal" className="lp-section lp-wrap lp-product-chapter" aria-labelledby="portal-heading">
+
+        <ScreenGallery story heading={<div className="lp-section-heading"><h2 id="portal-heading">One game is a start.<br/><span>Build your season.</span></h2><div className="lp-section-description"><p>Your profile brings the story together. Return to your game history, compare your stats and see where you stand.</p><Link className="lp-text-link" to={authLink('/hub')}>Explore the portal <span aria-hidden="true">↗</span></Link></div></div>} screens={[
+          {asset:'capture-profile',alt:'Player profile with personal banner, awards, season totals and recent games',label:'A profile that’s yours'},
+          {asset:'capture-weekly',alt:'Weekly leaderboard with leading disposal, fantasy and goal performances',label:'Lead the week'},
+          {asset:'capture-leaders',alt:'Player leaderboard with club identities, profile photos and disposal totals',label:'See where you stand'},
+        ]}/>
+      </section>
+
+      <section id="squads" className="lp-section lp-wrap lp-product-chapter" aria-labelledby="squads-heading">
+        <div className="lp-section-heading"><h2 id="squads-heading">Your club.<br/><span>Connected.</span></h2><p className="lp-section-description">Bring your people and your football together. Manage the squad, organise game-day roles and set your team for the next match.</p></div>
+        <ScreenGallery screens={[
+          {asset:'capture-squad',alt:'Northside Hawks official squad with club banner, members and upcoming match',label:'Your squad’s home',sizes:'(max-width:760px) 65vw, 320px'},
+          {asset:'capture-selection-design',alt:'Team selection poster with navy and gold club designs',label:'Your team. Your colours.',sizes:'(max-width:760px) 92vw, 900px'},
+        ]}/>
+
+      </section>
+
+      <section id="voting" className="lp-section lp-wrap lp-product-chapter" aria-labelledby="voting-heading">
+
+        <ScreenGallery story heading={<div className="lp-section-heading"><h2 id="voting-heading">Recognise the game.<br/><span>Reward the season.</span></h2><p className="lp-section-description">Best & Fairest voting, from individual cards to the season tally. Keep all your club’s teams, voting groups and results together in one place.</p></div>} screens={[
+          {asset:'capture-vote',alt:'Best and Fairest voting card with eligible players and vote entry fields',label:'Every vote has a place'},
+          {asset:'capture-voting-teams',alt:'Club voting groups for AFL, Reserves and Under 18 teams in one place',label:'All your teams’ votes, in one place'},
+          {asset:'capture-tally',alt:'Best and Fairest season tally with ranked players and vote totals',label:'The season adds up'},
+        ]}/>
+
+      </section>
+
+      <section id="social" className="lp-section lp-wrap lp-product-chapter lp-social" aria-labelledby="social-heading">
+        <div className="lp-section-heading"><h2 id="social-heading">After the siren.<br/><span>Share the story.</span></h2><p className="lp-section-description">Create club-coloured match results and player rankings to share with your football community. Celebrate the final score and the players who made it happen.</p></div>
+        <div className="lp-social-story">
+          <figure className="lp-social-result"><LandingMedia asset="capture-social-post" alt="Shared team result with generated top scorers, disposals and rating graphics" sizes="(max-width:760px) 92vw, 1120px"/><figcaption><strong>After the siren.</strong> Share the result and the players who made it happen.</figcaption></figure>
+        </div>
+      </section>
+
+      <section id="game-cards" className="lp-section lp-wrap lp-product-chapter lp-new-cards" aria-labelledby="cards-heading">
+        <ProductStoryStage kind="cards">
+        <div className="lp-section-heading"><h2 id="cards-heading">Your performance.<br/><span>Worth sharing.</span></h2><p className="lp-section-description">Turn a match into a player card. Keep it in your album or share it with the people who follow your footy.</p></div>
+        <ScreenGallery screens={[
+          {asset:'capture-card',alt:'Tom Smith’s navy and gold custom performance card with match stats and rating',label:'Your colours. Your card.'},
+          {asset:'capture-generated',alt:'Generated player performance card ready to save or share',label:'Ready to share'},
+          {asset:'capture-album',alt:'Player Card Album with a collection of saved performance cards',label:'Keep your season together'},
+        ]}/>
+
+        </ProductStoryStage>
+      </section>
 
       <PricingSection/>
 

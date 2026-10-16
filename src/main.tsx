@@ -9,6 +9,7 @@ import CheckEmail from './routes/auth/CheckEmail'
 import Forgot from './routes/auth/Forgot'
 import ResetPassword from './routes/auth/ResetPassword'
 import Landing from './routes/Landing'
+import Pricing from './routes/Pricing'
 import HowItWorks from './routes/HowItWorks'
 import Onboarding from './routes/Onboarding'
 import AuthCallback from './routes/auth/Callback'
@@ -52,6 +53,7 @@ import NotFoundPage from './routes/NotFoundPage'
 import { legalDocuments } from './content/legalDocuments'
 
 const router = createBrowserRouter([
+  { path: 'pricing', element: <Pricing /> },
   { path: 'vote-card/dev', element: import.meta.env.DEV ? <PublicVoteCardDevPage /> : <Navigate to="/" replace /> },
   { path: 'vote-card/:token', element: <PublicVoteCardPage /> },
   {

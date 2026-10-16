@@ -9,10 +9,12 @@ export function HeroVideoStage({ children }: { children: ReactNode }) {
   const stage = useRef<HTMLDivElement>(null)
   const video = useRef<HTMLVideoElement>(null)
   const [eligible, setEligible] = useState(false)
-  const [still, setStill] = useState(false)
+  const [pinned, setPinned] = useState(false)
+  const [grassroots, setGrassroots] = useState(false)
+  const progressLine = useRef<HTMLSpanElement>(null)
   const [failed, setFailed] = useState(false)
   const [ready, setReady] = useState(false)
-  const enabled = eligible && !still && !failed
+  const enabled = eligible && !failed
 
   useEffect(() => {
     const preference = window.matchMedia('(min-width: 1000px) and (min-height: 600px) and (prefers-reduced-motion: no-preference)')
@@ -26,6 +28,7 @@ export function HeroVideoStage({ children }: { children: ReactNode }) {
     const media = video.current
     const container = stage.current
     setReady(false)
+    setPinned(false)
     if (!enabled || !media || !container) return
     let frame = 0
     let desiredTime = 0
@@ -41,7 +44,11 @@ export function HeroVideoStage({ children }: { children: ReactNode }) {
       frame = 0
       const bounds = container.getBoundingClientRect()
       const header = container.closest('main')?.querySelector('header')?.getBoundingClientRect().height || 0
-      const progress = openingScrollProgress(window.scrollY, bounds.top + window.scrollY, bounds.height + window.innerHeight * .5, window.innerHeight, header)
+      const progress = openingScrollProgress(window.scrollY, bounds.top + window.scrollY, bounds.height, window.innerHeight, header)
+      const content = container.querySelector<HTMLElement>('.lp-video-stage-content')
+      setPinned(!!content && content.offsetHeight <= window.innerHeight - header)
+      setGrassroots(progress >= .5)
+      if (progressLine.current) progressLine.current.style.transform = `scaleX(${progress})`
       desiredTime = reverseVideoTime(progress, media.duration)
       seek()
     }
@@ -70,8 +77,13 @@ export function HeroVideoStage({ children }: { children: ReactNode }) {
     }
   }, [enabled])
 
-  return <div ref={stage} className={`lp-video-stage lp-wrap ${enabled ? 'has-scroll-video' : ''}`}>
-    <div className="lp-video-stage-content">{children}</div>
+  return <div ref={stage} className={`lp-video-stage lp-wrap ${enabled ? 'has-scroll-video' : ''} ${enabled && pinned ? 'is-pinned' : ''}`}>
+    <div className="lp-video-stage-content">{children}
+      <div className="lp-hero-progress">
+        <p><span className="sr-only">Taking professional analytics to grassroots football.</span><span aria-hidden="true">{!enabled ? 'Taking professional analytics to grassroots football.' : grassroots ? '…to grassroots football.' : 'Taking professional analytics…'}</span></p>
+        {enabled && <div className="lp-hero-progress-rail" aria-hidden="true"><span ref={progressLine}/></div>}
+      </div>
+    </div>
     <figure className="lp-hero-film">
       <div className="lp-hero-film-frame" role="img" aria-label="Northside Hawks player under stadium lights. Scrolling down pulls the scene back toward sunset.">
         <img src={POSTER} width={1080} height={1920} alt="" fetchPriority="high" decoding="async" />
@@ -79,8 +91,6 @@ export function HeroVideoStage({ children }: { children: ReactNode }) {
           muted playsInline preload="auto" aria-hidden="true" tabIndex={-1}
           className={ready ? 'is-ready' : ''} onError={() => setFailed(true)} />}
       </div>
-      <figcaption className="lp-hero-film-caption"><span>{enabled ? 'Scroll to see your game differently ↓' : 'Your player. Your game.'}</span><span>KICKCHASERS</span></figcaption>
-      {eligible && !failed && <button className="lp-film-toggle" type="button" aria-pressed={still} onClick={() => setStill(value => !value)}>{still ? 'Enable scroll video' : 'Use still image'}</button>}
     </figure>
   </div>
 }

@@ -51,9 +51,9 @@ test('reduced motion, narrow screens and failed media retain a poster without a 
  assert.match(source,/prefers-reduced-motion: no-preference/)
  assert.match(source,/min-width: 1000px/)
  assert.match(source,/enabled && <video/)
- assert.match(source,/eligible && !still && !failed/)
+ assert.match(source,/eligible && !failed/)
  assert.match(source,/onError=\{\(\) => setFailed\(true\)\}/)
- assert.match(source,/aria-pressed=\{still\}/)
+ assert.doesNotMatch(source,/Use still image|Scroll to see your game differently ↓|lp-hero-film-caption|setStill/)
  assert.match(source,/<img src=\{POSTER\}/)
 })
 
@@ -65,4 +65,16 @@ test('supplied video and extracted poster are real nonempty local assets', async
  assert.doesNotMatch(range,/id="features"/)
  assert.ok(landing.indexOf('id="features"') > landing.indexOf('</HeroVideoStage>'), 'player proof has its own full-width chapter after the opening film')
  assert.doesNotMatch(range,/id="team-tracking"/)
+})
+
+
+test('hero copy pins only when it fits and progress changes its message halfway',async()=>{
+ assert.match(source,/content.offsetHeight <= window.innerHeight - header/)
+ assert.match(source,/setGrassroots\(progress >= \.5\)/)
+ assert.match(source,/Taking professional analytics…/)
+ assert.match(source,/…to grassroots football/)
+ assert.match(source,/progressLine.current.style.transform = `scaleX/)
+ const css=await readFile(new URL('../src/components/landing/landing.css',import.meta.url),'utf8')
+ assert.match(css,/\.lp-video-stage.is-pinned \.lp-video-stage-content \{ position:sticky; top:77px;/)
+ assert.match(css,/\.lp-hero-progress-rail \{ height:4px;/)
 })

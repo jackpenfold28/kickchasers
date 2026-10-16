@@ -415,5 +415,1019 @@
         "bytes": 2630188
       }
     ]
+  },
+  "capture-player-phone": {
+    "original": "/landing/screenshots/single-tracker/Single tracking phone.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 935558,
+    "variants": [
+      {
+        "src": "/landing/images/capture-player-phone-360.webp",
+        "width": 360,
+        "bytes": 31458
+      },
+      {
+        "src": "/landing/images/capture-player-phone-600.webp",
+        "width": 600,
+        "bytes": 56090
+      },
+      {
+        "src": "/landing/images/capture-player-phone-900.webp",
+        "width": 900,
+        "bytes": 89392
+      }
+    ]
+  },
+  "capture-player-ipad": {
+    "original": "/landing/screenshots/single-tracker/singe tacker ipad-01.png",
+    "width": 4380,
+    "height": 3105,
+    "originalBytes": 1240684,
+    "variants": [
+      {
+        "src": "/landing/images/capture-player-ipad-480.webp",
+        "width": 480,
+        "bytes": 20194
+      },
+      {
+        "src": "/landing/images/capture-player-ipad-800.webp",
+        "width": 800,
+        "bytes": 37308
+      },
+      {
+        "src": "/landing/images/capture-player-ipad-1280.webp",
+        "width": 1280,
+        "bytes": 65732
+      },
+      {
+        "src": "/landing/images/capture-player-ipad-1920.webp",
+        "width": 1920,
+        "bytes": 106570
+      }
+    ]
+  },
+  "capture-team-phone": {
+    "original": "/landing/screenshots/team-tracker/team tracker phone.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 803927,
+    "variants": [
+      {
+        "src": "/landing/images/capture-team-phone-360.webp",
+        "width": 360,
+        "bytes": 30570
+      },
+      {
+        "src": "/landing/images/capture-team-phone-600.webp",
+        "width": 600,
+        "bytes": 56536
+      },
+      {
+        "src": "/landing/images/capture-team-phone-900.webp",
+        "width": 900,
+        "bytes": 92136
+      }
+    ]
+  },
+  "capture-team-ipad": {
+    "original": "/landing/screenshots/team-tracker/team tracker ipad.png",
+    "width": 4380,
+    "height": 3105,
+    "originalBytes": 785789,
+    "variants": [
+      {
+        "src": "/landing/images/capture-team-ipad-480.webp",
+        "width": 480,
+        "bytes": 21402
+      },
+      {
+        "src": "/landing/images/capture-team-ipad-800.webp",
+        "width": 800,
+        "bytes": 41312
+      },
+      {
+        "src": "/landing/images/capture-team-ipad-1280.webp",
+        "width": 1280,
+        "bytes": 73644
+      },
+      {
+        "src": "/landing/images/capture-team-ipad-1920.webp",
+        "width": 1920,
+        "bytes": 116950
+      }
+    ]
+  },
+  "capture-map-phone": {
+    "original": "/landing/screenshots/team-stats/team stats phone.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 1070182,
+    "variants": [
+      {
+        "src": "/landing/images/capture-map-phone-360.webp",
+        "width": 360,
+        "bytes": 31886
+      },
+      {
+        "src": "/landing/images/capture-map-phone-600.webp",
+        "width": 600,
+        "bytes": 60172
+      },
+      {
+        "src": "/landing/images/capture-map-phone-900.webp",
+        "width": 900,
+        "bytes": 99354
+      }
+    ]
+  },
+  "capture-map-ipad": {
+    "original": "/landing/screenshots/team-stats/team stats ipad.png",
+    "width": 4380,
+    "height": 3382,
+    "originalBytes": 1481896,
+    "variants": [
+      {
+        "src": "/landing/images/capture-map-ipad-480.webp",
+        "width": 480,
+        "bytes": 26890
+      },
+      {
+        "src": "/landing/images/capture-map-ipad-800.webp",
+        "width": 800,
+        "bytes": 54128
+      },
+      {
+        "src": "/landing/images/capture-map-ipad-1280.webp",
+        "width": 1280,
+        "bytes": 97980
+      },
+      {
+        "src": "/landing/images/capture-map-ipad-1920.webp",
+        "width": 1920,
+        "bytes": 160502
+      }
+    ]
+  },
+  "capture-custom-pad": {
+    "original": "/landing/screenshots/team-tracker/statpad custom.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 392993,
+    "variants": [
+      {
+        "src": "/landing/images/capture-custom-pad-360.webp",
+        "width": 360,
+        "bytes": 31182
+      },
+      {
+        "src": "/landing/images/capture-custom-pad-600.webp",
+        "width": 600,
+        "bytes": 59482
+      },
+      {
+        "src": "/landing/images/capture-custom-pad-900.webp",
+        "width": 900,
+        "bytes": 96980
+      }
+    ]
+  },
+  "capture-custom-stats": {
+    "original": "/landing/screenshots/team-tracker/custom stats.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 330420,
+    "variants": [
+      {
+        "src": "/landing/images/capture-custom-stats-360.webp",
+        "width": 360,
+        "bytes": 21800
+      },
+      {
+        "src": "/landing/images/capture-custom-stats-600.webp",
+        "width": 600,
+        "bytes": 39742
+      },
+      {
+        "src": "/landing/images/capture-custom-stats-900.webp",
+        "width": 900,
+        "bytes": 65216
+      }
+    ]
+  },
+  "capture-matchday": {
+    "original": "/landing/screenshots/live stats/Matchday.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 718361,
+    "variants": [
+      {
+        "src": "/landing/images/capture-matchday-360.webp",
+        "width": 360,
+        "bytes": 20882
+      },
+      {
+        "src": "/landing/images/capture-matchday-600.webp",
+        "width": 600,
+        "bytes": 41866
+      },
+      {
+        "src": "/landing/images/capture-matchday-900.webp",
+        "width": 900,
+        "bytes": 70548
+      }
+    ]
+  },
+  "capture-summary": {
+    "original": "/landing/screenshots/live stats/team tracker summery.png",
+    "width": 1285,
+    "height": 2604,
+    "originalBytes": 1253593,
+    "variants": [
+      {
+        "src": "/landing/images/capture-summary-360.webp",
+        "width": 360,
+        "bytes": 28714
+      },
+      {
+        "src": "/landing/images/capture-summary-600.webp",
+        "width": 600,
+        "bytes": 52936
+      },
+      {
+        "src": "/landing/images/capture-summary-900.webp",
+        "width": 900,
+        "bytes": 85092
+      }
+    ]
+  },
+  "capture-profile": {
+    "original": "/landing/screenshots/profile/profilepage.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 1586256,
+    "variants": [
+      {
+        "src": "/landing/images/capture-profile-360.webp",
+        "width": 360,
+        "bytes": 32604
+      },
+      {
+        "src": "/landing/images/capture-profile-600.webp",
+        "width": 600,
+        "bytes": 62188
+      },
+      {
+        "src": "/landing/images/capture-profile-900.webp",
+        "width": 900,
+        "bytes": 104110
+      }
+    ]
+  },
+  "capture-performance": {
+    "original": "/landing/screenshots/profile/single player stats.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 1013834,
+    "variants": [
+      {
+        "src": "/landing/images/capture-performance-360.webp",
+        "width": 360,
+        "bytes": 24692
+      },
+      {
+        "src": "/landing/images/capture-performance-600.webp",
+        "width": 600,
+        "bytes": 48496
+      },
+      {
+        "src": "/landing/images/capture-performance-900.webp",
+        "width": 900,
+        "bytes": 79144
+      }
+    ]
+  },
+  "capture-history": {
+    "original": "/landing/screenshots/profile/profile stats.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 397410,
+    "variants": [
+      {
+        "src": "/landing/images/capture-history-360.webp",
+        "width": 360,
+        "bytes": 26390
+      },
+      {
+        "src": "/landing/images/capture-history-600.webp",
+        "width": 600,
+        "bytes": 51140
+      },
+      {
+        "src": "/landing/images/capture-history-900.webp",
+        "width": 900,
+        "bytes": 84666
+      }
+    ]
+  },
+  "capture-leaders": {
+    "original": "/landing/screenshots/leaderboard/leaderboard all.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 563219,
+    "variants": [
+      {
+        "src": "/landing/images/capture-leaders-360.webp",
+        "width": 360,
+        "bytes": 34956
+      },
+      {
+        "src": "/landing/images/capture-leaders-600.webp",
+        "width": 600,
+        "bytes": 66772
+      },
+      {
+        "src": "/landing/images/capture-leaders-900.webp",
+        "width": 900,
+        "bytes": 108756
+      }
+    ]
+  },
+  "capture-weekly": {
+    "original": "/landing/screenshots/leaderboard/leaderboard weekly.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 1163665,
+    "variants": [
+      {
+        "src": "/landing/images/capture-weekly-360.webp",
+        "width": 360,
+        "bytes": 23562
+      },
+      {
+        "src": "/landing/images/capture-weekly-600.webp",
+        "width": 600,
+        "bytes": 46854
+      },
+      {
+        "src": "/landing/images/capture-weekly-900.webp",
+        "width": 900,
+        "bytes": 78770
+      }
+    ]
+  },
+  "capture-squad": {
+    "original": "/landing/screenshots/Official squads/official squads.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 1615719,
+    "variants": [
+      {
+        "src": "/landing/images/capture-squad-360.webp",
+        "width": 360,
+        "bytes": 36166
+      },
+      {
+        "src": "/landing/images/capture-squad-600.webp",
+        "width": 600,
+        "bytes": 69678
+      },
+      {
+        "src": "/landing/images/capture-squad-900.webp",
+        "width": 900,
+        "bytes": 116440
+      }
+    ]
+  },
+  "capture-management": {
+    "original": "/landing/screenshots/Official squads/squad managment.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 295960,
+    "variants": [
+      {
+        "src": "/landing/images/capture-management-360.webp",
+        "width": 360,
+        "bytes": 23468
+      },
+      {
+        "src": "/landing/images/capture-management-600.webp",
+        "width": 600,
+        "bytes": 45924
+      },
+      {
+        "src": "/landing/images/capture-management-900.webp",
+        "width": 900,
+        "bytes": 76296
+      }
+    ]
+  },
+  "capture-lineup": {
+    "original": "/landing/screenshots/Official squads/team selections.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 303121,
+    "variants": [
+      {
+        "src": "/landing/images/capture-lineup-360.webp",
+        "width": 360,
+        "bytes": 27336
+      },
+      {
+        "src": "/landing/images/capture-lineup-600.webp",
+        "width": 600,
+        "bytes": 53908
+      },
+      {
+        "src": "/landing/images/capture-lineup-900.webp",
+        "width": 900,
+        "bytes": 86474
+      }
+    ]
+  },
+  "capture-members": {
+    "original": "/landing/screenshots/Official squads/manage squad members.png",
+    "width": 1285,
+    "height": 2604,
+    "originalBytes": 289021,
+    "variants": [
+      {
+        "src": "/landing/images/capture-members-360.webp",
+        "width": 360,
+        "bytes": 21554
+      },
+      {
+        "src": "/landing/images/capture-members-600.webp",
+        "width": 600,
+        "bytes": 42044
+      },
+      {
+        "src": "/landing/images/capture-members-900.webp",
+        "width": 900,
+        "bytes": 69632
+      }
+    ]
+  },
+  "capture-guests": {
+    "original": "/landing/screenshots/Official squads/manage guests.png",
+    "width": 1285,
+    "height": 2604,
+    "originalBytes": 348904,
+    "variants": [
+      {
+        "src": "/landing/images/capture-guests-360.webp",
+        "width": 360,
+        "bytes": 23354
+      },
+      {
+        "src": "/landing/images/capture-guests-600.webp",
+        "width": 600,
+        "bytes": 45108
+      },
+      {
+        "src": "/landing/images/capture-guests-900.webp",
+        "width": 900,
+        "bytes": 73400
+      }
+    ]
+  },
+  "capture-roles": {
+    "original": "/landing/screenshots/Official squads/club roles.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 250524,
+    "variants": [
+      {
+        "src": "/landing/images/capture-roles-360.webp",
+        "width": 360,
+        "bytes": 20544
+      },
+      {
+        "src": "/landing/images/capture-roles-600.webp",
+        "width": 600,
+        "bytes": 40114
+      },
+      {
+        "src": "/landing/images/capture-roles-900.webp",
+        "width": 900,
+        "bytes": 65364
+      }
+    ]
+  },
+  "capture-vote": {
+    "original": "/landing/screenshots/Voting Screenshots/Voting card user.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 1182920,
+    "variants": [
+      {
+        "src": "/landing/images/capture-vote-360.webp",
+        "width": 360,
+        "bytes": 26720
+      },
+      {
+        "src": "/landing/images/capture-vote-600.webp",
+        "width": 600,
+        "bytes": 52194
+      },
+      {
+        "src": "/landing/images/capture-vote-900.webp",
+        "width": 900,
+        "bytes": 84916
+      }
+    ]
+  },
+  "capture-assign": {
+    "original": "/landing/screenshots/Voting Screenshots/Assign cards.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 597506,
+    "variants": [
+      {
+        "src": "/landing/images/capture-assign-360.webp",
+        "width": 360,
+        "bytes": 25148
+      },
+      {
+        "src": "/landing/images/capture-assign-600.webp",
+        "width": 600,
+        "bytes": 47996
+      },
+      {
+        "src": "/landing/images/capture-assign-900.webp",
+        "width": 900,
+        "bytes": 76100
+      }
+    ]
+  },
+  "capture-tally": {
+    "original": "/landing/screenshots/Voting Screenshots/season tallys.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 1071783,
+    "variants": [
+      {
+        "src": "/landing/images/capture-tally-360.webp",
+        "width": 360,
+        "bytes": 29948
+      },
+      {
+        "src": "/landing/images/capture-tally-600.webp",
+        "width": 600,
+        "bytes": 56404
+      },
+      {
+        "src": "/landing/images/capture-tally-900.webp",
+        "width": 900,
+        "bytes": 92090
+      }
+    ]
+  },
+  "capture-share-vote": {
+    "original": "/landing/screenshots/Voting Screenshots/send link to anyone.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 366571,
+    "variants": [
+      {
+        "src": "/landing/images/capture-share-vote-360.webp",
+        "width": 360,
+        "bytes": 20278
+      },
+      {
+        "src": "/landing/images/capture-share-vote-600.webp",
+        "width": 600,
+        "bytes": 39168
+      },
+      {
+        "src": "/landing/images/capture-share-vote-900.webp",
+        "width": 900,
+        "bytes": 64730
+      }
+    ]
+  },
+  "capture-awards": {
+    "original": "/landing/screenshots/Voting Screenshots/other awards.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 1000352,
+    "variants": [
+      {
+        "src": "/landing/images/capture-awards-360.webp",
+        "width": 360,
+        "bytes": 23594
+      },
+      {
+        "src": "/landing/images/capture-awards-600.webp",
+        "width": 600,
+        "bytes": 45852
+      },
+      {
+        "src": "/landing/images/capture-awards-900.webp",
+        "width": 900,
+        "bytes": 74722
+      }
+    ]
+  },
+  "capture-feed": {
+    "original": "/landing/screenshots/feed/Feed3 with score.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 2317686,
+    "variants": [
+      {
+        "src": "/landing/images/capture-feed-360.webp",
+        "width": 360,
+        "bytes": 40316
+      },
+      {
+        "src": "/landing/images/capture-feed-600.webp",
+        "width": 600,
+        "bytes": 78854
+      },
+      {
+        "src": "/landing/images/capture-feed-900.webp",
+        "width": 900,
+        "bytes": 127760
+      }
+    ]
+  },
+  "capture-card": {
+    "original": "/landing/screenshots/player-cards/custom card.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 2770540,
+    "variants": [
+      {
+        "src": "/landing/images/capture-card-360.webp",
+        "width": 360,
+        "bytes": 53698
+      },
+      {
+        "src": "/landing/images/capture-card-600.webp",
+        "width": 600,
+        "bytes": 110888
+      },
+      {
+        "src": "/landing/images/capture-card-900.webp",
+        "width": 900,
+        "bytes": 189070
+      }
+    ]
+  },
+  "capture-generated": {
+    "original": "/landing/screenshots/player-cards/generated card.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 1791798,
+    "variants": [
+      {
+        "src": "/landing/images/capture-generated-360.webp",
+        "width": 360,
+        "bytes": 36638
+      },
+      {
+        "src": "/landing/images/capture-generated-600.webp",
+        "width": 600,
+        "bytes": 71558
+      },
+      {
+        "src": "/landing/images/capture-generated-900.webp",
+        "width": 900,
+        "bytes": 118468
+      }
+    ]
+  },
+  "capture-album": {
+    "original": "/landing/screenshots/player-cards/album.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 1324045,
+    "variants": [
+      {
+        "src": "/landing/images/capture-album-360.webp",
+        "width": 360,
+        "bytes": 29996
+      },
+      {
+        "src": "/landing/images/capture-album-600.webp",
+        "width": 600,
+        "bytes": 61244
+      },
+      {
+        "src": "/landing/images/capture-album-900.webp",
+        "width": 900,
+        "bytes": 105954
+      }
+    ]
+  },
+  "capture-selection-design": {
+    "original": "/landing/screenshots/Official squads/team selections and design.png",
+    "width": 3116,
+    "height": 2604,
+    "originalBytes": 2339691,
+    "variants": [
+      {
+        "src": "/landing/images/capture-selection-design-480.webp",
+        "width": 480,
+        "bytes": 27632
+      },
+      {
+        "src": "/landing/images/capture-selection-design-800.webp",
+        "width": 800,
+        "bytes": 54608
+      },
+      {
+        "src": "/landing/images/capture-selection-design-1280.webp",
+        "width": 1280,
+        "bytes": 101154
+      },
+      {
+        "src": "/landing/images/capture-selection-design-1920.webp",
+        "width": 1920,
+        "bytes": 164788
+      }
+    ]
+  },
+  "capture-social-post": {
+    "original": "/landing/screenshots/team-tracker/teampost-social generation.png",
+    "width": 4068,
+    "height": 2705,
+    "originalBytes": 4252064,
+    "variants": [
+      {
+        "src": "/landing/images/capture-social-post-480.webp",
+        "width": 480,
+        "bytes": 15472
+      },
+      {
+        "src": "/landing/images/capture-social-post-800.webp",
+        "width": 800,
+        "bytes": 32742
+      },
+      {
+        "src": "/landing/images/capture-social-post-1280.webp",
+        "width": 1280,
+        "bytes": 61306
+      },
+      {
+        "src": "/landing/images/capture-social-post-1920.webp",
+        "width": 1920,
+        "bytes": 106110
+      }
+    ]
+  },
+  "capture-voting-teams": {
+    "original": "/landing/screenshots/Voting Screenshots/teams.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 1379239,
+    "variants": [
+      {
+        "src": "/landing/images/capture-voting-teams-360.webp",
+        "width": 360,
+        "bytes": 20402
+      },
+      {
+        "src": "/landing/images/capture-voting-teams-600.webp",
+        "width": 600,
+        "bytes": 39810
+      },
+      {
+        "src": "/landing/images/capture-voting-teams-900.webp",
+        "width": 900,
+        "bytes": 64446
+      }
+    ]
+  },
+  "capture-game-log": {
+    "original": "/landing/screenshots/profile/gamelog.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 795460,
+    "variants": [
+      {
+        "src": "/landing/images/capture-game-log-360.webp",
+        "width": 360,
+        "bytes": 20144
+      },
+      {
+        "src": "/landing/images/capture-game-log-600.webp",
+        "width": 600,
+        "bytes": 39370
+      },
+      {
+        "src": "/landing/images/capture-game-log-900.webp",
+        "width": 900,
+        "bytes": 65208
+      }
+    ]
+  },
+  "capture-location-analysis": {
+    "original": "/landing/screenshots/profile/single plaer location analysis.png",
+    "width": 1320,
+    "height": 717,
+    "originalBytes": 55726,
+    "variants": [
+      {
+        "src": "/landing/images/capture-location-analysis-480.webp",
+        "width": 480,
+        "bytes": 6098
+      },
+      {
+        "src": "/landing/images/capture-location-analysis-800.webp",
+        "width": 800,
+        "bytes": 10496
+      },
+      {
+        "src": "/landing/images/capture-location-analysis-1280.webp",
+        "width": 1280,
+        "bytes": 16952
+      }
+    ]
+  },
+  "capture-feed-player": {
+    "original": "/landing/screenshots/feed/Feed2.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 2238126,
+    "variants": [
+      {
+        "src": "/landing/images/capture-feed-player-360.webp",
+        "width": 360,
+        "bytes": 40414
+      },
+      {
+        "src": "/landing/images/capture-feed-player-600.webp",
+        "width": 600,
+        "bytes": 77956
+      },
+      {
+        "src": "/landing/images/capture-feed-player-900.webp",
+        "width": 900,
+        "bytes": 124198
+      }
+    ]
+  },
+  "capture-squad-player-leaders": {
+    "original": "/landing/screenshots/Official squads/squads leader board player.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 326167,
+    "variants": [
+      {
+        "src": "/landing/images/capture-squad-player-leaders-360.webp",
+        "width": 360,
+        "bytes": 22210
+      },
+      {
+        "src": "/landing/images/capture-squad-player-leaders-600.webp",
+        "width": 600,
+        "bytes": 42566
+      },
+      {
+        "src": "/landing/images/capture-squad-player-leaders-900.webp",
+        "width": 900,
+        "bytes": 72784
+      }
+    ]
+  },
+  "capture-squad-team-leaders": {
+    "original": "/landing/screenshots/Official squads/squads leader board team.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 265810,
+    "variants": [
+      {
+        "src": "/landing/images/capture-squad-team-leaders-360.webp",
+        "width": 360,
+        "bytes": 21598
+      },
+      {
+        "src": "/landing/images/capture-squad-team-leaders-600.webp",
+        "width": 600,
+        "bytes": 40220
+      },
+      {
+        "src": "/landing/images/capture-squad-team-leaders-900.webp",
+        "width": 900,
+        "bytes": 68808
+      }
+    ]
+  },
+  "capture-card-creation": {
+    "original": "/landing/screenshots/player-cards/Card creation.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 385263,
+    "variants": [
+      {
+        "src": "/landing/images/capture-card-creation-360.webp",
+        "width": 360,
+        "bytes": 18078
+      },
+      {
+        "src": "/landing/images/capture-card-creation-600.webp",
+        "width": 600,
+        "bytes": 34120
+      },
+      {
+        "src": "/landing/images/capture-card-creation-900.webp",
+        "width": 900,
+        "bytes": 55036
+      }
+    ]
+  },
+  "capture-tracked-vote": {
+    "original": "/landing/screenshots/Voting Screenshots/Tracked game Voting card.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 1656317,
+    "variants": [
+      {
+        "src": "/landing/images/capture-tracked-vote-360.webp",
+        "width": 360,
+        "bytes": 26228
+      },
+      {
+        "src": "/landing/images/capture-tracked-vote-600.webp",
+        "width": 600,
+        "bytes": 51350
+      },
+      {
+        "src": "/landing/images/capture-tracked-vote-900.webp",
+        "width": 900,
+        "bytes": 83064
+      }
+    ]
+  },
+  "capture-vote-setup": {
+    "original": "/landing/screenshots/Voting Screenshots/Creating Cards.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 318386,
+    "variants": [
+      {
+        "src": "/landing/images/capture-vote-setup-360.webp",
+        "width": 360,
+        "bytes": 27616
+      },
+      {
+        "src": "/landing/images/capture-vote-setup-600.webp",
+        "width": 600,
+        "bytes": 52998
+      },
+      {
+        "src": "/landing/images/capture-vote-setup-900.webp",
+        "width": 900,
+        "bytes": 83220
+      }
+    ]
+  },
+  "capture-game-tallies": {
+    "original": "/landing/screenshots/Voting Screenshots/game tallys.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 921570,
+    "variants": [
+      {
+        "src": "/landing/images/capture-game-tallies-360.webp",
+        "width": 360,
+        "bytes": 26230
+      },
+      {
+        "src": "/landing/images/capture-game-tallies-600.webp",
+        "width": 600,
+        "bytes": 51408
+      },
+      {
+        "src": "/landing/images/capture-game-tallies-900.webp",
+        "width": 900,
+        "bytes": 82656
+      }
+    ]
+  },
+  "capture-vote-matchups": {
+    "original": "/landing/screenshots/Voting Screenshots/view all cards.png",
+    "width": 1284,
+    "height": 2603,
+    "originalBytes": 2118729,
+    "variants": [
+      {
+        "src": "/landing/images/capture-vote-matchups-360.webp",
+        "width": 360,
+        "bytes": 28104
+      },
+      {
+        "src": "/landing/images/capture-vote-matchups-600.webp",
+        "width": 600,
+        "bytes": 54090
+      },
+      {
+        "src": "/landing/images/capture-vote-matchups-900.webp",
+        "width": 900,
+        "bytes": 90196
+      }
+    ]
   }
 }

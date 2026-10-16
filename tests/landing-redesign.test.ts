@@ -42,7 +42,7 @@ test('every visible media reference has a manifest entry and every video resolve
 test('chapter anchors resolve and cards are the last product chapter before final CTA', () => {
  const ids = [...landing.matchAll(/id="([\w-]+)"/g)].map(m=>m[1])
  for(const hash of [...landing.matchAll(/(?:href[:=]\s*['"]|['"])(#[\w-]+)['"]/g)].map(m=>m[1].slice(1))) assert.ok([...ids,'pricing'].includes(hash),hash)
- const chapters=['features','team-tracking','mapping','match-summary','portal','game-cards','get-started']
+ const chapters=['features','team-tracking','custom-stat-pad','mapping','match-summary','portal','squads','voting','social','game-cards','get-started']
  const actual=[...landing.matchAll(/<section[^>]*id="([\w-]+)"/g)].map(m=>m[1])
  assert.deepEqual(actual,chapters)
  assert.ok(landing.indexOf('<PricingSection/>') > landing.indexOf('id="game-cards"'))
@@ -84,7 +84,12 @@ test('media preserves originals, responsive variants and full-size access throug
  assert.match(media,/srcSet=/)
  assert.match(media,/loading=\{priority \? 'eager' : 'lazy'\}/)
  assert.match(media,/failed \? media.original/)
- assert.match(media,/target="_blank" rel="noreferrer"/)
+ assert.doesNotMatch(media,/target="_blank"/)
+ assert.match(media,/aria-haspopup="dialog"/)
+ assert.match(media,/showModal\(\)/)
+ assert.match(media,/onClose=\{\(\) => setExpanded\(false\)\}/)
+ assert.match(media,/event.target === event.currentTarget/)
+ assert.match(media,/aria-label="Close enlarged image"/)
  assert.match(css,/\.lp-single-proof img[^}]*object-position:/)
  assert.match(css,/\.lp-summary-proof img[^}]*object-position:/)
 })
@@ -104,4 +109,80 @@ test('landing retains semantic navigation, focus, direct anchors and motion over
 test('metadata stays football-specific without new claims or store destinations', async () => {
  assert.match(await source('index.html'),/name="description" content="Australian football performance tracking/)
  assert.doesNotMatch(landing,/apps\.apple|play\.google|AI.generated|most selected|\$99/)
+})
+
+
+test('new screenshot chapters use real responsive assets and phone-first device layering', async () => {
+ const screens = await source('src/components/landing/ProductScreens.tsx')
+ for (const match of landing.matchAll(/["'](capture-[a-z-]+)["']/g)) {
+  const asset = assets[match[1]]
+  assert.ok(asset, match[1])
+  assert.match(asset.original, /^\/landing\/screenshots\//)
+  assert.ok(asset.variants.length >= 2)
+ }
+ for (const pair of ['player','team','map']) assert.ok(landing.includes(`tablet="capture-${pair}-ipad" phone="capture-${pair}-phone"`))
+ assert.equal((landing.match(/<DevicePair /g)||[]).length, 3)
+ assert.ok(screens.indexOf('className="lp-device-tablet"') < screens.indexOf('className="lp-device-phone"'))
+ assert.match(css,/\.lp-device-tablet[^}]*z-index:1/)
+ assert.match(css,/\.lp-device-phone[^}]*z-index:2/)
+ assert.match(screens,/Open either screen for a closer look/)
+ assert.doesNotMatch(landing, /<MappingStory/)
+})
+
+
+test('social story and requested club screenshots replace walkthrough details', () => {
+ assert.match(landing, /id="social"/)
+ for (const asset of ['capture-selection-design','capture-social-post','capture-voting-teams']) assert.ok(landing.includes(asset))
+ assert.doesNotMatch(landing, /Members, guests and game-day roles|Share a voting link and manage other awards|See it in the feed|lp-proof/)
+ assert.match(landing, /All your teams’ votes, in one place/)
+ assert.match(landing, /useLandingStory\(\)/)
+ assert.doesNotMatch(landing, /observer.unobserve|entry.target.animate/)
+})
+
+
+test('annotated screenshots are promoted and social focuses on post-match sharing',()=>{
+ const portal=landing.slice(landing.indexOf('<section id="portal"'),landing.indexOf('<section id="squads"'))
+ assert.ok(portal.indexOf('capture-profile')<portal.indexOf('capture-weekly'))
+ assert.ok(portal.indexOf('capture-weekly')<portal.indexOf('capture-leaders'))
+ assert.doesNotMatch(portal,/capture-history|A different way to lead|<details/)
+ const club=landing.slice(landing.indexOf('<section id="squads"'),landing.indexOf('<section id="voting"'))
+ assert.doesNotMatch(club,/capture-management/)
+ assert.equal((club.match(/asset:'/g)||[]).length,2)
+ const social=landing.slice(landing.indexOf('<section id="social"'),landing.indexOf('<section id="game-cards"'))
+ assert.match(social,/capture-social-post/)
+ assert.doesNotMatch(social,/capture-selection-design|Before the bounce|lineups/)
+ assert.match(social,/After the siren/)
+ assert.match(css,/#squads > \.lp-screen-gallery \{ grid-template-columns:minmax\(0,320px\) minmax\(0,900px\)/)
+})
+
+
+test('custom stat pad has a standalone two-phone chapter rather than a disclosure',()=>{
+ const chapter=landing.slice(landing.indexOf('<section id="custom-stat-pad"'),landing.indexOf('<section id="mapping"'))
+ assert.match(chapter,/aria-labelledby="custom-pad-heading"/)
+ assert.match(chapter,/capture-custom-pad/)
+ assert.match(chapter,/capture-custom-stats/)
+ assert.doesNotMatch(chapter,/<details|<summary|ScreenGallery compact/)
+ assert.equal((landing.match(/capture-custom-pad/g)||[]).length,1)
+ assert.match(css,/\.lp-custom-pad \.lp-screen-gallery \{ grid-template-columns:repeat\(2,minmax\(0,340px\)\)/)
+})
+
+
+test('hero video enlarges inside the same iPad frame without navigation',async()=>{
+ const demo=await source('src/components/landing/TeamTrackingDemo.tsx')
+ const hero=landing.slice(landing.indexOf('<section className="lp-hero"'),landing.indexOf('</section>'))
+ assert.ok(hero.indexOf('<TeamTrackingDemo/>')>hero.indexOf('className="lp-actions"'))
+ assert.match(demo,/<figure ref=\{preview\} id="team-demo"/)
+ assert.match(demo,/blank%20Ipad.png/)
+ assert.match(demo,/aria-haspopup="dialog"/)
+ assert.match(demo,/showModal\(\)/)
+ assert.match(demo,/onClose=\{close\}/)
+ assert.match(demo,/suspended=\{expanded\}/)
+ assert.match(demo,/startTime=\{startTime\}/)
+ assert.match(demo,/body.style.overflow = previous/)
+ assert.match(demo,/focus\(\{ preventScroll:true \}\)/)
+ assert.doesNotMatch(demo,/window.open|target="_blank"|createPortal/)
+ assert.match(css,/\.lp-ipad-demo-frame \{[^}]*pointer-events:none/)
+ assert.match(css,/\.lp-video-enlarge \{[^}]*44px/)
+ assert.match(video,/controls muted playsInline loop preload="metadata"/)
+ assert.match(video,/failed \|\| suspended/)
 })
